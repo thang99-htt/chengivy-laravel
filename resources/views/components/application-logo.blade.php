@@ -1,0 +1,1 @@
+<img src="{{ asset('/storage/images/logo/logo.png') }}" width="250" class="d-block" alt="...">
