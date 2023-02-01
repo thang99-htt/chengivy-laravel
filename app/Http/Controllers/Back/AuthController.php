@@ -26,12 +26,18 @@ class AuthController extends Controller
                 'email' => ['Email hoặc mật khẩu không đúng.'],
             ]);
         }
-        return $staff->createToken($request->device_name)->plainTextToken;
+
+        $token = $staff->createToken($request->device_name)->plainTextToken;
+        
+        return response()->json([
+            'token' => $token,
+            'staff' => $staff
+        ]);
     }
 
     public function logout(Request $request)
     {
-        Auth::guard('admin')->logout();
+        $request->user()->currentAccessToken()->delete();
         return response()->json(['msg' => 'Đăng xuất thành công.']);
     }
     
