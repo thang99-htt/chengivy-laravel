@@ -13,7 +13,6 @@ use Auth;
 
 class CategoriesController extends Controller
 {
-
     public function category()
     {        
         $categories = Category::categories();

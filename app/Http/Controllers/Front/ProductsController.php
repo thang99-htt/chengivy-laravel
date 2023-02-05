@@ -58,7 +58,15 @@ class ProductsController extends Controller
         $productDetails = Product::with(['category' => function($query) {
             $query->select('id', 'name');
         }, 'images', 'sizes' ])->find($request->id);
-        return response()->json($productDetails);
+
+        if ($productDetails) {
+            return response()->json($productDetails);
+        } else {
+            return response()->json(array(
+                'code'      =>  404,
+                'message'   =>  "Error"
+            ), 404);
+        }
     }
     
 }

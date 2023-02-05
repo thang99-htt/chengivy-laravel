@@ -19,33 +19,28 @@ class CartsController extends Controller
 {
     public function index()
     {
-        if(Auth::check()) {
-            $getCartItems = Cart::with(['product', 'sizes'])->orderby('id', 'Desc')->where('user_id', Auth::user()->id)->paginate(2);
-            return response()->json($getCartItems);
-        } else 
-            return response()->json("Bạn phải là thành viên");
+        $getCartItems = Cart::with(['product', 'sizes'])->orderby('id', 'Desc')->where('user_id', $request['user_id']);
+        return response()->json($getCartItems);
     }
     
     public function store(Request $request)
     {
-        if(Auth::check()) {
-            $getProductQuantity = ProductSize::getProductQuantity($data['product_id'],$data['product_size']);
-            if($getProductQuantity < $data['product_quantity']) {
-                return response()->json("Số lượng không được phép.");
-            }
+        $getProductQuantity = ProductSize::getProductQuantity($request['product_id'], $request['size']);
+        $size = Size::select('name')->where('id', $request['size'])->first();
 
+        if($getProductQuantity > $request['quantity']) {
             // Save Product in Carts table
             $item = new Cart;
-            $item->user_id = Auth::user()->id;
-            $item->product_id = $data['product_id'];
-            $item->size = $data['product_size'];
-            $item->quantity = $data['product_quantity'];
+            $item->user_id = $request['user_id'];
+            $item->product_id = $request['product_id'];
+            $item->size = $size->name;
+            $item->quantity = $request['quantity'];
             $item->save();
-            return response()->json("Sản phẩm được thêm vào giỏ hàng.");
-        } else {
-            return response()->json("Bạn phải là thành viên");
+            return response()->json(true);
         }
-        
+        else {
+            return response()->json(false);
+        }        
     }
     
     public function update(Request $request)
