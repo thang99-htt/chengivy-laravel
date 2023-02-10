@@ -17,13 +17,34 @@ use Auth;
 
 class CartsController extends Controller
 {
-    public function index()
+    public function index($id)
     {
-        $getCartItems = Cart::with(['product', 'sizes'])->orderby('id', 'Desc')->where('user_id', $request['user_id']);
-        return response()->json($getCartItems);
+        $getCartItems = Cart::with(['product'])->orderby('id', 'Desc')->where('user_id', $id)->get();
+        $into_money = 0;
+        $count_item = 0;
+        
+        foreach($getCartItems as $key => $value) {
+            $getDiscountPrice = Product::getDiscountPrice($getCartItems[$key]['product']['id']);
+            $getCartItems[$key]['total_price'] = 0;
+
+            if($getDiscountPrice > 0) {
+                $getCartItems[$key]['final_price'] = $getDiscountPrice;
+                $getCartItems[$key]['total_price'] += $getDiscountPrice*$getCartItems[$key]['quantity'];
+            } else {
+                $getCartItems[$key]['final_price'] = $getCartItems[$key]['product']['price'];
+                $getCartItems[$key]['total_price'] += $getCartItems[$key]['product']['price']*$getCartItems[$key]['quantity'];
+            }
+            $into_money += $getCartItems[$key]['total_price'];
+            $count_item++;
+        }
+        return response()->json([
+            'getCartItems' => $getCartItems,
+            'into_money' => $into_money,
+            'count_item' => $count_item
+        ]);
     }
-    
-    public function store(Request $request)
+
+    public function store($id, Request $request)
     {
         $getProductQuantity = ProductSize::getProductQuantity($request['product_id'], $request['size']);
         $size = Size::select('name')->where('id', $request['size'])->first();
@@ -31,7 +52,7 @@ class CartsController extends Controller
         if($getProductQuantity > $request['quantity']) {
             // Save Product in Carts table
             $item = new Cart;
-            $item->user_id = $request['user_id'];
+            $item->user_id = $id;
             $item->product_id = $request['product_id'];
             $item->size = $size->name;
             $item->quantity = $request['quantity'];
@@ -61,9 +82,23 @@ class CartsController extends Controller
         return view('front.carts.carts');
     }
 
+    public function updateQuantity($id, Request $request) {
+        $cart = Cart::find($id);
+        $cart->quantity = $request->quantity;
+        $cart->save();
+        
+        return response()->json([
+            'success' => true,
+            'cart' => $cart,
+        ]);
+    }
+
     public function destroy($id)
     {
         Cart::where('id', $id)->delete();
-        return response()->json("Sản phẩm được xóa khỏi giỏ hàng.");
+        return response()->json([
+            'success' => 'true',
+            'message' => 'Sản phẩm được xóa khỏi giỏ hàng.'
+        ], 200);
     }
 }

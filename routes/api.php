@@ -50,8 +50,10 @@ Route::prefix('/products')->group( function() {
 
 
 Route::prefix('/cart')->group( function() {
-    Route::post('/add',[App\Http\Controllers\Front\CartsController::class, 'store']); 
-    Route::get('/',[App\Http\Controllers\Front\CartsController::class, 'index']); 
+    Route::post('/add/{id}',[App\Http\Controllers\Front\CartsController::class, 'store']); 
+    Route::get('/{id}',[App\Http\Controllers\Front\CartsController::class, 'index']); 
+    Route::put('{id}/{quantity}', [App\Http\Controllers\Front\CartsController::class, 'updateQuantity']);
+    Route::delete('/{id}',[App\Http\Controllers\Front\CartsController::class, 'destroy']); 
 });
 
 

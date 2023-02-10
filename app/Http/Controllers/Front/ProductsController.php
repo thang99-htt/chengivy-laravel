@@ -46,11 +46,29 @@ class ProductsController extends Controller
         ]);
     }
 
-    public function listing(Request $request) {
-        $url = $request['url'];
-        $categoryDetails = Category::categoryDetails($url);
-        $products = Product::with('category')->whereIn('category_id', $categoryDetails['catIds'])->where('status', 1)->get();
-        return response()->json($products);
+    public function listing($url) {
+        $categoryCount = Category::where(['url' => $url, 'status' => 1])->count();
+        if($categoryCount > 0) {
+            $categoryDetails = Category::categoryDetails($url);
+            $products = Product::with('category')->whereIn('category_id', $categoryDetails['catIds'])->where('status', 1)->get();
+            
+            foreach($products as $key => $value) {
+                $getDiscountPrice = Product::getDiscountPrice($products[$key]['id']);
+                if($getDiscountPrice > 0) {
+                    $products[$key]['final_price'] = $getDiscountPrice;
+                } else {
+                    $products[$key]['final_price'] = $products[$key]['price'];
+                }
+            }
+
+            return response()->json($products);
+        } else {
+            $message = "Category URL incorect!";
+            return response()->json([
+                'status' => false,
+                'message' => $message
+            ], 422);
+        }
 
     }
 
@@ -58,6 +76,13 @@ class ProductsController extends Controller
         $productDetails = Product::with(['category' => function($query) {
             $query->select('id', 'name');
         }, 'images', 'sizes' ])->find($request->id);
+
+        $getDiscountPrice = Product::getDiscountPrice($productDetails['id']);
+        if($getDiscountPrice > 0) {
+            $productDetails['final_price'] = $getDiscountPrice;
+        } else {
+            $productDetails['final_price'] = $productDetails['price'];
+        }
 
         if ($productDetails) {
             return response()->json($productDetails);
