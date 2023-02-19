@@ -32,7 +32,6 @@ class Product extends Model
         'category_id',
         'name',
         'description',
-        'purchase_price',
         'price',
         'image',
         'type_id',
@@ -60,7 +59,7 @@ class Product extends Model
     }
     
     public function sizes() {
-        return $this->belongsToMany(Size::class, 'product_size')->withPivot(['id', 'quantity']);
+        return $this->belongsToMany(Size::class, 'product_size')->withPivot(['id', 'quantity', 'stock']);
     }
 
     public function product_size() {
@@ -83,5 +82,4 @@ class Product extends Model
     public function carts() {
         return $this->belongsToMany(Carts::class, 'carts_products')->withPivot(['id', 'quantity']);
     }
-
 }

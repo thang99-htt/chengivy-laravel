@@ -115,6 +115,7 @@ class ProductsController extends Controller
             $productsize->product_id = $request['product.id'];
             $productsize->size_id =  $request['size'];
             $productsize->quantity =  $request['quantity'];
+            $productsize->stock =  $request['stock'];
             $productsize->save();
             return response()->json(true);
         }

@@ -62,6 +62,6 @@ class Ward extends Model
      */
 
     public function users() {
-        return $this->belongsToMany(User::class, 'contacts')->withPivot(['id' ,'address', 'phone', 'default']);
+        return $this->belongsToMany(User::class, 'contacts')->withPivot(['id', 'address', 'phone']);
     }
 }

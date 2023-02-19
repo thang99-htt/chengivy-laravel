@@ -4,15 +4,16 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Product;
 
-class ProductSize extends Model
+class Product extends Model
 {
     use HasFactory;
 
     /**
      * Database table name
      */
-    protected $table = 'product_size';
+    protected $table = 'products';
 
     /**
      * Use timestamps 
@@ -26,18 +27,19 @@ class ProductSize extends Model
      */
     protected $fillable = [
         'product_id',
-        'size_id',
-        'quantity',
-        'stock'
+        'price',
+        'start_date',
+        'end_date',
     ];
 
     /**
      * Date time columns.
      */
     protected $dates = [];
-
-    public static function getProductQuantity($product_id, $size_id) {
-        $getProductQuantity = ProductSize::select('quantity', 'stock')->where(['product_id'=>$product_id, 'size_id'=>$size_id])->first();
-        return $getProductQuantity->quantity;
+    
+    public function product()
+    {
+        return $this->belongsTo(Product::class, 'product_id');
     }
+
 }

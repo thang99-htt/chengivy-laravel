@@ -32,7 +32,8 @@ class Staff extends Authenticatable
      * Mass assignable columns
      */
     protected $fillable = [
-        'fullname',
+        'name',
+        'identity_card',
         'email',
         'phone',
         'gender',
@@ -40,7 +41,6 @@ class Staff extends Authenticatable
         'address',
         'image',
         'status',
-        'role_id',
     ];
 
     /**
@@ -66,10 +66,5 @@ class Staff extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
     ];
-
-    public function role()
-    {
-        return $this->belongsTo(Role::class, 'role_id');
-    }
 
 }

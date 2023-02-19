@@ -48,16 +48,26 @@ class CartsController extends Controller
     {
         $getProductQuantity = ProductSize::getProductQuantity($request['product_id'], $request['size']);
         $size = Size::select('name')->where('id', $request['size'])->first();
-
+        
         if($getProductQuantity > $request['quantity']) {
-            // Save Product in Carts table
-            $item = new Cart;
-            $item->user_id = $id;
-            $item->product_id = $request['product_id'];
-            $item->size = $size->name;
-            $item->quantity = $request['quantity'];
-            $item->save();
-            return response()->json(true);
+            // Check existed Size
+            $cart = Cart::where(['user_id' => $id, 'product_id' => $request['product_id'], 
+                'size' => $size->name])->first();     
+            if($cart) {
+                $cartId = Cart::find($cart->id);
+                $cartId->quantity++;
+                $cartId->save();
+                return response()->json(true);
+            } else {
+                // Save Product in Carts table
+                $item = new Cart;
+                $item->user_id = $id;
+                $item->product_id = $request['product_id'];
+                $item->size = $size->name;
+                $item->quantity = $request['quantity'];
+                $item->save();
+                return response()->json(true);
+            }
         }
         else {
             return response()->json(false);

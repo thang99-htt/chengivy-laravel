@@ -26,7 +26,6 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
-        'role_id',
     ];
 
     /**
@@ -48,18 +47,13 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
     ];
 
-    public function role()
-    {
-        return $this->belongsTo(Role::class, 'role_id');
-    }
-
 
     public function profiles() {
         return $this->hasMany(Profile::class, 'user_id');
     }
 
     public function wards() {
-        return $this->belongsToMany(Ward::class, 'contacts')->withPivot(['id' ,'address', 'phone']);
+        return $this->belongsToMany(Ward::class, 'contacts')->withPivot(['id', 'address', 'phone']);
     }
 
 }

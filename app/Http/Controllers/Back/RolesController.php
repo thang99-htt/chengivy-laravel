@@ -72,4 +72,18 @@ class RolesController extends Controller
         $role->delete();
         return response()->json(['success'=>'true'], 200);
     }
+
+    public function destroyAll()
+    {
+        $roles = Role::all();
+        
+        foreach($roles as $key => $value) {
+            $role = Role::find($roles[$key]['id']);
+            $role->delete();
+        }
+        return response()->json([
+            'status' => false,
+            'message' => "Deleted All."
+        ], 200);
+    }
 }

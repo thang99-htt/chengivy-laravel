@@ -17,9 +17,21 @@ use Response;
 
 
 class ProfilesController extends Controller
-{
-    public function index() {
-        return view('front.profiles.profile');
+{    
+    public function addresses($id) {
+        $user = User::find($id);
+        $wards = $user->wards;
+        foreach($wards as $key => $value) {
+            $district = $wards[$key]->district->name;
+            $city = $wards[$key]->district->city->name;
+        }
+
+        return response()->json($wards);
+    }
+
+    public function addressOrder($id) {
+        $contact = Contact::find($id);
+        return response()->json($contact);
     }
 
     public function updateProfileDetails(Request $request) {
@@ -64,16 +76,6 @@ class ProfilesController extends Controller
             return "false";
         }
         
-    }
-
-    public function addresses(Request $request) {
-        $user = User::find(Auth::user()->id);
-        $cities = City::select('id', 'name')->get()->toArray();
-        return view('front.profiles.addresses')->with(compact('user', 'cities'));
-        return response()->json([
-            'user' => $user,
-            'cities' => $cities
-        ]);
     }
 
     public function addressDefault(Request $request) {

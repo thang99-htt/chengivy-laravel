@@ -4,6 +4,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Back\CategoriesController;
 use App\Http\Controllers\Back\ProductsController;
+use App\Http\Controllers\Front\OrdersController;
 
 
 /*
@@ -18,6 +19,7 @@ use App\Http\Controllers\Back\ProductsController;
 */
 
 Route::apiResource('/admin/roles', App\Http\Controllers\Back\RolesController::class);
+Route::delete('admin/roles/', [App\Http\Controllers\Back\RolesController::class, 'destroyAll']);
 
 // Route::get('/admin/categories/add',  [App\Http\Controllers\Back\CategoriesController::class, 'create']);
 Route::prefix('/admin/categories')->group( function() {
@@ -56,6 +58,14 @@ Route::prefix('/cart')->group( function() {
     Route::delete('/{id}',[App\Http\Controllers\Front\CartsController::class, 'destroy']); 
 });
 
+Route::apiResource('/admin/payment-methods', App\Http\Controllers\Back\PaymentMethodsController::class);
+
+Route::prefix('/addresses')->group( function() {
+    Route::get('/{id}',[App\Http\Controllers\Front\AddressesController::class, 'addresses']); 
+    Route::get('/address-order/{id}',[App\Http\Controllers\Front\AddressesController::class, 'addressOrder']); 
+});
+
+Route::apiResource('/admin/orders', OrdersController::class);
 
 Route::post('admin/login', [App\Http\Controllers\Back\AuthController::class, 'login']);
 Route::post('admin/logout', [App\Http\Controllers\Back\AuthController::class, 'logout'])->middleware('auth:sanctum');
