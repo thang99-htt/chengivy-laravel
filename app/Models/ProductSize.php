@@ -38,6 +38,6 @@ class ProductSize extends Model
 
     public static function getProductQuantity($product_id, $size_id) {
         $getProductQuantity = ProductSize::select('quantity', 'stock')->where(['product_id'=>$product_id, 'size_id'=>$size_id])->first();
-        return $getProductQuantity->quantity;
+        return $getProductQuantity->stock;
     }
 }

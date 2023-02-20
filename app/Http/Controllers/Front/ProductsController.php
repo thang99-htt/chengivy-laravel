@@ -38,6 +38,42 @@ class ProductsController extends Controller
                     
         $specialProducts = Product::with('category')->where('type_id', 3)->limit(3)->get();
 
+        foreach($trendingProducts as $key => $value) {
+            $getDiscountPrice = Product::getDiscountPrice($trendingProducts[$key]['id']);
+            if($getDiscountPrice > 0) {
+                $trendingProducts[$key]['final_price'] = $getDiscountPrice;
+            } else {
+                $trendingProducts[$key]['final_price'] = $trendingProducts[$key]['price'];
+            }
+        }
+
+        foreach($specialNewProduct as $key => $value) {
+            $getDiscountPrice = Product::getDiscountPrice($specialNewProduct[$key]['id']);
+            if($getDiscountPrice > 0) {
+                $specialNewProduct[$key]['final_price'] = $getDiscountPrice;
+            } else {
+                $specialNewProduct[$key]['final_price'] = $specialNewProduct[$key]['price'];
+            }
+        }
+
+        foreach($specialHighestPriceProduct as $key => $value) {
+            $getDiscountPrice = Product::getDiscountPrice($specialHighestPriceProduct[$key]['id']);
+            if($getDiscountPrice > 0) {
+                $specialHighestPriceProduct[$key]['final_price'] = $getDiscountPrice;
+            } else {
+                $specialHighestPriceProduct[$key]['final_price'] = $specialHighestPriceProduct[$key]['price'];
+            }
+        }
+
+        foreach($specialProducts as $key => $value) {
+            $getDiscountPrice = Product::getDiscountPrice($specialProducts[$key]['id']);
+            if($getDiscountPrice > 0) {
+                $specialProducts[$key]['final_price'] = $getDiscountPrice;
+            } else {
+                $specialProducts[$key]['final_price'] = $specialProducts[$key]['price'];
+            }
+        }
+
         return response()->json([
             'trendingProducts' => $trendingProducts,
             'specialNewProduct' => $specialNewProduct,

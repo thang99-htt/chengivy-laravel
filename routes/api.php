@@ -65,7 +65,8 @@ Route::prefix('/addresses')->group( function() {
     Route::get('/address-order/{id}',[App\Http\Controllers\Front\AddressesController::class, 'addressOrder']); 
 });
 
-Route::apiResource('/admin/orders', OrdersController::class);
+Route::apiResource('/orders', OrdersController::class);
+Route::post('orders/add/{id}', [OrdersController::class, 'store']);
 
 Route::post('admin/login', [App\Http\Controllers\Back\AuthController::class, 'login']);
 Route::post('admin/logout', [App\Http\Controllers\Back\AuthController::class, 'logout'])->middleware('auth:sanctum');
