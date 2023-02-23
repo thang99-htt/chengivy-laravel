@@ -40,8 +40,7 @@ class AuthController extends Controller
                 'password' => 'required',
                 'device_name' => 'required',
             ],
-            
-            
+                        
         );
         $user = User::where('email', $request->email)->first();
 

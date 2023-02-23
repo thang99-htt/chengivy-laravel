@@ -63,4 +63,23 @@ class Order extends Model
         return $this->belongsTo(Contact::class, 'contact_id');
     }
 
+    public function order_product()
+    {
+        return $this->hasMany(OrderProduct::class, 'order_id');
+    }
+
+    
+    // with id = ward_id
+    public static function getAddressDetail($id) {
+        $ward = Ward::find($id);
+        $district = $ward->district->name;
+        $city = $ward->district->city->name;
+
+        return $ward;
+    }
+
+    public function products()
+    {
+        return $this->belongsToMany(Product::class);
+    }
 }

@@ -4,7 +4,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Back\CategoriesController;
 use App\Http\Controllers\Back\ProductsController;
-use App\Http\Controllers\Front\OrdersController;
+use App\Http\Controllers\Back\OrdersController;
 
 
 /*
@@ -39,6 +39,9 @@ Route::prefix('/admin/products')->group( function() {
 });
 Route::apiResource('/admin/products', ProductsController::class);
 
+Route::apiResource('/admin/orders', OrdersController::class);
+Route::put('admin/orders/{id}/{status}', [OrdersController::class, 'updateOrderStatus']);
+
 Route::prefix('/categories')->group( function() {
     Route::get('/category',[App\Http\Controllers\Front\CategoriesController::class, 'category']);
 });
@@ -65,8 +68,10 @@ Route::prefix('/addresses')->group( function() {
     Route::get('/address-order/{id}',[App\Http\Controllers\Front\AddressesController::class, 'addressOrder']); 
 });
 
-Route::apiResource('/orders', OrdersController::class);
-Route::post('orders/add/{id}', [OrdersController::class, 'store']);
+Route::apiResource('/orders', App\Http\Controllers\Front\OrdersController::class);
+Route::post('orders/add/{id}', [App\Http\Controllers\Front\OrdersController::class, 'store']);
+Route::get('orders/purchases/user-{id}', [App\Http\Controllers\Front\OrdersController::class, 'purchaseAll']);
+Route::get('orders/purchase/user-{user}/order-{id}', [App\Http\Controllers\Front\OrdersController::class, 'purchaseShow']);
 
 Route::post('admin/login', [App\Http\Controllers\Back\AuthController::class, 'login']);
 Route::post('admin/logout', [App\Http\Controllers\Back\AuthController::class, 'logout'])->middleware('auth:sanctum');
