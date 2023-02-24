@@ -81,27 +81,11 @@ class OrdersController extends Controller
     public function purchaseAll($id)
     {
         $orders = Order::with(['user' => function($query) {
-            $query->select('id', 'name', 'email');
-        }, 'contact' => function($query) {
-            $query->select('id', 'phone', 'address', 'ward_id');
-        }, 'payment' => function($query) {
             $query->select('id', 'name');
         }, 'status' => function($query) {
             $query->select('id', 'name');
-        }, 'order_product'])->where('user_id', $id)->get();
+        }])->where('user_id', $id)->get();
 
-        foreach($orders as $key => $value) {
-            $getAddressDetail = Order::getAddressDetail($orders[$key]['contact']['ward_id']);
-            $orders[$key]['contact']['address_detail'] = $getAddressDetail;
-
-            foreach($orders[$key]['order_product'] as $key1 => $value) {
-                $productDetail = Product::where('id', $orders[$key]['order_product'][$key1]['product_id'])->first();
-                $orders[$key]['order_product'][$key1]['product_detail'] = $productDetail;
-            }
-
-            $userProfile = User::where('id', $orders[$key]['user_id'])->first();
-            $orders[$key]['user']['user_detail'] = $userProfile->profiles->first();
-        }       
         return response()->json($orders);
     }
 
@@ -129,9 +113,10 @@ class OrdersController extends Controller
         return response()->json($order);
     }
 
-    public function updateOrderStatus($id, Request $request) {
-        $order = Order::with('status')->find($id);
-        $order->status->id = 2;
+    public function cancleOrder($id) {
+        $order = Order::find($id);
+        $order->status_id = 10;
+        $order->cancle_date = Carbon::now('Asia/Ho_Chi_Minh');
         $order->save();
         
         return response()->json([

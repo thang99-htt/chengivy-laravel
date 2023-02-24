@@ -29,4 +29,28 @@ class ContactsController extends Controller
         return response()->json($wards);
     }
 
+    public function store($user, Request $request) {
+        $contactOld = Contact::where(['user_id' =>$user, 'ward_id' => $request->ward_id, 
+            'address' => $request->address])->first();
+
+        $contact = new Contact;
+
+        if(!$contactOld) {
+            $contact->user_id = $user;
+            $contact->ward_id = $request['ward_id'];
+            $contact->address = $request['address'];
+            $contact->phone = $request['phone'];
+            $contact->save();
+            return response()->json([
+                'success' => true,
+                'contact' => $contact,
+            ]);
+        } else {
+            return response()->json([
+                'success' => false,
+                'message' => "Địa chỉ hệ đã tồn tại."
+            ]);
+        }
+    }
+
 }

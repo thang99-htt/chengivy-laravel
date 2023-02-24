@@ -53,7 +53,6 @@ Route::prefix('/products')->group( function() {
     Route::get('/detail/{id}',[App\Http\Controllers\Front\ProductsController::class, 'detail']);
 });
 
-
 Route::prefix('/cart')->group( function() {
     Route::post('/add/{id}',[App\Http\Controllers\Front\CartsController::class, 'store']); 
     Route::get('/{id}',[App\Http\Controllers\Front\CartsController::class, 'index']); 
@@ -64,14 +63,20 @@ Route::prefix('/cart')->group( function() {
 Route::apiResource('/admin/payment-methods', App\Http\Controllers\Back\PaymentMethodsController::class);
 
 Route::prefix('/addresses')->group( function() {
+    Route::get('/cities',[App\Http\Controllers\Front\AddressesController::class, 'getCities']);
+    Route::post('/get-districts/{id}', [App\Http\Controllers\Front\AddressesController::class, 'getDistricts']);
+    Route::post('/get-wards/{id}', [App\Http\Controllers\Front\AddressesController::class, 'getWards']); 
     Route::get('/{id}',[App\Http\Controllers\Front\AddressesController::class, 'addresses']); 
     Route::get('/address-order/{id}',[App\Http\Controllers\Front\AddressesController::class, 'addressOrder']); 
+    Route::post('/address-add/{id}', [App\Http\Controllers\Front\AddressesController::class, 'store']);
 });
+
 
 Route::apiResource('/orders', App\Http\Controllers\Front\OrdersController::class);
 Route::post('orders/add/{id}', [App\Http\Controllers\Front\OrdersController::class, 'store']);
 Route::get('orders/purchases/user-{id}', [App\Http\Controllers\Front\OrdersController::class, 'purchaseAll']);
 Route::get('orders/purchase/user-{user}/order-{id}', [App\Http\Controllers\Front\OrdersController::class, 'purchaseShow']);
+Route::put('orders/purchase/cancle-{id}', [App\Http\Controllers\Front\OrdersController::class, 'cancleOrder']);
 
 Route::post('admin/login', [App\Http\Controllers\Back\AuthController::class, 'login']);
 Route::post('admin/logout', [App\Http\Controllers\Back\AuthController::class, 'logout'])->middleware('auth:sanctum');

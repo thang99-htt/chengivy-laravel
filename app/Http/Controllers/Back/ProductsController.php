@@ -52,7 +52,6 @@ class ProductsController extends Controller
         $product->category_id = $request['category_id'];
         $product->name = $request['name'];
         $product->description = $request['description'];
-        $product->purchase_price = $request['purchase_price'];
         $product->price = $request['price'];
         $product->image = $imageName;
         $product->type_id = $request['type_id'];
