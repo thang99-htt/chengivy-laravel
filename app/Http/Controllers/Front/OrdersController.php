@@ -44,6 +44,7 @@ class OrdersController extends Controller
 
         // Save table orders
         $order = new Order;
+        $order->staff_id = 0;
         $order->user_id = $id;
         $order->contact_id = $request['contact_id'];
         $order->payment_id = $request['payment_id'];
@@ -51,7 +52,8 @@ class OrdersController extends Controller
         $order->order_date = Carbon::now('Asia/Ho_Chi_Minh');
         $order->estimate_date = Carbon::now('Asia/Ho_Chi_Minh')->addDays(3);;
         $order->total_price = $order_total_price;
-        $order->note = $request['note'];
+        if($request['note'] != null)
+            $order->note = $request['note'];
         $order->save();
 
         $order_id = $order->id;
@@ -84,7 +86,7 @@ class OrdersController extends Controller
             $query->select('id', 'name');
         }, 'status' => function($query) {
             $query->select('id', 'name');
-        }])->where('user_id', $id)->get();
+        }])->where('user_id', $id)->orderBy('created_at', 'DESC')->get();
 
         return response()->json($orders);
     }

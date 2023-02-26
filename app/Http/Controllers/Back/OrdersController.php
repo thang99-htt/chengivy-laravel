@@ -56,50 +56,6 @@ class OrdersController extends Controller
         return response()->json($order);
     }
 
-    public function detail(Request $request)
-    {
-        // $orderDetail = OrderProduct::where('id', $request['id'])
-    }
-
-    public function update($id, Request $request)
-    {
-        $image_current = Product::select('image')->where('id', $id)->first();
-        if($request->image == $image_current->image) {
-            $imageName = $image_current->image;
-        } else {
-            $strpos = strpos($request->image, ';');
-            $sub = substr($request->image, 0, $strpos);
-            $ex = explode("/", $sub)[1];
-            $imageName = time().".".$ex;
-            $img = Image::make($request->image);
-            $upload_path = public_path()."/storage/uploads/products/";
-            $img->save($upload_path.$imageName);
-        }
-        $product = Product::where('id', $id)->update([
-            'category_id' => $request['category_id'],
-            'name' => $request['name'],
-            'description' => $request['description'],
-            'purchase_price' => $request['purchase_price'],
-            'price' => $request['price'],
-            'image' => $imageName,
-            'type_id' => $request['type_id'],
-            'discount_percent' => $request['discount_percent']
-        ]);
-
-        return response()->json($product);
-    }
-
-    public function updateProductStatus($id, Request $request) {
-        $product = Product::find($id);
-        $product->status = !$request->status;
-        $product->save();
-        
-        return response()->json([
-            'success' => true,
-            'product' => $product,
-        ]);
-    }
-
     public function updateOrderStatus($id, Request $request) {
         $order = Order::find($id);
         if($request->status == 1)
