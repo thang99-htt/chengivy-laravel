@@ -48,6 +48,7 @@ Route::prefix('/categories')->group( function() {
 
 Route::prefix('/products')->group( function() {
     Route::get('/',[App\Http\Controllers\Front\ProductsController::class, 'index']); 
+    Route::get('/all',[App\Http\Controllers\Front\ProductsController::class, 'listingAll']);
     Route::get('/type',[App\Http\Controllers\Front\ProductsController::class, 'type']); 
     Route::get('/{url}',[App\Http\Controllers\Front\ProductsController::class, 'listing']);
     Route::get('/detail/{id}',[App\Http\Controllers\Front\ProductsController::class, 'detail']);
@@ -77,6 +78,7 @@ Route::post('orders/add/{id}', [App\Http\Controllers\Front\OrdersController::cla
 Route::get('orders/purchases/user-{id}', [App\Http\Controllers\Front\OrdersController::class, 'purchaseAll']);
 Route::get('orders/purchase/user-{user}/order-{id}', [App\Http\Controllers\Front\OrdersController::class, 'purchaseShow']);
 Route::put('orders/purchase/cancle-{id}', [App\Http\Controllers\Front\OrdersController::class, 'cancleOrder']);
+Route::put('orders/purchase/receipt-{id}', [App\Http\Controllers\Front\OrdersController::class, 'receiptOrder']);
 
 Route::post('admin/login', [App\Http\Controllers\Back\AuthController::class, 'login']);
 Route::post('admin/logout', [App\Http\Controllers\Back\AuthController::class, 'logout'])->middleware('auth:sanctum');

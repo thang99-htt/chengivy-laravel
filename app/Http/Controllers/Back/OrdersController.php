@@ -70,8 +70,8 @@ class OrdersController extends Controller
             $order->status_id = 6;
         if($request->status == 6)
             $order->status_id = 7;
-        if($request->status == 7)
-            $order->status_id = 8;
+        // if($request->status == 7)
+        //     $order->status_id = 8;
         if($request->status == 8)
             $order->status_id = 9;
         $order->save();

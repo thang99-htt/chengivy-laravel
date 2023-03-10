@@ -44,7 +44,6 @@ class OrdersController extends Controller
 
         // Save table orders
         $order = new Order;
-        $order->staff_id = 0;
         $order->user_id = $id;
         $order->contact_id = $request['contact_id'];
         $order->payment_id = $request['payment_id'];
@@ -119,6 +118,18 @@ class OrdersController extends Controller
         $order = Order::find($id);
         $order->status_id = 10;
         $order->cancle_date = Carbon::now('Asia/Ho_Chi_Minh');
+        $order->save();
+        
+        return response()->json([
+            'success' => true,
+            'order' => $order,
+        ]);
+    }
+
+    public function receiptOrder($id) {
+        $order = Order::find($id);
+        $order->status_id = 8;
+        $order->receipt_date = Carbon::now('Asia/Ho_Chi_Minh');
         $order->save();
         
         return response()->json([

@@ -108,6 +108,31 @@ class ProductsController extends Controller
 
     }
 
+    public function listingAll() {
+        $categoryCount = Category::where(['status' => 1])->count();
+        if($categoryCount > 0) {
+            $products = Product::with('category')->where('status', 1)->get();
+            
+            foreach($products as $key => $value) {
+                $getDiscountPrice = Product::getDiscountPrice($products[$key]['id']);
+                if($getDiscountPrice > 0) {
+                    $products[$key]['final_price'] = $getDiscountPrice;
+                } else {
+                    $products[$key]['final_price'] = $products[$key]['price'];
+                }
+            }
+
+            return response()->json($products);
+        } else {
+            $message = "Category URL incorect!";
+            return response()->json([
+                'status' => false,
+                'message' => $message
+            ], 422);
+        }
+
+    }
+
     public function detail(Request $request) {
         $productDetails = Product::with(['category' => function($query) {
             $query->select('id', 'name');
