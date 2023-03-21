@@ -2,9 +2,7 @@
 
 namespace App\Http\Controllers\Back;
 
-use Illuminate\Support\Facades\Gate;
 use App\Http\Controllers\Controller;
-use Intervention\Image\ImageManager;
 use Illuminate\Http\Request;
 use App\Models\Product;
 use App\Models\Size;
@@ -12,8 +10,7 @@ use App\Models\Images;
 use App\Models\ProductSize;
 use App\Models\Category;
 use App\Models\Type;
-use Image;
-use Auth;
+use Intervention\Image\Facades\Image;
 
 class ProductsController extends Controller
 {

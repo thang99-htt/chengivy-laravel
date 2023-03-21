@@ -4,17 +4,14 @@ namespace App\Http\Controllers\Front;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\User;
 use App\Models\Product;
 use App\Models\Order;
 use App\Models\OrderProduct;
+use App\Models\ProductSize;
+use App\Models\Size;
 use App\Models\Cart;
 use Carbon\Carbon;
-use Session;
-use Auth;
-use Hash;
-use Response;
-
+use App\Http\Resources\OrderResource;
 
 class OrdersController extends Controller
 {    
@@ -70,6 +67,11 @@ class OrdersController extends Controller
 
             // Delete in cart
             Cart::where('id', $item->id)->delete();
+            $size = Size::select('id')->where('name', $item['size'])->first();
+            $getProductStock = ProductSize::getProductQuantity($item['product_id'], $size['id']);
+            ProductSize::where(['product_id' => $item['product_id'], 'size_id' => $size['id']])->update([
+                'stock' => $getProductStock-$item['quantity']
+            ]);
         }
         
         return response()->json([
@@ -91,27 +93,30 @@ class OrdersController extends Controller
     }
 
     // with id = order_id
-    public function purchaseShow($user, $id)
+    public function purchaseShow($id)
     {
-        $order = Order::with(['user' => function($query) {
-            $query->select('id', 'name', 'email');
-        }, 'contact' => function($query) {
-            $query->select('id', 'phone', 'address', 'ward_id');
-        }, 'payment' => function($query) {
-            $query->select('id', 'name');
-        }, 'status' => function($query) {
-            $query->select('id', 'name');
-        }, 'order_product'])->where(['id' => $id, 'user_id'=> $user])->first();
+        // $order = Order::with(['user' => function($query) {
+        //     $query->select('id', 'name', 'email');
+        // }, 'contact' => function($query) {
+        //     $query->select('id', 'phone', 'address', 'ward_id');
+        // }, 'payment' => function($query) {
+        //     $query->select('id', 'name');
+        // }, 'status' => function($query) {
+        //     $query->select('id', 'name');
+        // }, 'order_product'])->where(['id' => $id, 'user_id'=> $user])->first();
 
-        $getAddressDetail = Order::getAddressDetail($order['contact']['ward_id']);
-        $order['contact']['address_detail'] = $getAddressDetail;
+        // $getAddressDetail = Order::getAddressDetail($order['contact']['ward_id']);
+        // $order['contact']['address_detail'] = $getAddressDetail;
 
-        foreach($order['order_product'] as $key => $value) {
-            $productDetail = Product::where('id', $order['order_product'][$key]['product_id'])->first();
-            $order['order_product'][$key]['product_detail'] = $productDetail;
-        }
+        // foreach($order['order_product'] as $key => $value) {
+        //     $productDetail = Product::where('id', $order['order_product'][$key]['product_id'])->first();
+        //     $order['order_product'][$key]['product_detail'] = $productDetail;
+        // }
 
-        return response()->json($order);
+        // return response()->json($order);
+        
+        $order = Order::with('order_product.product')->find($id);
+        return response()->json(new OrderResource($order));
     }
 
     public function cancleOrder($id) {

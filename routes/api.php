@@ -52,6 +52,7 @@ Route::prefix('/products')->group( function() {
     Route::get('/type',[App\Http\Controllers\Front\ProductsController::class, 'type']); 
     Route::get('/{url}',[App\Http\Controllers\Front\ProductsController::class, 'listing']);
     Route::get('/detail/{id}',[App\Http\Controllers\Front\ProductsController::class, 'detail']);
+    Route::get('/get-stock/product-{product}/size-{size}',[App\Http\Controllers\Front\ProductsController::class, 'getStock']); 
 });
 
 Route::prefix('/cart')->group( function() {
@@ -67,7 +68,7 @@ Route::prefix('/addresses')->group( function() {
     Route::get('/cities',[App\Http\Controllers\Front\AddressesController::class, 'getCities']);
     Route::post('/get-districts/{id}', [App\Http\Controllers\Front\AddressesController::class, 'getDistricts']);
     Route::post('/get-wards/{id}', [App\Http\Controllers\Front\AddressesController::class, 'getWards']); 
-    Route::get('/{id}',[App\Http\Controllers\Front\AddressesController::class, 'addresses']); 
+    Route::get('/{id}',[App\Http\Controllers\Front\AddressesController::class, 'addresses']);  // Find all address by user_id
     Route::get('/address-order/{id}',[App\Http\Controllers\Front\AddressesController::class, 'addressOrder']); 
     Route::post('/address-add/{id}', [App\Http\Controllers\Front\AddressesController::class, 'store']);
 });
@@ -76,7 +77,7 @@ Route::prefix('/addresses')->group( function() {
 Route::apiResource('/orders', App\Http\Controllers\Front\OrdersController::class);
 Route::post('orders/add/{id}', [App\Http\Controllers\Front\OrdersController::class, 'store']);
 Route::get('orders/purchases/user-{id}', [App\Http\Controllers\Front\OrdersController::class, 'purchaseAll']);
-Route::get('orders/purchase/user-{user}/order-{id}', [App\Http\Controllers\Front\OrdersController::class, 'purchaseShow']);
+Route::get('orders/purchase/order-{id}', [App\Http\Controllers\Front\OrdersController::class, 'purchaseShow']);
 Route::put('orders/purchase/cancle-{id}', [App\Http\Controllers\Front\OrdersController::class, 'cancleOrder']);
 Route::put('orders/purchase/receipt-{id}', [App\Http\Controllers\Front\OrdersController::class, 'receiptOrder']);
 

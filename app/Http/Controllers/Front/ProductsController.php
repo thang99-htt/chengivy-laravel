@@ -2,18 +2,11 @@
 
 namespace App\Http\Controllers\Front;
 
-use Illuminate\Support\Facades\Gate;
 use App\Http\Controllers\Controller;
-use Intervention\Image\ImageManager;
 use Illuminate\Http\Request;
 use App\Models\Product;
-use App\Models\Size;
-use App\Models\Images;
-use App\Models\ProductSize;
 use App\Models\Category;
-use App\Models\Type;
-use Image;
-use Auth;
+use App\Models\ProductSize;
 
 class ProductsController extends Controller
 {
@@ -153,6 +146,13 @@ class ProductsController extends Controller
                 'message'   =>  "Error"
             ), 404);
         }
+    }
+
+    
+    public function getStock($product_id, $size_id)
+    {
+        $getProductStock = ProductSize::getProductQuantity($product_id, $size_id);
+        return response()->json($getProductStock, 200);
     }
     
 }

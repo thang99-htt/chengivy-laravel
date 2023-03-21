@@ -2,18 +2,12 @@
 
 namespace App\Http\Controllers\Front;
 
-use Illuminate\Support\Facades\Gate;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Product;
 use App\Models\Size;
-use App\Models\Images;
 use App\Models\ProductSize;
-use App\Models\Category;
-use App\Models\Type;
 use App\Models\Cart;
-use Image;
-use Auth;
 
 class CartsController extends Controller
 {
@@ -81,13 +75,13 @@ class CartsController extends Controller
     public function update(Request $request)
     {
         $cart = Cart::find($request->id);
-        $getProductQuantity = ProductSize::getProductQuantity($data['cart_product_id'],$data['cart_size_id']);
+        $getProductQuantity = ProductSize::getProductQuantity($request['cart_product_id'],$request['cart_size_id']);
         
-        if($getProductQuantity < $data['cart_quantity']) {
+        if($getProductQuantity < $request['cart_quantity']) {
             return response()->json("Số lượng không được phép.");
         } else {
             Cart::where('id', $request->id)->update([
-                'quantity'=>$data['cart_quantity']
+                'quantity'=>$request['cart_quantity']
             ]);
 
             return response()->json("Sản phẩm được thêm vào giỏ hàng.");
@@ -115,4 +109,5 @@ class CartsController extends Controller
             'message' => 'Sản phẩm được xóa khỏi giỏ hàng.'
         ], 200);
     }
+
 }

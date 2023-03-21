@@ -2,58 +2,57 @@
 
 namespace App\Http\Controllers\Back;
 
-use Illuminate\Support\Facades\Gate;
 use App\Http\Controllers\Controller;
-use Intervention\Image\ImageManager;
 use Illuminate\Http\Request;
 use App\Models\Product;
-use App\Models\User;
 use App\Models\Order;
-use App\Models\OrderProduct;
-use Image;
-use Auth;
-
+use App\Http\Resources\OrderResource;
 class OrdersController extends Controller
 {
     public function index()
     {
-        $orders = Order::with(['user' => function($query) {
-            $query->select('id', 'name', 'email');
-        }, 'contact' => function($query) {
-            $query->select('id', 'phone');
-        }, 'payment' => function($query) {
-            $query->select('id', 'name');
-        }, 'status' => function($query) {
-            $query->select('id', 'name');
-        }])->orderBy('created_at', 'DESC')->get();
+        $orders = Order::orderBy('created_at', 'DESC')->get();
+        
+        return response(OrderResource::collection($orders));
+        // $orders = Order::with(['user' => function($query) {
+        //     $query->select('id', 'name', 'email');
+        // }, 'contact' => function($query) {
+        //     $query->select('id', 'phone');
+        // }, 'payment' => function($query) {
+        //     $query->select('id', 'name');
+        // }, 'status' => function($query) {
+        //     $query->select('id', 'name');
+        // }])->orderBy('created_at', 'DESC')->get();
 
-        return response()->json($orders);
+        // return response()->json($orders);
     }
 
     public function show($id)
     {
-        $order = Order::with(['user' => function($query) {
-            $query->select('id', 'name', 'email');
-        }, 'contact' => function($query) {
-            $query->select('id', 'phone', 'address', 'ward_id');
-        }, 'payment' => function($query) {
-            $query->select('id', 'name');
-        }, 'status' => function($query) {
-            $query->select('id', 'name');
-        }, 'order_product'])->find($id);
+        // $order = Order::with(['user' => function($query) {
+        //     $query->select('id', 'name', 'email');
+        // }, 'contact' => function($query) {
+        //     $query->select('id', 'phone', 'address', 'ward_id');
+        // }, 'payment' => function($query) {
+        //     $query->select('id', 'name');
+        // }, 'status' => function($query) {
+        //     $query->select('id', 'name');
+        // }, 'order_product'])->find($id);
 
-        $getAddressDetail = Order::getAddressDetail($order['contact']['ward_id']);
-        $order['contact']['address_detail'] = $getAddressDetail;
+        // $getAddressDetail = Order::getAddressDetail($order['contact']['ward_id']);
+        // $order['contact']['address_detail'] = $getAddressDetail;
 
-        foreach($order['order_product'] as $key => $value) {
-            $productDetail = Product::where('id', $order['order_product'][$key]['product_id'])->first();
-            $order['order_product'][$key]['product_detail'] = $productDetail;
-        }
+        // foreach($order['order_product'] as $key => $value) {
+        //     $productDetail = Product::where('id', $order['order_product'][$key]['product_id'])->first();
+        //     $order['order_product'][$key]['product_detail'] = $productDetail;
+        // }
 
-        $userProfile = User::where('id', $order['user_id'])->first();
-        $order['user']['user_detail'] = $userProfile->profiles->first();
+        // $userProfile = User::where('id', $order['user_id'])->first();
+        // $order['user']['user_detail'] = $userProfile->profiles->first();
 
-        return response()->json($order);
+        // return response()->json($order);
+        $order = Order::with('order_product.product')->find($id);
+        return response()->json(new OrderResource($order));
     }
 
     public function updateOrderStatus($id, Request $request) {

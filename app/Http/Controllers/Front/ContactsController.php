@@ -2,17 +2,10 @@
 
 namespace App\Http\Controllers\Front;
 
-use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\User;
-use App\Models\Ward;
-use App\Models\District;
-use App\Models\City;
 use App\Models\Contact;
-use Session;
-use Image;
-use Auth;
 
 
 class ContactsController extends Controller

@@ -4,42 +4,30 @@ namespace App\Http\Controllers\Front;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\User;
-use App\Models\Profile;
 use App\Models\City;
 use App\Models\District;
 use App\Models\Ward;
 use App\Models\Contact;
-use App\Models\Payment;
-use Session;
-use Auth;
-use Hash;
-use Response;
+
+use App\Http\Resources\ContactResource;
 
 
 class AddressesController extends Controller
 {    
     // Find all address by user_id
     public function addresses($id) {
-        $user = User::find($id);
-        $wards = $user->wards;
-        foreach($wards as $key => $value) {
-            $district = $wards[$key]->district->name;
-            $city = $wards[$key]->district->city->name;
-        }
-
-        return response()->json($wards);
+        $contacts = Contact::with(['ward.district.city'])
+                ->whereHas('user', function($query) use ($id) {
+                   $query->where('id', $id);
+                })->get();
+        
+        return response(ContactResource::collection($contacts));
     }
-
 
     // Find address by contact_id
     public function addressOrder($id) {
-        $contact = Contact::find($id)->with(['ward', 'user' => function($query) {
-            $query->select('id', 'name');
-        }])->first();
-        $district = $contact->ward->district;
-        $city = $contact->ward->district->city;
-        return response()->json($contact);
+        $contact = Contact::with(['ward.district.city'])->find($id);
+        return response()->json(new ContactResource($contact));
     }
 
     public function getCities() {
@@ -71,6 +59,7 @@ class AddressesController extends Controller
 
         if(!$contactOld) {
             $contact->user_id = $user;
+            $contact->name = $request['name'];
             $contact->ward_id = $request['ward_id'];
             $contact->address = $request['address'];
             $contact->phone = $request['phone'];

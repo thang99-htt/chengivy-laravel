@@ -39,6 +39,9 @@ class Contact extends Model
     protected $fillable = [
         'user_id',
         'ward_id',
+        'name',
+        'address',
+        'phone'
     ];
 
     public function ward()

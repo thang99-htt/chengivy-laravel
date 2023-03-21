@@ -5,8 +5,7 @@ namespace App\Http\Controllers\Back;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Category;
-use App\Models\Product;
-use Image;
+use Intervention\Image\Facades\Image;
 
 class CategoriesController extends Controller
 {

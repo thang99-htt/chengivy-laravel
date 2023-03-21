@@ -6,9 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Http\Request;
 use App\Models\Staff;
-use Hash;
-use Auth;
-
+use Illuminate\Support\Facades\Auth;
 class AuthController extends Controller
 {
     public function login(Request $request) {

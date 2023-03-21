@@ -6,15 +6,11 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\Profile;
-use App\Models\City;
 use App\Models\District;
 use App\Models\Ward;
 use App\Models\Contact;
-use Session;
-use Auth;
-use Hash;
-use Response;
-
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 
 class ProfilesController extends Controller
 {    
@@ -36,13 +32,13 @@ class ProfilesController extends Controller
 
     public function updateProfileDetails(Request $request) {
         $profile = Profile::with('user')->where('id', Auth::user()->id)->first();
-        Profile::where('id',Auth::user()->id)->update(['phone'=>$data['profile_phone'], 'birth_date'=>$data['profile_birth_date'], 'gender'=>$data['profile_gender']]);
+        Profile::where('id',Auth::user()->id)->update(['phone'=>$request['profile_phone'], 'birth_date'=>$request['profile_birth_date'], 'gender'=>$request['profile_gender']]);
         return redirect()->back()->with('success_message','Profile has been update successfully!');
     }
 
     public function updateEmail(Request $request) {
-        if(Hash::check($data['profile_current_password'],Auth::user()->password)) { 
-            User::where('id',Auth::user()->id)->update(['email'=>$data['profile_email']]);
+        if(Hash::check($request['profile_current_password'],Auth::user()->password)) { 
+            User::where('id',Auth::user()->id)->update(['email'=>$request['profile_email']]);
             return redirect()->back()->with('success_message','Email has been update successfully!');
         } else {
             return redirect()->back()->with('error_message','Your current password is Incorrect!');
@@ -51,10 +47,10 @@ class ProfilesController extends Controller
 
     public function updatePassword(Request $request) {
         // Check if current password entered by admin is correct
-        if(Hash::check($data['profile_current_password'],Auth::user()->password)) {
+        if(Hash::check($request['profile_current_password'],Auth::user()->password)) {
             // Check if new password is matching with confirm password
-            if($data['profile_confirm_password'] == $data['profile_new_password']) {
-                User::where('id',Auth::user()->id)->update(['password'=>bcrypt($data['profile_new_password'])]);
+            if($request['profile_confirm_password'] == $request['profile_new_password']) {
+                User::where('id',Auth::user()->id)->update(['password'=>bcrypt($request['profile_new_password'])]);
                 return redirect()->back()->with('success_message','Password has been update successfully!');
             } else {
                 return redirect()->back()->with('error_message','New password and Cofirm password does not match!');
@@ -68,9 +64,9 @@ class ProfilesController extends Controller
     }
 
     public function checkUserPassword(Request $request) {
-        $data = $request->all();
-        // echo "<pre>"; print_r($data); die;
-        if(Hash::check($data['profile_current_password'],Auth::user()->password)) {
+        $request = $request->all();
+        // echo "<pre>"; print_r($request); die;
+        if(Hash::check($request['profile_current_password'],Auth::user()->password)) {
             return "true";
         } else {
             return "false";
@@ -79,8 +75,8 @@ class ProfilesController extends Controller
     }
 
     public function addressDefault(Request $request) {
-        $data = $request->all();
-        return $data['addressCheck'];
+        $request = $request->all();
+        return $request['addressCheck'];
         
     }
     
@@ -93,8 +89,8 @@ class ProfilesController extends Controller
 
         if(!$contactOld) {
             $contact->user_id = Auth::user()->id;
-            $contact->ward_id = $data['address_ward'];
-            $contact->address = $data['address_detail'];
+            $contact->ward_id = $request['address_ward'];
+            $contact->address = $request['address_detail'];
             $contact->phone = $phone->phone;
             $contact->save();
             return redirect()->back()->with('success_message','Contact add successfully!');
@@ -109,8 +105,8 @@ class ProfilesController extends Controller
         
         Contact::where('id', $request->id)->update([
             'user_id' => Auth::user()->id,
-            'ward_id'=>$data['update_address_ward'], 
-            'address'=>$data['update_address_detail'],
+            'ward_id'=>$request['update_address_ward'], 
+            'address'=>$request['update_address_detail'],
             'phone'=>$phone->phone
         ]);
 
