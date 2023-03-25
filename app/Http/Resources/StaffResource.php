@@ -29,6 +29,13 @@ class StaffResource extends JsonResource
                     'description' => $roles->role->description,
                 ];
             }), 
+            'permissions' => $this->permission_staff->map(function ($permissions) {
+                return [
+                    'id' => $permissions->permission->id,
+                    'name' => $permissions->permission->name,
+                    'description' => $permissions->permission->description,
+                ];
+            }), 
         ];
     }
 }

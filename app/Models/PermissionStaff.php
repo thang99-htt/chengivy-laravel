@@ -34,4 +34,8 @@ class PermissionStaff extends Model
      */
     protected $dates = [];
 
+    public function permission()
+    {
+        return $this->belongsTo(Permission::class, 'permission_id');
+    }
 }

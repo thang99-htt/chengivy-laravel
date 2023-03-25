@@ -29,6 +29,7 @@ Route::put('admin/staffs/{id}/{status}', [App\Http\Controllers\Admin\StaffsContr
 Route::prefix('admin/authorization')->group( function() {
     Route::get('/by-role', [App\Http\Controllers\Admin\AuthorizationController::class, 'authorizationByRole']);
     Route::get('/by-staff', [App\Http\Controllers\Admin\AuthorizationController::class, 'authorizationByStaff']);
+    Route::get('/by-staff/{id}', [App\Http\Controllers\Admin\AuthorizationController::class, 'getStaff']);
     Route::get('/role-staff/{id}', [App\Http\Controllers\Admin\AuthorizationController::class, 'getRoleStaff']);
     Route::post('/role-staff', [App\Http\Controllers\Admin\AuthorizationController::class, 'storeRoleStaff']);
     Route::get('/permission-role/{id}', [App\Http\Controllers\Admin\AuthorizationController::class, 'getPermssionRole']);

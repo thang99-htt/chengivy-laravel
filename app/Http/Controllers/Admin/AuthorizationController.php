@@ -25,6 +25,11 @@ class AuthorizationController extends Controller
         return response()->json(StaffResource::collection($staffs));
     }
 
+    public function getStaff($id) {
+        $staff = Staff::find($id);
+        return response()->json(new StaffResource($staff));
+    }
+
     public function storeRoleStaff(Request $request)
     {
         $getRoles = $request['role_id'];
