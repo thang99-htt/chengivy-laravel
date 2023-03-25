@@ -1,12 +1,12 @@
 <?php
 
-namespace App\Http\Controllers\Back;
+namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\Role;
+use App\Models\Permission;
 
-class RolesController extends Controller
+class PermissionsController extends Controller
 {
     /**
      * Display a listing of the resource.
@@ -15,8 +15,8 @@ class RolesController extends Controller
      */
     public function index()
     {
-        $roles = Role::orderBy('created_at', 'DESC')->get();
-        return response()->json($roles); 
+        $permissions = Permission::orderBy('created_at', 'DESC')->get();
+        return response()->json($permissions); 
     }
 
     /**
@@ -27,11 +27,11 @@ class RolesController extends Controller
      */
     public function store(Request $request)
     {
-        $role = new Role;
-        $role->name = $request['name'];
-        $role->description = $request['description'];
-        $role->save();
-        return response()->json('Role created!');;
+        $permission = new Permission;
+        $permission->name = $request['name'];
+        $permission->description = $request['description'];
+        $permission->save();
+        return response()->json('Permission created!');;
     }
 
     /**
@@ -42,8 +42,8 @@ class RolesController extends Controller
      */
     public function show($id)
     {
-        $role = Role::find($id);
-        return response()->json($role);
+        $Permission = Permission::find($id);
+        return response()->json($Permission);
     }
 
     /**
@@ -55,9 +55,9 @@ class RolesController extends Controller
      */
     public function update(Request $request, $id)
     {
-        $role = Role::find($id);
-        $role->update($request->all());
-        return response()->json('Role updated!');
+        $Permission = Permission::find($id);
+        $Permission->update($request->all());
+        return response()->json('Permission updated!');
     }
 
     /**
@@ -68,18 +68,18 @@ class RolesController extends Controller
      */
     public function destroy($id)
     {
-        $role = Role::find($id);
-        $role->delete();
+        $Permission = Permission::find($id);
+        $Permission->delete();
         return response()->json(['success'=>'true'], 200);
     }
 
     public function destroyAll()
     {
-        $roles = Role::all();
+        $permissions = Permission::all();
         
-        foreach($roles as $key => $value) {
-            $role = Role::find($roles[$key]['id']);
-            $role->delete();
+        foreach($permissions as $key => $value) {
+            $Permission = Permission::find($permissions[$key]['id']);
+            $Permission->delete();
         }
         return response()->json([
             'status' => false,

@@ -2,419 +2,178 @@
 
 namespace App\Http\Controllers\Admin;
 
-use Illuminate\Support\Facades\Gate;
-use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use App\Models\Product;
+use App\Models\Size;
+use App\Models\Images;
+use App\Models\ProductSize;
 use App\Models\Category;
 use App\Models\Type;
-use App\Models\Product;
-use App\Models\Images;
-use App\Models\Size;
-use App\Models\ProductSize;
-use Session;
-use Image;
-use Auth;
+use Intervention\Image\Facades\Image;
 
 class ProductsController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
     public function index()
     {
-        $categoryDetails = Category::all();
-
         $products = Product::with(['category' => function($query) {
-                $query->select('id', 'name');
-            }, 'type' => function($query) {
-                $query->select('id', 'name');
-            }]);
-
-            // Check for sort
-            if(isset($_GET['sort']) && !empty($_GET['sort'])) {
-                if($_GET['sort']=='newest') {
-                    $products->orderBy('products.id','Desc');
-                } else if($_GET['sort']=='lastest') {
-                    $products->orderBy('products.id','Asc');
-                } else if($_GET['sort']=='name_a_z') {
-                    $products->orderBy('products.name','Asc');
-                } else if($_GET['sort']=='name_z_a') {
-                    $products->orderBy('products.name','Desc');
-                }
-            }
-            $products = $products->paginate(10);
-        return view('admin.products.products')->with(compact('products'));
+            $query->select('id', 'name');
+        }, 'type' => function($query) {
+            $query->select('id', 'name');
+        }])->orderBy('created_at', 'DESC')->get();
+        return response()->json($products);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
     public function create()
     {
-        $categories = Category::get()->toArray();
-        $types = Type::get()->toArray();
-        // dd($categories);
-
-        if (Gate::forUser(Auth::guard('admin')->user())->allows('isEmployee')) {
-            abort(403);
-        } 
-        
-        return view('admin.products.add_product')->with(compact('categories', 'types'));
+        $categories = Category::select('id', 'name')->get();
+        $types = Type::select('id', 'name')->get();        
+        return response()->json([
+            'categories' => $categories,
+            'types' => $types,
+        ]);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
     public function store(Request $request)
     {
+        if($request->image) {
+            $strpos = strpos($request->image, ';');
+            $sub = substr($request->image, 0, $strpos);
+            $ex = explode("/", $sub)[1];
+            $imageName = time().".".$ex;
+            $img = Image::make($request->image);
+            $upload_path = public_path()."/storage/uploads/products/";
+            $img->save($upload_path.$imageName);
+        }
         $product = new Product;
-        if($request->isMethod('post')) {
-            $data = $request->all();
-            // echo "<pre>"; print_r($data); die;
-
-            $rules = [
-                'product_category' => 'required',
-                'product_name' => 'required',
-                'product_des' => 'required',
-                'product_purchase_price' => 'required',
-                'product_price' => 'required',
-                'product_image' => 'required',
-                'product_type' => 'required',
-
-            ];
-
-            $customMessage = [
-                'product_parent.required' => 'Product Parent ID is required!',
-                'product_name.required' => 'Product Name is required!',
-                'product_des.required' => 'Product Description is required!',
-                'product_purchase_price.required' => 'Product Purchase Price is required!',
-                'product_price.required' => 'Product Price is required!',
-                'product_image.required' => 'Product Image is required!',
-                'product_type.required' => 'Product Type is required!',
-            ];
-
-            $this->validate($request, $rules, $customMessage);
-
-            // Upload product image
-            if($request->hasFile('product_image')) {
-                $image_tmp = $request->file('product_image');
-                if($image_tmp->isValid()) {
-                    // Get image extension
-                    $extension = $image_tmp->getClientOriginalExtension();
-                    // Generate new image name
-                    $imageName = rand(111,99999).'.'.$extension;
-                    $imagePath = 'storage/images/products/'.$imageName;
-                    // Upload image
-                    Image::make($image_tmp)->save($imagePath);
-                }
-            } else {
-                $imageName = "" ;
-            }
-
-            $product->category_id = $data['product_category'];
-            $product->name = $data['product_name'];
-            $product->description = $data['product_des'];
-            $product->purchase_price = $data['product_purchase_price'];
-            $product->price = $data['product_price'];
-            $product->image = $imageName;
-            $product->type_id = $data['product_type'];
-            if($data['product_dis'] != null) {
-                $product->discount_percent = $data['product_dis'];
-            } else {
-                $product->discount_percent = 0;
-            }
-            $product->save();
-        }
-        
-        return redirect()->back()->with('success_message','Product new has been create successfully');
+        $product->category_id = $request['category_id'];
+        $product->name = $request['name'];
+        $product->description = $request['description'];
+        $product->price = $request['price'];
+        $product->image = $imageName;
+        $product->type_id = $request['type_id'];
+        $product->discount_percent = $request['discount_percent'];
+        $product->save();
+        return response()->json($product);
     }
 
-    /**
-     * Display the specified resource.
-     *
-     * @param  \App\Models\Product  $product
-     * @return \Illuminate\Http\Response
-     */
-    public function show(Request $request)
+    public function show($id)
     {
-        $categories = Category::get()->toArray();
-        $types = Type::get()->toArray();
+        $product = Product::find($id);
+        return response()->json($product);
+    }
+
+    public function view(Request $request)
+    {
         $product = Product::with(['category' => function($query) {
-                $query->select('id', 'name');
-            }, 'type' => function($query) {
-                $query->select('id', 'name');
-            }])->find($request->id)->toArray();
-        // dd ($product);
+            $query->select('id', 'name');
+        }, 'type' => function($query) {
+            $query->select('id', 'name');
+        }, 'images', 'sizes' ])->where('id', $request->id)->first();
+        $sizes = Size::select('id', 'name')->get();
 
-        if (Gate::forUser(Auth::guard('admin')->user())->allows('isEmployee')) {
-            abort(403);
-        }
-
-        return view('admin.products.update_product', compact('product', 'categories', 'types'));
+        return response()->json([
+            'product' => $product,
+            'sizes' => $sizes,
+        ]);
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  \App\Models\Product  $product
-     * @return \Illuminate\Http\Response
-     */
-    public function edit(Product $product)
+    public function addImage(Request $request)
     {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\Product  $product
-     * @return \Illuminate\Http\Response
-     */
-    public function update(Request $request)
-    {
-        $product = Product::find($request->id);
-        if($request->isMethod('post')){
-            $data = $request->all();
-            // echo "<pre>"; print_r($data); die;
-
-            $rules = [
-                'pro_category' => 'required',
-                'pro_name' => 'required',
-                'pro_des' => 'required',
-                'pro_purchase_price' => 'required|numeric',
-                'pro_price' => 'required|numeric',
-                'pro_type' => 'required',
-                'pro_dis' => 'required',
-
-            ];
-
-            $customMessage = [
-                'pro_category.required' => 'Product Parent ID is required!',
-                'pro_name.required' => 'Product Name is required!',
-                'pro_des.required' => 'Product Description is required!',
-                'pro_purchase_price.required' => 'Product Purchase Price is required!',
-                'pro_purchase_price.numeric' => 'Product Purchase Price must be number!',
-                'pro_price.required' => 'Product Price is required!',
-                'pro_price.numeric' => 'Product Price must be number!',
-                'pro_type.required' => 'Product Type is required!',
-                'pro_dis.required' => 'Product Discount is required!',
-            ];
-
-            $this->validate($request, $rules, $customMessage);
-
-            // Upload product image
-            if($request->hasFile('pro_image')) {
-                $image_tmp = $request->file('pro_image');
-
-                if($image_tmp->isValid()) {
-                    // Get image extension
-                    $extension = $image_tmp->getClientOriginalExtension();
-                    // Generate new image name
-                    $imageName = rand(111,99999).'.'.$extension;
-                    $imagePath = 'storage/images/products/'.$imageName;
-                    // Upload new image
-                    Image::make($image_tmp)->save($imagePath);
-
-                    // Delete old image in folder
-                    unlink('storage/images/products/'.$data['current_product_image']);
-                }
-            } else if (!empty($data['current_product_image'])) {
-                $imageName = $data['current_product_image'];
-            } else {
-                $imageName = "" ;
-            }
-
-            Product::where('id', $request->id)->update([
-                'category_id'=>$data['pro_category'],
-                'name'=>$data['pro_name'], 
-                'description'=>$data['pro_des'], 
-                'purchase_price'=>$data['pro_purchase_price'],
-                'price'=>$data['pro_price'],
-                'image'=>$imageName, 
-                'type_id'=>$data['pro_type'], 
-                'discount_percent'=>$data['pro_dis']
-            ]);
-
-            return redirect('admin/products')->with('success_message','Product update successfully!');
+        if($request->image) {
+            $strpos = strpos($request->image, ';');
+            $sub = substr($request->image, 0, $strpos);
+            $ex = explode("/", $sub)[1];
+            $imageName = time().".".$ex;
+            $img = Image::make($request->image);
+            $upload_path = public_path()."/storage/uploads/products/";
+            $img->save($upload_path.$imageName);
         }
-
-        return view('admin.products.update_product', compact('product'));
-    }
-
-    public function addImages(Request $request) {
-        Session::put('page', 'products');
-        $product = Product::select('id', 'name', 'price', 'image')->find($request->id);
-
-        if($request->isMethod('post')){
-            $data = $request->all();
-
-            // Upload product image
-            if($request->hasFile('images')) {
-                $images = $request->file('images');
-                
-                foreach($images as $image) {
-                    $image_tmp = Image::make($image);
-
-                    // $image_name = $image->getClientOriginalName();
-                    $extension = $image->getClientOriginalExtension();
-
-                    $imageName = rand(111,99999).'.'.$extension;
-
-                    $imagePath = 'storage/images/products/'.$imageName;
-                    Image::make($image_tmp)->save($imagePath);
-
-                    $image = new Images();
-                    $image->image = $imageName;
-                    $image->product_id = $request->id;
-                    $image->save();
-
-                }
-            }
-    
-            return redirect()->back()->with('success_message','Product Images update successfully!');
-        }    
-            
-        if (Gate::forUser(Auth::guard('admin')->user())->allows('isEmployee')) {
-            abort(403);
-        }
-
-        return view('admin.images.add_images')->with(compact('product'));
-
+        $image = new Images();
+        $image->product_id = $request['product.id'];
+        $image->image = $imageName;
+        $image->save();
+        return response()->json("ok");
     }
 
     public function deleteImage(Request $request)
     {
-        // Get product image
         $productImage = Images::select('image')->where('id', $request->id)->first();
-
-        // Get product image path
-        $imagePath = 'storage/images/products/';
-
-        // Delete product image in folder
-        if(file_exists($imagePath.$productImage->image)) {
-            unlink($imagePath.$productImage->image);
-        }
-
-        // Delete product image form products table
+        unlink(public_path()."/storage/uploads/products/". $productImage->image);
         Images::where('id', $request->id)->delete();
-
-        return redirect()->back()->with('success_message','Product Image has been deleted successfully!');
+        return response()->json(['success'=>'true'], 200);
     }
 
-    public function addSizes(Request $request) {
-        Session::put('page', 'products');
-        $product = Product::select('id', 'name', 'price', 'image')->find($request->id);
-        $sizes = Size::select('id', 'name')->get()->toArray();
-        
-        $productsize = new ProductSize;
-        
-        // Check Name Size
-        $idSize = $request->add_product_size;
-        $size = ProductSize::where(['product_id' => $request->id, 'size_id' => $idSize])->first();
-        
-        if($request->isMethod('post')){
-            $data = $request->all();
-
-            $rules = [
-                'add_product_size' => 'required',
-                'add_quantity_size' => 'required|numeric',
-
-            ];
-            
-            $customMessage = [
-                'add_product_size.required' => 'Product Size is required!',
-                'add_quantity_size.required' => 'Product Quantity is required!',
-                'add_quantity_size.required' => 'Product Quantity must be number!',
-            ];
-            
-            $this->validate($request, $rules, $customMessage);
-
-            if(!$size) {
-                $productsize->product_id = $request->id;
-                $productsize->size_id = $data['add_product_size'];
-                $productsize->quantity = $data['add_quantity_size'];
-                $productsize->save();
-
-                return redirect()->back()->with('success_message','Product Size add successfully!');
-            } else {
-                return redirect()->back()->with('error_message','Product Size already existed!');
-            }
-
+    public function addSize(Request $request) {
+        $size = ProductSize::where(['product_id' => $request['product.id'], 'size_id' => $request['size']])->first();
+        if(!$size) {
+            $productsize = new ProductSize; 
+            $productsize->product_id = $request['product.id'];
+            $productsize->size_id =  $request['size'];
+            $productsize->quantity =  $request['quantity'];
+            $productsize->stock =  $request['stock'];
+            $productsize->save();
+            return response()->json(true);
         }
-
-        if (Gate::forUser(Auth::guard('admin')->user())->allows('isEmployee')) {
-            abort(403);
-        }
-
-        return view('admin.sizes.add_sizes')->with(compact('product', 'sizes'));
+        return response()->json(false);
 
     }
 
     public function deleteSize(Request $request)
     {
-        // Delete product image form products table
         ProductSize::where('id', $request->id)->delete();
-        // dd($request->id);
-        return redirect()->back()->with('success_message','Product Size has been deleted successfully!');
+        return response()->json(['success'=>'true'], 200);
     }
-    
 
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  \App\Models\Product  $product
-     * @return \Illuminate\Http\Response
-     */
-    public function destroy(Request $request)
+    public function update($id, Request $request)
     {
-        if (Gate::forUser(Auth::guard('admin')->user())->allows('isEmployee')) {
-            abort(403);
+        $image_current = Product::select('image')->where('id', $id)->first();
+        if($request->image == $image_current->image) {
+            $imageName = $image_current->image;
+        } else {
+            $strpos = strpos($request->image, ';');
+            $sub = substr($request->image, 0, $strpos);
+            $ex = explode("/", $sub)[1];
+            $imageName = time().".".$ex;
+            $img = Image::make($request->image);
+            $upload_path = public_path()."/storage/uploads/products/";
+            $img->save($upload_path.$imageName);
         }
+        $product = Product::where('id', $id)->update([
+            'category_id' => $request['category_id'],
+            'name' => $request['name'],
+            'description' => $request['description'],
+            'purchase_price' => $request['purchase_price'],
+            'price' => $request['price'],
+            'image' => $imageName,
+            'type_id' => $request['type_id'],
+            'discount_percent' => $request['discount_percent']
+        ]);
 
-        $product = Product::find($request->id);
+        return response()->json($product);
+    }
 
-        $images = $product->images;
-        foreach($images as $i){
-            unlink("storage/images/products/". $i->image);
-            $i->delete();
-        }
+    public function updateProductStatus($id, Request $request) {
+        $product = Product::find($id);
+        $product->status = !$request->status;
+        $product->save();
         
-        $sizes = $product->product_size;
-        foreach($sizes as $s){
-            $s->delete();
-        }
-        
-        unlink("storage/images/products/". $product->image);
+        return response()->json([
+            'success' => true,
+            'product' => $product,
+        ]);
+    }
+
+    public function destroy($id)
+    {
+        $product = Product::find($id);
         $product->delete();
-        $message = "Product has been deleted successfully!";
-        return redirect()->back()->with('success_message', $message);
-    }
-
-    public function updateProductStatus(Request $request) {
-        if (Gate::forUser(Auth::guard('admin')->user())->allows('isEmployee')) {
-            abort(403);
-        }
-
-        if($request->ajax()) {
-            $data = $request->all();
-
-            if($data['status'] == 'Active') {
-                $status = 0;
-            } else {
-                $status = 1;
+        if($product->delete()) {
+            if($product->image != null) {
+                unlink(public_path()."/storage/uploads/products/". $product->image);
             }
-
-            Product::where('id', $data['product_id'])->update(['status' => $status]);
-            return response()->json(['status'=>$status, 'product_id'=> $data['product_id']]);
         }
+        return response()->json(['success'=>'true'], 200);
     }
+
 }

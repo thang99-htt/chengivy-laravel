@@ -5,14 +5,14 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Role extends Model
+class Permission extends Model
 {
     use HasFactory;
 
     /**
      * Database table name
      */
-    protected $table = 'roles';
+    protected $table = 'permissions';
 
     /**
      * Use timestamps 
@@ -35,21 +35,10 @@ class Role extends Model
     protected $dates = [];
 
     public function staffs() {
-        return $this->belongsToMany(Role::class, 'role_staff');
-    }
-    
-
-    public function permissions() {
-        return $this->belongsToMany(Permission::class);
+        return $this->belongsToMany(Staff::class, 'permission_staff');
     }
 
-    public function permission_role()
-    {
-        return $this->hasMany(PermissionRole::class, 'role_id');
-    }
-
-    public function role_staff()
-    {
-        return $this->hasMany(RoleStaff::class, 'role_id');
+    public function roles() {
+        return $this->belongsToMany(Role::class, 'permission_role');
     }
 }
