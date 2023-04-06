@@ -83,13 +83,9 @@ class OrdersController extends Controller
     // with id = user_id
     public function purchaseAll($id)
     {
-        $orders = Order::with(['user' => function($query) {
-            $query->select('id', 'name');
-        }, 'status' => function($query) {
-            $query->select('id', 'name');
-        }])->where('user_id', $id)->orderBy('created_at', 'DESC')->get();
+        $orders = Order::with(['order_product.product'])->where('user_id', $id)->orderBy('created_at', 'DESC')->get();
 
-        return response()->json($orders);
+        return response()->json(OrderResource::collection($orders));
     }
 
     // with id = order_id

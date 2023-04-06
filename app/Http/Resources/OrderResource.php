@@ -24,7 +24,7 @@ class OrderResource extends JsonResource
             'cancle_date' => $this->cancle_date,
             'receipt_date' => $this->receipt_date,
         
-            'user_detail' => $this->user,
+            'user_account_detail' => $this->user,
             'user_name' => $this->contact->name,
             'user_phone' => $this->contact->phone,
             'user_address' => $this->contact->address,
@@ -35,6 +35,7 @@ class OrderResource extends JsonResource
 
             'order_details' => $this->order_product->map(function ($orderDetail) {
                 return [
+                    'product_id' => $orderDetail->product->id,
                     'product_name' => $orderDetail->product->name,
                     'product_image' => $orderDetail->product->image,
                     'product_size' => $orderDetail->size,

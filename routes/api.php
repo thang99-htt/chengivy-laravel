@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\CategoriesController;
 use App\Http\Controllers\Admin\ProductsController;
 use App\Http\Controllers\Admin\OrdersController;
+use App\Http\Controllers\Admin\StatisticalController;
 
 
 /*
@@ -57,6 +58,8 @@ Route::apiResource('/admin/products', ProductsController::class);
 
 Route::apiResource('/admin/orders', OrdersController::class);
 Route::put('admin/orders/{id}/{status}', [OrdersController::class, 'updateOrderStatus']);
+
+Route::apiResource('/admin/statisticals', StatisticalController::class);
 
 Route::prefix('/categories')->group( function() {
     Route::get('/category',[App\Http\Controllers\User\CategoriesController::class, 'category']);
