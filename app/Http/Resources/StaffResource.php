@@ -17,25 +17,23 @@ class StaffResource extends JsonResource
         return [
             'id' => $this->id,
             'name' => $this->name,
-            'role_staff' => $this->role_staff->map(function ($role_staff) {
+            'roles' => $this->role_staff->map(function ($role) {
                 return [
-                    'id' => $role_staff->id,
+                    'role_staff' => $role->id,
+                    'id' => $role->role->id,
+                    'name' => $role->role->name,
+                    'description' => $role->role->description,
+                    'permissions' => $role->role->permission_role->map(function ($permission) {
+                        return [
+                            'permission_role' => $permission->id,
+                            'id' => $permission->permission->id,
+                            'name' => $permission->permission->name,
+                            'description' => $permission->permission->description,
+                        ];
+                    }),
                 ];
-            }), 
-            'roles' => $this->role_staff->map(function ($roles) {
-                return [
-                    'id' => $roles->role->id,
-                    'name' => $roles->role->name,
-                    'description' => $roles->role->description,
-                ];
-            }), 
-            'permissions' => $this->permission_staff->map(function ($permissions) {
-                return [
-                    'id' => $permissions->permission->id,
-                    'name' => $permissions->permission->name,
-                    'description' => $permissions->permission->description,
-                ];
-            }), 
+            }),
+            
         ];
     }
 }

@@ -82,4 +82,8 @@ class Staff extends Authenticatable
     public function permission_staff() {
         return $this->hasMany(PermissionStaff::class);
     }
+
+    public function permission_role() {
+        return $this->hasMany(PermissionRole::class);
+    }
 }

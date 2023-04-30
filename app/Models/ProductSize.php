@@ -40,4 +40,9 @@ class ProductSize extends Model
         $getProductQuantity = ProductSize::select('quantity', 'stock')->where(['product_id'=>$product_id, 'size_id'=>$size_id])->first();
         return $getProductQuantity->stock;
     }
+
+    public function size()
+    {
+        return $this->belongsTo(Size::class, 'size_id');
+    }
 }

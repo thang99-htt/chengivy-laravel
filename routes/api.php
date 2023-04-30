@@ -47,6 +47,7 @@ Route::apiResource('/admin/categories', CategoriesController::class);
 Route::prefix('/admin/products')->group( function() {
     Route::get('/add',[ProductsController::class, 'create']);
     Route::get('/view/{id}',[ProductsController::class, 'view']);
+    Route::get('/sizes',[ProductsController::class, 'sizeAll']);
     Route::post('/add-image',[ProductsController::class, 'addImage']);
     Route::delete('/delete-image/{id}',[ProductsController::class, 'deleteImage']);
     Route::post('/add-size',[ProductsController::class, 'addSize']);
@@ -57,7 +58,7 @@ Route::prefix('/admin/products')->group( function() {
 Route::apiResource('/admin/products', ProductsController::class);
 
 Route::apiResource('/admin/orders', OrdersController::class);
-Route::put('admin/orders/{id}/{status}', [OrdersController::class, 'updateOrderStatus']);
+Route::put('admin/orders/{staff}/{id}/{status}', [OrdersController::class, 'updateOrderStatus']);
 
 Route::apiResource('/admin/statisticals', StatisticalController::class);
 
@@ -99,6 +100,9 @@ Route::get('orders/purchases/user-{id}', [App\Http\Controllers\User\OrdersContro
 Route::get('orders/purchase/order-{id}', [App\Http\Controllers\User\OrdersController::class, 'purchaseShow']);
 Route::put('orders/purchase/cancle-{id}', [App\Http\Controllers\User\OrdersController::class, 'cancleOrder']);
 Route::put('orders/purchase/receipt-{id}', [App\Http\Controllers\User\OrdersController::class, 'receiptOrder']);
+
+Route::get('user/{id}', [App\Http\Controllers\User\UsersController::class, 'infoAccount']);
+Route::put('user/update-profile/{id}', [App\Http\Controllers\User\UsersController::class, 'updateProfile']);
 
 Route::post('admin/login', [App\Http\Controllers\Admin\AuthController::class, 'login']);
 Route::post('admin/logout', [App\Http\Controllers\Admin\AuthController::class, 'logout'])->middleware('auth:sanctum');

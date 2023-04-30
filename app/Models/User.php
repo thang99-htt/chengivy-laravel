@@ -55,5 +55,9 @@ class User extends Authenticatable
     public function wards() {
         return $this->belongsToMany(Ward::class, 'contacts')->withPivot(['id', 'address', 'phone']);
     }
-
+    
+    public function contacts()
+    {
+        return $this->hasMany(Contact::class, 'user_id');
+    }
 }

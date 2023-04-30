@@ -25,6 +25,7 @@ class Order extends Model
      * Mass assignable columns
      */
     protected $fillable = [
+        'staff_id',
         'user_id',
         'status_id',
         'payment_id',
@@ -43,6 +44,11 @@ class Order extends Model
      */
     protected $dates = [];
     
+    public function staff()
+    {
+        return $this->belongsTo(Staff::class, 'staff_id');
+    }
+
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id');

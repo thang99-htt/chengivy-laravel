@@ -11,6 +11,7 @@ use App\Models\ProductSize;
 use App\Models\Category;
 use App\Models\Type;
 use Intervention\Image\Facades\Image;
+use App\Http\Resources\ProductResource;
 
 class ProductsController extends Controller
 {
@@ -63,34 +64,46 @@ class ProductsController extends Controller
         return response()->json($product);
     }
 
-    public function view(Request $request)
-    {
-        $product = Product::with(['category' => function($query) {
-            $query->select('id', 'name');
-        }, 'type' => function($query) {
-            $query->select('id', 'name');
-        }, 'images', 'sizes' ])->where('id', $request->id)->first();
-        $sizes = Size::select('id', 'name')->get();
+    // public function view(Request $request)
+    // {
+    //     $product = Product::with(['category' => function($query) {
+    //         $query->select('id', 'name');
+    //     }, 'type' => function($query) {
+    //         $query->select('id', 'name');
+    //     }, 'images', 'sizes' ])->where('id', $request->id)->first();
+    //     $sizes = Size::select('id', 'name')->get();
 
-        return response()->json([
-            'product' => $product,
-            'sizes' => $sizes,
-        ]);
+    //     return response()->json([
+    //         'product' => $product,
+    //         'sizes' => $sizes,
+    //     ]);
+    // }
+
+    public function sizeAll()
+    {
+        $sizes = Size::select('id', 'name')->get();
+        return response()->json($sizes);
+    }
+
+    public function view($id)
+    {
+        $product = Product::with('category','type', 'images', 'product_size.size')->find($id);
+        return response()->json(new ProductResource($product));
     }
 
     public function addImage(Request $request)
     {
-        if($request->image) {
-            $strpos = strpos($request->image, ';');
-            $sub = substr($request->image, 0, $strpos);
+        if($request->img) {
+            $strpos = strpos($request->img, ';');
+            $sub = substr($request->img, 0, $strpos);
             $ex = explode("/", $sub)[1];
             $imageName = time().".".$ex;
-            $img = Image::make($request->image);
+            $img = Image::make($request->img);
             $upload_path = public_path()."/storage/uploads/products/";
             $img->save($upload_path.$imageName);
         }
         $image = new Images();
-        $image->product_id = $request['product.id'];
+        $image->product_id = $request['id'];
         $image->image = $imageName;
         $image->save();
         return response()->json("ok");
@@ -105,10 +118,10 @@ class ProductsController extends Controller
     }
 
     public function addSize(Request $request) {
-        $size = ProductSize::where(['product_id' => $request['product.id'], 'size_id' => $request['size']])->first();
+        $size = ProductSize::where(['product_id' => $request['id'], 'size_id' => $request['size']])->first();
         if(!$size) {
             $productsize = new ProductSize; 
-            $productsize->product_id = $request['product.id'];
+            $productsize->product_id = $request['id'];
             $productsize->size_id =  $request['size'];
             $productsize->quantity =  $request['quantity'];
             $productsize->stock =  $request['stock'];

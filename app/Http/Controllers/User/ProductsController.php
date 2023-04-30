@@ -79,7 +79,7 @@ class ProductsController extends Controller
         $categoryCount = Category::where(['url' => $url, 'status' => 1])->count();
         if($categoryCount > 0) {
             $categoryDetails = Category::categoryDetails($url);
-            $products = Product::with('category')->whereIn('category_id', $categoryDetails['catIds'])->where('status', 1)->get();
+            $products = Product::with('category', 'sizes')->whereIn('category_id', $categoryDetails['catIds'])->where('status', 1)->get();
             
             foreach($products as $key => $value) {
                 $getDiscountPrice = Product::getDiscountPrice($products[$key]['id']);
@@ -104,7 +104,7 @@ class ProductsController extends Controller
     public function listingAll() {
         $categoryCount = Category::where(['status' => 1])->count();
         if($categoryCount > 0) {
-            $products = Product::with('category')->where('status', 1)->get();
+            $products = Product::with('category', 'sizes')->where('status', 1)->get();
             
             foreach($products as $key => $value) {
                 $getDiscountPrice = Product::getDiscountPrice($products[$key]['id']);

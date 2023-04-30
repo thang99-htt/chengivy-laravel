@@ -41,6 +41,7 @@ class OrdersController extends Controller
 
         // Save table orders
         $order = new Order;
+        $order->staff_id = 1;
         $order->user_id = $id;
         $order->contact_id = $request['contact_id'];
         $order->payment_id = $request['payment_id'];

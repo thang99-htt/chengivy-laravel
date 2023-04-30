@@ -15,6 +15,11 @@ use App\Http\Resources\StaffResource;
 
 class AuthorizationController extends Controller
 {
+    public function getStaff($id) {
+        $staff = Staff::with('role_staff.role.permission_role.permission')->find($id);
+        return response()->json(new StaffResource($staff));
+    }
+
     public function authorizationByRole() {
         $roles = Role::with('permission_role.permission', 'role_staff.staff')->get();
         return response()->json(RoleResource::collection($roles));
@@ -23,12 +28,7 @@ class AuthorizationController extends Controller
     public function authorizationByStaff() {
         $staffs = Staff::with('role_staff')->get();
         return response()->json(StaffResource::collection($staffs));
-    }
-
-    public function getStaff($id) {
-        $staff = Staff::find($id);
-        return response()->json(new StaffResource($staff));
-    }
+    }   
 
     public function storeRoleStaff(Request $request)
     {
