@@ -5,14 +5,14 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Supplier extends Model
+class Invoice extends Model
 {
     use HasFactory;
 
     /**
      * Database table name
      */
-    protected $table = 'suppliers';
+    protected $table = 'invoices';
 
     /**
      * Use timestamps 
@@ -25,18 +25,13 @@ class Supplier extends Model
      * Mass assignable columns
      */
     protected $fillable = [
-        'name',
-        'address',
-        'phone',
-        'email'
+        'date',
+        'total_price',
     ];
 
-    /**
-     * Date time columns.
-     */
-    protected $dates = [];
-
-    public function import_coupon() {
-        return $this->hasMany(ImportCoupon::class, 'import_coupon_id');
+    public function invoice_product()
+    {
+        return $this->hasMany(InvoiceProduct::class, 'invoice_id');
     }
+
 }

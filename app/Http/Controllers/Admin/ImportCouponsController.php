@@ -5,85 +5,72 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Product;
-use App\Models\Order;
-use App\Http\Resources\OrderResource;
-class OrdersController extends Controller
+use App\Models\ImportCouponProduct;
+use App\Models\ImportCoupon;
+use App\Http\Resources\ImportCouponResource;
+use Carbon\Carbon;
+use Intervention\Image\Facades\Image;
+
+class ImportCouponsController extends Controller
 {
     public function index()
     {
-        $orders = Order::orderBy('created_at', 'DESC')->get();
+        $orders = ImportCoupon::orderBy('created_at', 'DESC')->get();
         
-        return response(OrderResource::collection($orders));
-        // $orders = Order::with(['user' => function($query) {
-        //     $query->select('id', 'name', 'email');
-        // }, 'contact' => function($query) {
-        //     $query->select('id', 'phone');
-        // }, 'payment' => function($query) {
-        //     $query->select('id', 'name');
-        // }, 'status' => function($query) {
-        //     $query->select('id', 'name');
-        // }])->orderBy('created_at', 'DESC')->get();
-
-        // return response()->json($orders);
+        return response(ImportCouponResource::collection($orders));
     }
 
     public function show($id)
     {
-        // $order = Order::with(['user' => function($query) {
-        //     $query->select('id', 'name', 'email');
-        // }, 'contact' => function($query) {
-        //     $query->select('id', 'phone', 'address', 'ward_id');
-        // }, 'payment' => function($query) {
-        //     $query->select('id', 'name');
-        // }, 'status' => function($query) {
-        //     $query->select('id', 'name');
-        // }, 'order_product'])->find($id);
-
-        // $getAddressDetail = Order::getAddressDetail($order['contact']['ward_id']);
-        // $order['contact']['address_detail'] = $getAddressDetail;
-
-        // foreach($order['order_product'] as $key => $value) {
-        //     $productDetail = Product::where('id', $order['order_product'][$key]['product_id'])->first();
-        //     $order['order_product'][$key]['product_detail'] = $productDetail;
-        // }
-
-        // $userProfile = User::where('id', $order['user_id'])->first();
-        // $order['user']['user_detail'] = $userProfile->profiles->first();
-
-        // return response()->json($order);
-        $order = Order::with('order_product.product')->find($id);
-        return response()->json(new OrderResource($order));
+        $order = ImportCoupon::with('import_coupon_product.product')->find($id);
+        return response()->json(new ImportCouponResource($order));
     }
 
-    public function updateOrderStatus($id, Request $request) {
-        $order = Order::find($id);
-        if($request->status == 1)
-            $order->status_id = 2;
-        if($request->status == 2)
-            $order->status_id = 3;
-        if($request->status == 3)
-            $order->status_id = 4;
-        if($request->status == 4)
-            $order->status_id = 5;
-        if($request->status == 5)
-            $order->status_id = 6;
-        if($request->status == 6)
-            $order->status_id = 7;
-        // if($request->status == 7)
-        //     $order->status_id = 8;
-        if($request->status == 8)
-            $order->status_id = 9;
-        $order->save();
+    public function store($id, Request $request)
+    {
+        $importCoupon = new ImportCoupon;
+        $importCoupon->staff_id = $id;
+        $importCoupon->supplier_id = $request->supplier_id;
+        $importCoupon->payment_voucher_id = $request->payment_voucher_id;
+        $importCoupon->date = $request->date;
+        $importCoupon->total_price = $request->total_price;
+        $importCoupon->value_added = $request->value_added;
+        $importCoupon->total_value = $request->total_value;
+
+        if($request->image) {
+            $strpos = strpos($request->image, ';');
+            $sub = substr($request->image, 0, $strpos);
+            $ex = explode("/", $sub)[1];
+            $imageName = time().".".$ex;
+            $img = Image::make($request->image);
+            $upload_path = public_path()."/storage/uploads/products/";
+            $img->save($upload_path.$imageName);
+
+            $importCoupon->image = $imageName;    
+        } 
+
+        $importCoupon->save();
+
+        $importCouponId = $importCoupon->id;
+
+        
+        foreach($request->products as $item) {
+            $importCouponProduct = new ImportCouponProduct();
+            $importCouponProduct->import_coupon_id = $importCouponId;
+            $importCouponProduct->product_id = $item['id'];
+            $importCouponProduct->quantity = $item['quantity'];
+            $importCouponProduct->price = $item['purchase_price'];
+            $importCouponProduct->save();
+        }
         
         return response()->json([
-            'success' => true,
-            'order' => $order,
-        ]);
+            'success' => 'true'
+        ], 200);  
     }
 
     public function destroy($id)
     {
-        $product = Product::find($id);
+        $product = ImportCoupon::find($id);
         if($product->image != null) {
             unlink(public_path()."/storage/uploads/products/". $product->image);
         }

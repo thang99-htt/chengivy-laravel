@@ -5,14 +5,14 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class ImportCouponProduct extends Model
+class InvoiceProduct extends Model
 {
     use HasFactory;
 
     /**
      * Database table name
      */
-    protected $table = 'import_coupon_product';
+    protected $table = 'invoice_product';
 
     /**
      * Use timestamps 
@@ -25,15 +25,16 @@ class ImportCouponProduct extends Model
      * Mass assignable columns
      */
     protected $fillable = [
-        'import_coupon_id',
+        'invoice_id',
         'product_id',
+        'size',
         'quantity',
         'price',
     ];
 
-    public function import_coupon()
+    public function invoice()
     {
-        return $this->belongsTo(ImportCoupon::class, 'import_coupon_id');
+        return $this->belongsTo(Invoice::class, 'invoice_id');
     }
 
     public function product()

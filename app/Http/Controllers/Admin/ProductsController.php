@@ -12,6 +12,7 @@ use App\Models\Category;
 use App\Models\Type;
 use Intervention\Image\Facades\Image;
 use App\Http\Resources\ProductResource;
+use Carbon\Carbon;
 
 class ProductsController extends Controller
 {
@@ -28,7 +29,7 @@ class ProductsController extends Controller
     public function create()
     {
         $categories = Category::select('id', 'name')->get();
-        $types = Type::select('id', 'name')->get();        
+        $types = Type::select('id', 'name', 'description')->get();        
         return response()->json([
             'categories' => $categories,
             'types' => $types,
@@ -63,21 +64,6 @@ class ProductsController extends Controller
         $product = Product::find($id);
         return response()->json($product);
     }
-
-    // public function view(Request $request)
-    // {
-    //     $product = Product::with(['category' => function($query) {
-    //         $query->select('id', 'name');
-    //     }, 'type' => function($query) {
-    //         $query->select('id', 'name');
-    //     }, 'images', 'sizes' ])->where('id', $request->id)->first();
-    //     $sizes = Size::select('id', 'name')->get();
-
-    //     return response()->json([
-    //         'product' => $product,
-    //         'sizes' => $sizes,
-    //     ]);
-    // }
 
     public function sizeAll()
     {
@@ -180,12 +166,14 @@ class ProductsController extends Controller
     public function destroy($id)
     {
         $product = Product::find($id);
-        $product->delete();
-        if($product->delete()) {
-            if($product->image != null) {
-                unlink(public_path()."/storage/uploads/products/". $product->image);
-            }
-        }
+        // $product->delete();
+        // if($product->delete()) {
+        //     if($product->image != null) {
+        //         unlink(public_path()."/storage/uploads/products/". $product->image);
+        //     }
+        // }
+        $product->deleted_at = Carbon::now('Asia/Ho_Chi_Minh');
+        $product->save();
         return response()->json(['success'=>'true'], 200);
     }
 

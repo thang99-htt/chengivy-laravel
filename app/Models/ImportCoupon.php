@@ -54,4 +54,9 @@ class ImportCoupon extends Model
     {
         return $this->belongsTo(PaymentVoucher::class, 'payment_voucher_id');
     }
+
+    public function import_coupon_product()
+    {
+        return $this->hasMany(ImportCouponProduct::class, 'import_coupon_id');
+    }
 }

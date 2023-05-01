@@ -51,6 +51,7 @@ class OrdersController extends Controller
         $order->total_price = $order_total_price;
         if($request['note'] != null)
             $order->note = $request['note'];
+        $order->paid = $request->paid;        
         $order->save();
 
         $order_id = $order->id;
@@ -92,26 +93,6 @@ class OrdersController extends Controller
     // with id = order_id
     public function purchaseShow($id)
     {
-        // $order = Order::with(['user' => function($query) {
-        //     $query->select('id', 'name', 'email');
-        // }, 'contact' => function($query) {
-        //     $query->select('id', 'phone', 'address', 'ward_id');
-        // }, 'payment' => function($query) {
-        //     $query->select('id', 'name');
-        // }, 'status' => function($query) {
-        //     $query->select('id', 'name');
-        // }, 'order_product'])->where(['id' => $id, 'user_id'=> $user])->first();
-
-        // $getAddressDetail = Order::getAddressDetail($order['contact']['ward_id']);
-        // $order['contact']['address_detail'] = $getAddressDetail;
-
-        // foreach($order['order_product'] as $key => $value) {
-        //     $productDetail = Product::where('id', $order['order_product'][$key]['product_id'])->first();
-        //     $order['order_product'][$key]['product_detail'] = $productDetail;
-        // }
-
-        // return response()->json($order);
-        
         $order = Order::with('order_product.product')->find($id);
         return response()->json(new OrderResource($order));
     }

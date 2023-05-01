@@ -6,7 +6,12 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Product;
 use App\Models\Order;
+use App\Models\OrderProduct;
 use App\Http\Resources\OrderResource;
+use App\Models\Invoice;
+use App\Models\InvoiceProduct;
+use Carbon\Carbon;
+
 class OrdersController extends Controller
 {
     public function index()
@@ -37,8 +42,28 @@ class OrdersController extends Controller
             $order->status_id = 6;
         if($request->status == 6)
             $order->status_id = 7;
-        if($request->status == 8)
+        if($request->status == 8) {
             $order->status_id = 9;
+
+            $invoice = new Invoice();
+            $invoice->date = Carbon::now('Asia/Ho_Chi_Minh');
+            $invoice->total_price = $order->total_price;
+            $invoice->save();
+    
+            $invoice_id = $invoice->id;
+    
+            $getOrderItems = OrderProduct::with(['product'])->where('order_id', $order->id)->get();
+            
+            foreach($getOrderItems as $item) {
+                $invoiceItem = new InvoiceProduct;
+                $invoiceItem->invoice_id = $invoice_id;
+                $invoiceItem->product_id = $item['product_id'];
+                $invoiceItem->size = $item['size'];
+                $invoiceItem->quantity = $item['quantity'];
+                $invoiceItem->price = $item['product']['price']*$item['quantity'];
+                $invoiceItem->save();
+            }
+        }
         $order->save();
         
         return response()->json([

@@ -22,6 +22,11 @@ use App\Http\Controllers\Admin\StatisticalController;
 Route::apiResource('/admin/roles', App\Http\Controllers\Admin\RolesController::class);
 Route::delete('admin/roles/', [App\Http\Controllers\Admin\RolesController::class, 'destroyAll']);
 
+Route::apiResource('/admin/suppliers', App\Http\Controllers\Admin\SuppliersController::class);
+Route::apiResource('/admin/payment-vouchers', App\Http\Controllers\Admin\PaymentVouchersController::class);
+Route::apiResource('/admin/import-coupons', App\Http\Controllers\Admin\ImportCouponsController::class);
+Route::post('admin/import-coupons/add/{id}', [App\Http\Controllers\Admin\ImportCouponsController::class, 'store']);
+
 Route::apiResource('/admin/permissions', App\Http\Controllers\Admin\PermissionsController::class);
 
 Route::apiResource('/admin/staffs', App\Http\Controllers\Admin\StaffsController::class);
@@ -37,7 +42,6 @@ Route::prefix('admin/authorization')->group( function() {
     Route::post('/permission-role', [App\Http\Controllers\Admin\AuthorizationController::class, 'storePermssionRole']);
 });
 
-// Route::get('/admin/categories/add',  [App\Http\Controllers\Admin\CategoriesController::class, 'create']);
 Route::prefix('/admin/categories')->group( function() {
     Route::get('/add',[CategoriesController::class, 'create']);   
     Route::put('{id}/{status}', [CategoriesController::class, 'updateCategoryStatus']);

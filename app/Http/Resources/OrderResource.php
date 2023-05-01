@@ -20,6 +20,7 @@ class OrderResource extends JsonResource
             'payment' => $this->payment,
             'total_price' => $this->total_price,
             'status' => $this->status,
+            'paid' => $this->paid,
             'order_date' => $this->order_date,
             'estimate_date' => $this->estimate_date,
             'cancle_date' => $this->cancle_date,

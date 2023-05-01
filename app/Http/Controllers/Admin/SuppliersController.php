@@ -8,82 +8,41 @@ use App\Models\Supplier;
 
 class SuppliersController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
     public function index()
     {
-        $roles = Supplier::orderBy('created_at', 'DESC')->get();
-        return response()->json($roles); 
+        $suppliers = Supplier::orderBy('created_at', 'DESC')->get();
+        return response()->json($suppliers); 
     }
 
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
     public function store(Request $request)
     {
-        $role = new Supplier;
-        $role->name = $request['name'];
-        $role->description = $request['description'];
-        $role->save();
-        return response()->json('Role created!');;
+        $supplier = new Supplier;
+        $supplier->name = $request['name'];
+        $supplier->address = $request['address'];
+        $supplier->phone = $request['phone'];
+        $supplier->email = $request['email'];
+        $supplier->save();
+        return response()->json($supplier);
     }
 
-    /**
-     * Display the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
     public function show($id)
     {
-        $role = Supplier::find($id);
-        return response()->json($role);
+        $supplier = Supplier::find($id);
+        return response()->json($supplier);
     }
 
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
     public function update(Request $request, $id)
     {
-        $role = Supplier::find($id);
-        $role->update($request->all());
-        return response()->json('Role updated!');
+        $supplier = Supplier::find($id);
+        $supplier->update($request->all());
+        return response()->json($supplier);
     }
 
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
     public function destroy($id)
     {
-        $role = Supplier::find($id);
-        $role->delete();
+        $supplier = Supplier::find($id);
+        $supplier->delete();
         return response()->json(['success'=>'true'], 200);
     }
 
-    public function destroyAll()
-    {
-        $roles = Supplier::all();
-        
-        foreach($roles as $key => $value) {
-            $role = Supplier::find($roles[$key]['id']);
-            $role->delete();
-        }
-        return response()->json([
-            'status' => false,
-            'message' => "Deleted All."
-        ], 200);
-    }
 }
