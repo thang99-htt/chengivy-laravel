@@ -18,12 +18,8 @@ class ProductsController extends Controller
 {
     public function index()
     {
-        $products = Product::with(['category' => function($query) {
-            $query->select('id', 'name');
-        }, 'type' => function($query) {
-            $query->select('id', 'name');
-        }])->orderBy('created_at', 'DESC')->get();
-        return response()->json($products);
+        $products = Product::with('category','type', 'images', 'product_size.size', 'reviews.images_review')->orderBy('created_at', 'DESC')->get();
+        return response()->json(ProductResource::collection($products));
     }
 
     public function create()
@@ -73,7 +69,7 @@ class ProductsController extends Controller
 
     public function view($id)
     {
-        $product = Product::with('category','type', 'images', 'product_size.size')->find($id);
+        $product = Product::with('category','type', 'images', 'product_size.size', 'reviews.images_review')->find($id);
         return response()->json(new ProductResource($product));
     }
 

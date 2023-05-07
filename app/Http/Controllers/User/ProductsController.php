@@ -7,17 +7,14 @@ use Illuminate\Http\Request;
 use App\Models\Product;
 use App\Models\Category;
 use App\Models\ProductSize;
+use App\Http\Resources\ProductResource;
 
 class ProductsController extends Controller
 {
     public function index()
     {
-        $products = Product::with(['category' => function($query) {
-            $query->select('id', 'name');
-        }, 'type' => function($query) {
-            $query->select('id', 'name');
-        }])->orderBy('created_at', 'DESC')->get();
-        return response()->json($products);
+        $product = Product::with('category','type', 'images', 'product_size.size', 'reviews.images_review')->orderBy('created_at', 'DESC')->get();
+        return response()->json(ProductResource::collection($product));
     }
     
     public function type()
@@ -79,18 +76,16 @@ class ProductsController extends Controller
         $categoryCount = Category::where(['url' => $url, 'status' => 1])->count();
         if($categoryCount > 0) {
             $categoryDetails = Category::categoryDetails($url);
-            $products = Product::with('category', 'sizes')->whereIn('category_id', $categoryDetails['catIds'])->where('status', 1)->get();
-            
-            foreach($products as $key => $value) {
-                $getDiscountPrice = Product::getDiscountPrice($products[$key]['id']);
-                if($getDiscountPrice > 0) {
-                    $products[$key]['final_price'] = $getDiscountPrice;
-                } else {
-                    $products[$key]['final_price'] = $products[$key]['price'];
+            $products = Product::with('category','type', 'images', 'product_size.size', 'reviews.images_review')->whereIn('category_id', $categoryDetails['catIds'])->where('status', 1)->orderBy('created_at', 'DESC')->get();
+                foreach($products as $key => $value) {
+                    $getDiscountPrice = Product::getDiscountPrice($products[$key]['id']);
+                    if($getDiscountPrice > 0) {
+                        $products[$key]['final_price'] = $getDiscountPrice;
+                    } else {
+                        $products[$key]['final_price'] = $products[$key]['price'];
+                    }
                 }
-            }
-
-            return response()->json($products);
+                return response()->json(ProductResource::collection($products));
         } else {
             $message = "Category URL incorect!";
             return response()->json([
@@ -102,50 +97,27 @@ class ProductsController extends Controller
     }
 
     public function listingAll() {
-        $categoryCount = Category::where(['status' => 1])->count();
-        if($categoryCount > 0) {
-            $products = Product::with('category', 'sizes')->where('status', 1)->get();
-            
-            foreach($products as $key => $value) {
-                $getDiscountPrice = Product::getDiscountPrice($products[$key]['id']);
-                if($getDiscountPrice > 0) {
-                    $products[$key]['final_price'] = $getDiscountPrice;
-                } else {
-                    $products[$key]['final_price'] = $products[$key]['price'];
-                }
+        $products = Product::with('category','type', 'images', 'product_size.size', 'reviews.images_review')->where('status', 1)->orderBy('created_at', 'DESC')->get();
+        foreach($products as $key => $value) {
+            $getDiscountPrice = Product::getDiscountPrice($products[$key]['id']);
+            if($getDiscountPrice > 0) {
+                $products[$key]['final_price'] = $getDiscountPrice;
+            } else {
+                $products[$key]['final_price'] = $products[$key]['price'];
             }
-
-            return response()->json($products);
-        } else {
-            $message = "Category URL incorect!";
-            return response()->json([
-                'status' => false,
-                'message' => $message
-            ], 422);
         }
-
+        return response()->json(ProductResource::collection($products));
     }
 
-    public function detail(Request $request) {
-        $productDetails = Product::with(['category' => function($query) {
-            $query->select('id', 'name');
-        }, 'images', 'sizes' ])->find($request->id);
-
-        $getDiscountPrice = Product::getDiscountPrice($productDetails['id']);
+    public function detail($id) {
+        $product = Product::with('category','type', 'images', 'product_size.size', 'reviews.images_review')->where('status', 1)->orderBy('created_at', 'DESC')->find($id);
+        $getDiscountPrice = Product::getDiscountPrice($id);
         if($getDiscountPrice > 0) {
-            $productDetails['final_price'] = $getDiscountPrice;
+            $product['final_price'] = $getDiscountPrice;
         } else {
-            $productDetails['final_price'] = $productDetails['price'];
+            $product['final_price'] = $product['price'];
         }
-
-        if ($productDetails) {
-            return response()->json($productDetails);
-        } else {
-            return response()->json(array(
-                'code'      =>  404,
-                'message'   =>  "Error"
-            ), 404);
-        }
+        return response()->json(new ProductResource($product));
     }
 
     

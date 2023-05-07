@@ -18,10 +18,13 @@ class ProductResource extends JsonResource
             'id' => $this->id,
             'name' => $this->name,
             'description' => $this->description,
+            'price' => $this->price,
+            'final_price' => $this->when(isset($this->final_price), $this->final_price),
             'discount_percent' => $this->discount_percent,
             'image' => $this->image,
             'category' => $this->category->name,
             'type' => $this->type->name,
+            'status' => $this->status,
             'images' => $this->images->map(function ($image) {
                 return [
                     'id' => $image->id,
@@ -37,9 +40,25 @@ class ProductResource extends JsonResource
                     'stock' => $size->stock,
                 ];
             }), 
-            'created' => $this->created,
-            'updated' => $this->updated,
-            'delete' => $this->delete,
+            'reviews' => $this->reviews->map(function ($review) {
+                return [
+                    'id' => $review->id,
+                    'user' => $review->user->name,
+                    'content' => $review->content,
+                    'rate' => $review->rate,
+                    'status' => $review->status,
+                    'created_at' => $review->created_at,
+                    'images_review' => $review->images_review->map(function ($image) {
+                        return [
+                            'id' => $image->id,
+                            'image' => $image->image
+                        ];
+                    }),
+                ];
+            }), 
+            'created_at' => $this->created_at,
+            'updated_at' => $this->updated_at,
+            'deleted_at' => $this->deleted_at,
             
         ];
     }

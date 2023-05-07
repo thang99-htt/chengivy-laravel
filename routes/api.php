@@ -5,7 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\CategoriesController;
 use App\Http\Controllers\Admin\ProductsController;
 use App\Http\Controllers\Admin\OrdersController;
-use App\Http\Controllers\Admin\StatisticalController;
+use App\Http\Controllers\Admin\StatisticalsController;
 
 
 /*
@@ -64,7 +64,9 @@ Route::apiResource('/admin/products', ProductsController::class);
 Route::apiResource('/admin/orders', OrdersController::class);
 Route::put('admin/orders/{staff}/{id}/{status}', [OrdersController::class, 'updateOrderStatus']);
 
-Route::apiResource('/admin/statisticals', StatisticalController::class);
+Route::apiResource('/admin/statisticals', StatisticalsController::class);
+
+Route::apiResource('/admin/invoices', App\Http\Controllers\Admin\InvoicesController::class);
 
 Route::prefix('/categories')->group( function() {
     Route::get('/category',[App\Http\Controllers\User\CategoriesController::class, 'category']);
@@ -107,6 +109,10 @@ Route::put('orders/purchase/receipt-{id}', [App\Http\Controllers\User\OrdersCont
 
 Route::get('user/{id}', [App\Http\Controllers\User\UsersController::class, 'infoAccount']);
 Route::put('user/update-profile/{id}', [App\Http\Controllers\User\UsersController::class, 'updateProfile']);
+
+Route::get('admin/reviews',[App\Http\Controllers\Admin\ReviewsController::class, 'index']);
+Route::put('admin/reviews/{id}/{status}', [App\Http\Controllers\Admin\ReviewsController::class, 'updateReviewStatus']);
+Route::post('reviews/add',[App\Http\Controllers\User\ReviewsController::class, 'store']);
 
 Route::post('admin/login', [App\Http\Controllers\Admin\AuthController::class, 'login']);
 Route::post('admin/logout', [App\Http\Controllers\Admin\AuthController::class, 'logout'])->middleware('auth:sanctum');

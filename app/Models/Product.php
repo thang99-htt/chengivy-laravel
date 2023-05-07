@@ -82,4 +82,9 @@ class Product extends Model
     public function carts() {
         return $this->belongsToMany(Carts::class, 'carts_products')->withPivot(['id', 'quantity']);
     }
+
+    public function reviews()
+    {
+        return $this->hasMany(Review::class, 'product_id');
+    }
 }

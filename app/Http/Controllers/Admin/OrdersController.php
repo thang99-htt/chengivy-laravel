@@ -44,6 +44,7 @@ class OrdersController extends Controller
             $order->status_id = 7;
         if($request->status == 8) {
             $order->status_id = 9;
+            $order->paid = 1;
 
             $invoice = new Invoice();
             $invoice->date = Carbon::now('Asia/Ho_Chi_Minh');
