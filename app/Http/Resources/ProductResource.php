@@ -23,7 +23,8 @@ class ProductResource extends JsonResource
             'discount_percent' => $this->discount_percent,
             'image' => $this->image,
             'category' => $this->category->name,
-            'type' => $this->type->name,
+            'type' => $this->type->description,
+            'color' => $this->color->description,
             'status' => $this->status,
             'images' => $this->images->map(function ($image) {
                 return [

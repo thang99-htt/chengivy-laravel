@@ -19,21 +19,21 @@ class ProductsController extends Controller
     
     public function type()
     {        
-        $trendingProducts = Product::with('category', 'images')->where('type_id', 2)->limit(4)->inRandomOrder()->get();
+        $designProducts = Product::with('category', 'images')->where('type_id', 4)->orderBy('created_at','desc')->limit(6)->get();
 
         // Special Products
-        $specialNewProduct = Product::with('category')->where('type_id', 3)->orderBy('id','desc')->limit(1)->get();
+        $specialNewProduct = Product::with('category')->where('type_id', 3)->orderBy('created_at','asc')->limit(1)->get();
         
         $specialHighestPriceProduct = Product::with('category')->where('type_id', 3)->orderBy('price','desc')->limit(1)->get();
                     
-        $specialProducts = Product::with('category')->where('type_id', 3)->limit(3)->get();
+        $limitProducts = Product::with('category')->where('type_id', 3)->orderBy('created_at','desc')->limit(3)->inRandomOrder()->get();
 
-        foreach($trendingProducts as $key => $value) {
-            $getDiscountPrice = Product::getDiscountPrice($trendingProducts[$key]['id']);
+        foreach($designProducts as $key => $value) {
+            $getDiscountPrice = Product::getDiscountPrice($designProducts[$key]['id']);
             if($getDiscountPrice > 0) {
-                $trendingProducts[$key]['final_price'] = $getDiscountPrice;
+                $designProducts[$key]['final_price'] = $getDiscountPrice;
             } else {
-                $trendingProducts[$key]['final_price'] = $trendingProducts[$key]['price'];
+                $designProducts[$key]['final_price'] = $designProducts[$key]['price'];
             }
         }
 
@@ -55,20 +55,20 @@ class ProductsController extends Controller
             }
         }
 
-        foreach($specialProducts as $key => $value) {
-            $getDiscountPrice = Product::getDiscountPrice($specialProducts[$key]['id']);
+        foreach($limitProducts as $key => $value) {
+            $getDiscountPrice = Product::getDiscountPrice($limitProducts[$key]['id']);
             if($getDiscountPrice > 0) {
-                $specialProducts[$key]['final_price'] = $getDiscountPrice;
+                $limitProducts[$key]['final_price'] = $getDiscountPrice;
             } else {
-                $specialProducts[$key]['final_price'] = $specialProducts[$key]['price'];
+                $limitProducts[$key]['final_price'] = $limitProducts[$key]['price'];
             }
         }
 
         return response()->json([
-            'trendingProducts' => $trendingProducts,
+            'designProducts' => $designProducts,
             'specialNewProduct' => $specialNewProduct,
             'specialHighestPriceProduct' => $specialHighestPriceProduct,
-            'specialProducts' => $specialProducts,
+            'limitProducts' => $limitProducts,
         ]);
     }
 
