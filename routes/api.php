@@ -52,6 +52,8 @@ Route::prefix('/admin/products')->group( function() {
     Route::get('/add',[ProductsController::class, 'create']);
     Route::get('/view/{id}',[ProductsController::class, 'view']);
     Route::get('/sizes',[ProductsController::class, 'sizeAll']);
+    Route::get('/types',[ProductsController::class, 'typeAll']);
+    Route::get('/colors',[ProductsController::class, 'colorAll']);
     Route::post('/add-image',[ProductsController::class, 'addImage']);
     Route::delete('/delete-image/{id}',[ProductsController::class, 'deleteImage']);
     Route::post('/add-size',[ProductsController::class, 'addSize']);
@@ -86,6 +88,13 @@ Route::prefix('/cart')->group( function() {
     Route::get('/{id}',[App\Http\Controllers\User\CartsController::class, 'index']); 
     Route::put('{id}/{quantity}', [App\Http\Controllers\User\CartsController::class, 'updateQuantity']);
     Route::delete('/{id}',[App\Http\Controllers\User\CartsController::class, 'destroy']); 
+});
+
+Route::prefix('/favorite')->group( function() {
+    Route::post('/add/{id}',[App\Http\Controllers\User\FavoritesController::class, 'store']); 
+    Route::get('/{id}',[App\Http\Controllers\User\FavoritesController::class, 'index']); 
+    Route::put('{id}/{quantity}', [App\Http\Controllers\User\FavoritesController::class, 'updateQuantity']);
+    Route::delete('/{user}/{product}',[App\Http\Controllers\User\FavoritesController::class, 'destroy']); 
 });
 
 Route::apiResource('/admin/payment-methods', App\Http\Controllers\Admin\PaymentMethodsController::class);

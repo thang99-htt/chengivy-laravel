@@ -10,6 +10,7 @@ use App\Models\Images;
 use App\Models\ProductSize;
 use App\Models\Category;
 use App\Models\Type;
+use App\Models\Color;
 use Intervention\Image\Facades\Image;
 use App\Http\Resources\ProductResource;
 use Carbon\Carbon;
@@ -63,8 +64,20 @@ class ProductsController extends Controller
 
     public function sizeAll()
     {
-        $sizes = Size::select('id', 'name')->get();
+        $sizes = Size::get();
         return response()->json($sizes);
+    }
+
+    public function typeAll()
+    {
+        $types = Type::get();
+        return response()->json($types);
+    }
+    
+    public function colorAll()
+    {
+        $colors = Color::get();
+        return response()->json($colors);
     }
 
     public function view($id)

@@ -35,6 +35,7 @@ class Product extends Model
         'price',
         'image',
         'type_id',
+        'color_id',
         'discount_percent',
         'status',
     ];
