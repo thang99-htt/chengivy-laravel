@@ -86,7 +86,8 @@ Route::prefix('/products')->group( function() {
 Route::prefix('/cart')->group( function() {
     Route::post('/add/{id}',[App\Http\Controllers\User\CartsController::class, 'store']); 
     Route::get('/{id}',[App\Http\Controllers\User\CartsController::class, 'index']); 
-    Route::put('{id}/{quantity}', [App\Http\Controllers\User\CartsController::class, 'updateQuantity']);
+    Route::put('/quantity/{id}/{quantity}', [App\Http\Controllers\User\CartsController::class, 'updateQuantity']);
+    Route::put('/size/{id}/{size}/{quantity}', [App\Http\Controllers\User\CartsController::class, 'updateSize']);
     Route::delete('/{id}',[App\Http\Controllers\User\CartsController::class, 'destroy']); 
 });
 

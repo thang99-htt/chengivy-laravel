@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Staff;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 
 class StaffsController extends Controller
 {
@@ -20,7 +21,7 @@ class StaffsController extends Controller
         $staff = new Staff;
         $staff->name = $request['name'];
         $staff->email = $request['email'];
-        $staff->password = Hash::make($request['phone']);
+        $staff->password = Hash::make($request['password']);
         $staff->phone = $request['phone'];
         $staff->identity_card = $request['identity_card'];
         $staff->gender = $request['gender'];
@@ -32,6 +33,18 @@ class StaffsController extends Controller
             $staff->image = 'male.jpg';
         }
         $staff->save();
+
+        // Gửi email chứa mật khẩu cho người dùng
+        $toEmail = $staff->email;
+        $subject = 'Mật khẩu đăng nhập Chengivy Store';
+        $message = 'Xin chào, ' . $staff->name . '!' . "\n" . 
+        'Mật khẩu đăng nhập của bạn là: ' . $request->password;
+
+        Mail::raw($message, function ($mail) use ($toEmail, $subject) {
+            $mail->to($toEmail)
+                ->subject($subject);
+        });
+
         return response()->json($staff, 200);
     }
 

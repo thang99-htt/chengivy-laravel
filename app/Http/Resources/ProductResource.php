@@ -26,7 +26,7 @@ class ProductResource extends JsonResource
             'category_parent' => $this->category->parent ? $this->category->parent->name : null,
             'category_url' => $this->category->url,
             'type' => $this->type->description,
-            'color' => $this->color->description,
+            'color' => $this->color,
             'status' => $this->status,
             'images' => $this->images->map(function ($image) {
                 return [

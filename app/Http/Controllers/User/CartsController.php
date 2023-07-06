@@ -68,33 +68,55 @@ class CartsController extends Controller
             }
         }
         else {
-            return response()->json(false);
+            return response()->json([
+                'success' => false,
+                'message' => "Rất tiếc, bạn chỉ có thể mua tối đa " . $getProductQuantity . " sản phẩm",
+            ]);
         }        
     }
-    
-    public function update(Request $request)
-    {
-        $cart = Cart::find($request->id);
-        $getProductQuantity = ProductSize::getProductQuantity($request['cart_product_id'],$request['cart_size_id']);
-        
-        if($getProductQuantity < $request['cart_quantity']) {
-            return response()->json("Số lượng không được phép.");
-        } else {
-            Cart::where('id', $request->id)->update([
-                'quantity'=>$request['cart_quantity']
+
+    public function updateQuantity($id, $quantity) {
+        $cart = Cart::find($id);
+        $size = Size::where('name', $cart->size)->first();
+        $getProductQuantity = ProductSize::getProductQuantity($cart->product_id, $size->id);
+        // $maxProductQuantity = $getProductQuantity - $quantity;
+        if($getProductQuantity >= $quantity) {
+            $cart->quantity = $quantity;
+            $cart->save();
+            return response()->json([
+                'success' => true,
+                'cart' => $cart,
             ]);
-
-            return response()->json("Sản phẩm được thêm vào giỏ hàng.");
+        } else {
+            return response()->json([
+                'success' => false,
+                'message' => "Rất tiếc, bạn chỉ có thể mua tối đa " . $getProductQuantity . " sản phẩm",
+            ]);
         }
-
-        return view('front.carts.carts');
+        
     }
 
-    public function updateQuantity($id, Request $request) {
+    public function updateSize($id, $size, $quantity) {
         $cart = Cart::find($id);
-        $cart->quantity = $request->quantity;
-        $cart->save();
-        
+        $cart_existed = Cart::where('size', $size)->first();
+        $sizeName = Size::where('name', $size)->first();
+        $getProductQuantity = ProductSize::getProductQuantity($cart->product_id, $sizeName->id);
+
+        if($cart_existed && $cart_existed != $cart) {
+            if($getProductQuantity >= ($cart_existed->quantity + $quantity)) {
+                $cart_existed->quantity = $cart_existed->quantity + $quantity;
+                $cart_existed->save();
+                $cart->delete();
+            } else {
+                return response()->json([
+                    'success' => false,
+                    'message' => "Rất tiếc, bạn chỉ có thể mua tối đa " . $getProductQuantity . " sản phẩm",
+                ]);
+            }
+        } else {
+            $cart->size = $size;
+            $cart->save();
+        }
         return response()->json([
             'success' => true,
             'cart' => $cart,

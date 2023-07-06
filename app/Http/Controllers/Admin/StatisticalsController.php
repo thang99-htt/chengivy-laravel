@@ -14,11 +14,11 @@ use App\Models\Product;
 class StatisticalsController extends Controller
 {
     public function index() {
-        $staffs = count(Staff::get());
-        $users = count(User::get());
+        $staffs = count(Staff::get()) ? count(Staff::get()) : 0;
+        $users = count(User::get()) ? count(User::get()) : 0;
         $customers = Order::with('user')->where('status_id',9)->selectRaw('user_id, COUNT(user_id) as count')
         ->groupBy('user_id')->orderByDesc('count')->first();
-        $customers = $customers->user->name;
+        $customers = $customers ? $customers->user->name : 0;
 
         $orders = count(Order::get());
         $orders_cancle = count(Order::where('status_id',10)->get());
@@ -39,18 +39,18 @@ class StatisticalsController extends Controller
             });
         
         $products_best_seller = $products_orders->sortByDesc('count')->first();
-        $products_best_seller = $products_best_seller['product']['name'];
+        $products_best_seller = $products_best_seller ? $products_best_seller['product']['name'] : 0;
         
         $products_flop = $products_orders->sortBy('count')->first();
-        $products_flop= $products_flop['product']['name'];
+        $products_flop = $products_flop ? $products_flop['product']['name'] : 0;
 
-        $revenues = Invoice::sum('total_price');
+        $revenues = Invoice::sum('total_price') ?? 0;
         $revenues_per_month = Invoice::selectRaw('MONTH(date) as month, MONTH(date) as month, SUM(total_price) as revenue')
             ->groupBy('month')->orderBy('month','asc')->get();
-        $revenues_today = Order::whereDate('created_at', today())->sum('total_price');
-        $revenues_month = Order::whereMonth('created_at', today()->month)->sum('total_price');
+        $revenues_today = Order::whereDate('created_at', today())->sum('total_price') ?? 0;
+        $revenues_month = Order::whereMonth('created_at', today()->month)->sum('total_price') ?? 0;
 
-        $payments = PaymentVoucher::sum('total_price');
+        $payments = PaymentVoucher::sum('total_price') ?? 0;
         $payments_per_month = PaymentVoucher::selectRaw('MONTH(date) as month, SUM(total_price) as payment')
             ->groupBy('month')->orderBy('month','asc')->get();
 
@@ -64,7 +64,7 @@ class StatisticalsController extends Controller
             $profits_per_month->push($profit);
         }
             
-        $profits = $revenues - $payments;
+        $profits = ($revenues - $payments) || 0;
 
         return response()->json([
             'staffs' => $staffs,
