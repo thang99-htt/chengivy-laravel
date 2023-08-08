@@ -14,36 +14,46 @@ class OrderResource extends JsonResource
      */
     public function toArray($request)
     {
+        // Chuỗi địa chỉ ban đầu
+        $address = $this->address_receiver;
+        // Tìm vị trí của dấu phẩy
+        $comma_position = strpos($address, ',');
+        // Tách chuỗi thành hai phần dựa trên vị trí của dấu phẩy
+        $user_address_detail = trim(substr($address, 0, $comma_position));
+        $user_address = trim(substr($address, $comma_position + 1));
+
         return [
             'id' => $this->id,
             'staff' => $this->staff->name,
-            'payment' => $this->payment,
+            'payment_method' => $this->payment_method,
+            'total_value' => $this->total_value,
+            'fee' => $this->fee,
+            'total_discount' => $this->total_discount,
             'total_price' => $this->total_price,
-            'status' => $this->status,
             'paid' => $this->paid,
-            'order_date' => $this->order_date,
-            'estimate_date' => $this->estimate_date,
-            'cancle_date' => $this->cancle_date,
-            'receipt_date' => $this->receipt_date,
+            'status' => $this->status,
+            'ordered_at' => $this->ordered_at,
+            'confirmed_at' => $this->confirmed_at,
+            'estimated_at' => $this->estimated_at,
+            'cancled_at' => $this->cancled_at,
+            'receipted_at' => $this->receipted_at,
         
             'user_account_detail' => $this->user,
-            'user_name' => $this->contact->name,
-            'user_phone' => $this->contact->phone,
-            'user_address' => $this->contact->address,
+            'user_name' => $this->name_receiver,
+            'user_phone' => $this->phone_receiver,
+            'user_address_detail' => $user_address_detail,
+            'user_address' => $user_address,
 
-            'ward' => $this->contact->ward->name,
-            'district' => $this->contact->ward->district->name,
-            'city' => $this->contact->ward->district->city->name,
-
-            'order_details' => $this->order_product->map(function ($orderDetail) {
+            'items' => $this->order_product->map(function ($orderDetail) {
                 return [
-                    'product_id' => $orderDetail->product->id,
-                    'product_name' => $orderDetail->product->name,
-                    'product_image' => $orderDetail->product->image,
-                    'product_size' => $orderDetail->size,
-                    'product_price' => $orderDetail->product->price,
-                    'product_quantity' => $orderDetail->quantity,
-                    'product_into_money' => $orderDetail->price,
+                    'id' => $orderDetail->product->id,
+                    'name' => $orderDetail->product->name,
+                    'image' => $orderDetail->product->product_image[0]->image,
+                    'size' => $orderDetail->size,
+                    'color' => $orderDetail->color,
+                    'price' => $orderDetail->product->price,
+                    'quantity' => $orderDetail->quantity,
+                    'price_discount' => $orderDetail->price_discount,
                 ];
             }),          
         ];

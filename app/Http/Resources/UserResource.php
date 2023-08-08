@@ -19,21 +19,26 @@ class UserResource extends JsonResource
             'name' => $this->name,
             'email' => $this->email,
             'password' => $this->password,
-            'profiles' => [
-                'name' => $this->name,
-                'gender' => $this->profiles->first()->gender,
-                'birth_date' => $this->profiles->first()->birth_date,
-                'phone' => $this->profiles->first()->phone,
-                'account_number' => $this->profiles->first()->account_number,
-            ],
-            'contacts' => $this->contacts->map(function ($contact) {
+            'gender' => $this->profiles->first()->gender,
+            'birth_date' => $this->profiles->first()->birth_date,
+            'phone' => $this->profiles->first()->phone,
+            'bank_account' => $this->profiles->first()->bank_account,
+            'delivery_address' => $this->delivery_address->map(function ($address) {
+                // Chuỗi địa chỉ ban đầu
+                $address_user = $address->address;
+                // Tìm vị trí của dấu phẩy
+                $comma_position = strpos($address_user, ',');
+                // Tách chuỗi thành hai phần dựa trên vị trí của dấu phẩy
+                $user_address_detail = trim(substr($address_user, 0, $comma_position));
+                $user_address = trim(substr($address_user, $comma_position + 1));
+
                 return [
-                    'name' => $contact->name,
-                    'phone' => $contact->phone,
-                    'address' => $contact->address,
-                    'ward' => $contact->ward->name,
-                    'district' => $contact->ward->district->name,
-                    'city' => $contact->ward->district->city->name,
+                    'id' => $address->id,
+                    'name' => $address->name,
+                    'phone' => $address->phone,
+                    'address_detail' => $user_address_detail,
+                    'address' => $user_address,
+                    'default' => $address->default,
                 ];
             })
         ];

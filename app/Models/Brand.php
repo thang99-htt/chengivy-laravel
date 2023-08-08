@@ -5,14 +5,14 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Images extends Model
+class Brand extends Model
 {
     use HasFactory;
 
     /**
      * Database table name
      */
-    protected $table = 'images';
+    protected $table = 'brands';
 
     /**
      * Use timestamps 
@@ -25,8 +25,8 @@ class Images extends Model
      * Mass assignable columns
      */
     protected $fillable = [
-        'product_id',
-        'image',
+        'name',
+        'description',
     ];
 
     /**
@@ -34,5 +34,7 @@ class Images extends Model
      */
     protected $dates = [];
     
-
+    public function products() {
+        return $this->hasMany(Product::class, 'brand_id');
+    }
 }

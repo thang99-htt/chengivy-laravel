@@ -20,7 +20,7 @@ use App\Http\Controllers\Admin\StatisticalsController;
 */
 
 Route::apiResource('/admin/roles', App\Http\Controllers\Admin\RolesController::class);
-Route::delete('admin/roles/', [App\Http\Controllers\Admin\RolesController::class, 'destroyAll']);
+Route::delete('admin/roles/', [App\Http\Controllers\Admin\RolesController::class, 'destroyIds']);
 
 Route::apiResource('/admin/suppliers', App\Http\Controllers\Admin\SuppliersController::class);
 Route::apiResource('/admin/payment-vouchers', App\Http\Controllers\Admin\PaymentVouchersController::class);
@@ -30,21 +30,13 @@ Route::post('admin/import-coupons/add/{id}', [App\Http\Controllers\Admin\ImportC
 Route::apiResource('/admin/permissions', App\Http\Controllers\Admin\PermissionsController::class);
 
 Route::apiResource('/admin/staffs', App\Http\Controllers\Admin\StaffsController::class);
+Route::delete('/admin/staffs', [App\Http\Controllers\Admin\StaffsController::class, 'destroyIds']);
 Route::put('admin/staffs/{id}/{status}', [App\Http\Controllers\Admin\StaffsController::class, 'updateStaffStatus']);
-
-Route::prefix('admin/authorization')->group( function() {
-    Route::get('/by-role', [App\Http\Controllers\Admin\AuthorizationController::class, 'authorizationByRole']);
-    Route::get('/by-staff', [App\Http\Controllers\Admin\AuthorizationController::class, 'authorizationByStaff']);
-    Route::get('/by-staff/{id}', [App\Http\Controllers\Admin\AuthorizationController::class, 'getStaff']);
-    Route::get('/role-staff/{id}', [App\Http\Controllers\Admin\AuthorizationController::class, 'getRoleStaff']);
-    Route::post('/role-staff', [App\Http\Controllers\Admin\AuthorizationController::class, 'storeRoleStaff']);
-    Route::get('/permission-role/{id}', [App\Http\Controllers\Admin\AuthorizationController::class, 'getPermssionRole']);
-    Route::post('/permission-role', [App\Http\Controllers\Admin\AuthorizationController::class, 'storePermssionRole']);
-});
 
 Route::prefix('/admin/categories')->group( function() {
     Route::get('/add',[CategoriesController::class, 'create']);   
     Route::put('{id}/{status}', [CategoriesController::class, 'updateCategoryStatus']);
+    Route::delete('/', [CategoriesController::class, 'destroyIds']);
 });
 Route::apiResource('/admin/categories', CategoriesController::class);
 
@@ -52,7 +44,7 @@ Route::prefix('/admin/products')->group( function() {
     Route::get('/add',[ProductsController::class, 'create']);
     Route::get('/view/{id}',[ProductsController::class, 'view']);
     Route::get('/sizes',[ProductsController::class, 'sizeAll']);
-    Route::get('/types',[ProductsController::class, 'typeAll']);
+    Route::get('/brands',[ProductsController::class, 'brandAll']);
     Route::get('/colors',[ProductsController::class, 'colorAll']);
     Route::post('/add-image',[ProductsController::class, 'addImage']);
     Route::delete('/delete-image/{id}',[ProductsController::class, 'deleteImage']);
@@ -80,38 +72,45 @@ Route::prefix('/products')->group( function() {
     Route::get('/type',[App\Http\Controllers\User\ProductsController::class, 'type']); 
     Route::get('/{url}',[App\Http\Controllers\User\ProductsController::class, 'listing']);
     Route::get('/detail/{id}',[App\Http\Controllers\User\ProductsController::class, 'detail']);
-    Route::get('/get-stock/product-{product}/size-{size}',[App\Http\Controllers\User\ProductsController::class, 'getStock']); 
+    Route::get('/get-inventory/product-{product}/size-{size}',[App\Http\Controllers\User\ProductsController::class, 'getInventory']); 
 });
 
 Route::prefix('/cart')->group( function() {
     Route::post('/add/{id}',[App\Http\Controllers\User\CartsController::class, 'store']); 
     Route::get('/{id}',[App\Http\Controllers\User\CartsController::class, 'index']); 
-    Route::put('/quantity/{id}/{quantity}', [App\Http\Controllers\User\CartsController::class, 'updateQuantity']);
-    Route::put('/size/{id}/{size}/{quantity}', [App\Http\Controllers\User\CartsController::class, 'updateSize']);
-    Route::delete('/{id}',[App\Http\Controllers\User\CartsController::class, 'destroy']); 
+    Route::put('/quantity', [App\Http\Controllers\User\CartsController::class, 'updateQuantity']);
+    Route::put('/size-and-color', [App\Http\Controllers\User\CartsController::class, 'updateColorAndSize']);
+    Route::delete('/{user}/{product}/{color}/{size}',[App\Http\Controllers\User\CartsController::class, 'destroy']); 
 });
 
 Route::prefix('/favorite')->group( function() {
     Route::post('/add/{id}',[App\Http\Controllers\User\FavoritesController::class, 'store']); 
+    Route::post('/add-to-cart/{id}',[App\Http\Controllers\User\FavoritesController::class, 'addToCart']); 
     Route::get('/{id}',[App\Http\Controllers\User\FavoritesController::class, 'index']); 
     Route::put('{id}/{quantity}', [App\Http\Controllers\User\FavoritesController::class, 'updateQuantity']);
-    Route::delete('/{user}/{product}',[App\Http\Controllers\User\FavoritesController::class, 'destroy']); 
+    Route::delete('/{id}',[App\Http\Controllers\User\FavoritesController::class, 'destroy']); 
+    Route::delete('/delete-by-user/{user}/{product}',[App\Http\Controllers\User\FavoritesController::class, 'destroyByUser']); 
 });
 
 Route::apiResource('/admin/payment-methods', App\Http\Controllers\Admin\PaymentMethodsController::class);
 
 Route::prefix('/addresses')->group( function() {
     Route::get('/cities',[App\Http\Controllers\User\AddressesController::class, 'getCities']);
-    Route::post('/get-districts/{id}', [App\Http\Controllers\User\AddressesController::class, 'getDistricts']);
-    Route::post('/get-wards/{id}', [App\Http\Controllers\User\AddressesController::class, 'getWards']); 
-    Route::get('/{id}',[App\Http\Controllers\User\AddressesController::class, 'addresses']);  // Find all address by user_id
+    Route::get('/{id}',[App\Http\Controllers\User\AddressesController::class, 'index']);
+    Route::get('/getAll/{id}',[App\Http\Controllers\User\AddressesController::class, 'addresses']);
+    Route::get('/get-districts/{id}', [App\Http\Controllers\User\AddressesController::class, 'getDistricts']);
+    Route::get('/get-wards/{id}', [App\Http\Controllers\User\AddressesController::class, 'getWards']); 
     Route::get('/address-order/{id}',[App\Http\Controllers\User\AddressesController::class, 'addressOrder']); 
     Route::post('/address-add/{id}', [App\Http\Controllers\User\AddressesController::class, 'store']);
+    Route::put('/{id}', [App\Http\Controllers\User\AddressesController::class, 'update']);
+    Route::put('/set-default/{id}', [App\Http\Controllers\User\AddressesController::class, 'setDefault']);
+    Route::delete('/{id}',[App\Http\Controllers\User\AddressesController::class, 'destroy']); 
 });
 
 
 Route::apiResource('/orders', App\Http\Controllers\User\OrdersController::class);
 Route::post('orders/add/{id}', [App\Http\Controllers\User\OrdersController::class, 'store']);
+Route::post('orders/add-buy-now/{id}', [App\Http\Controllers\User\OrdersController::class, 'addBuyNow']);
 Route::get('orders/purchases/user-{id}', [App\Http\Controllers\User\OrdersController::class, 'purchaseAll']);
 Route::get('orders/purchase/order-{id}', [App\Http\Controllers\User\OrdersController::class, 'purchaseShow']);
 Route::put('orders/purchase/cancle-{id}', [App\Http\Controllers\User\OrdersController::class, 'cancleOrder']);
@@ -119,6 +118,7 @@ Route::put('orders/purchase/receipt-{id}', [App\Http\Controllers\User\OrdersCont
 
 Route::get('user/{id}', [App\Http\Controllers\User\UsersController::class, 'infoAccount']);
 Route::put('user/update-profile/{id}', [App\Http\Controllers\User\UsersController::class, 'updateProfile']);
+Route::put('user/update-password/{id}', [App\Http\Controllers\User\UsersController::class, 'updatePassword']);
 
 Route::get('admin/reviews',[App\Http\Controllers\Admin\ReviewsController::class, 'index']);
 Route::put('admin/reviews/{id}/{status}', [App\Http\Controllers\Admin\ReviewsController::class, 'updateReviewStatus']);

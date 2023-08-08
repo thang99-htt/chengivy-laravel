@@ -12,7 +12,7 @@ class ImportCoupon extends Model
     /**
      * Database table name
      */
-    protected $table = 'import_coupon';
+    protected $table = 'stock_received_docket';
 
     /**
      * Use timestamps 
@@ -28,11 +28,13 @@ class ImportCoupon extends Model
         'staff_id',
         'supplier_id',
         'payment_voucher_id',
+        'form',
         'date',
         'total_price',
         'value_added',
         'total_value',
         'image',
+        'note'
     ];
 
     /**

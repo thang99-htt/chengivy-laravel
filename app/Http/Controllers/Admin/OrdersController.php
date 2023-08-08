@@ -31,6 +31,7 @@ class OrdersController extends Controller
         if($request->status == 1) {
             $order->staff_id = $staff;
             $order->status_id = 2;
+            $order->confirm_date = Carbon::now('Asia/Ho_Chi_Minh');
         }
         if($request->status == 2)
             $order->status_id = 3;

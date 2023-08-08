@@ -14,35 +14,60 @@ class ProductResource extends JsonResource
      */
     public function toArray($request)
     {
+        $groupedImages = $this->groupImagesByColor();
+        $firstImage = null;
+
+        if (!empty($groupedImages) && isset($groupedImages[0]['images'][0]['image'])) {
+            $firstImage = $groupedImages[0]['images'][0]['image'];
+        }
+
         return [
             'id' => $this->id,
             'name' => $this->name,
             'description' => $this->description,
             'price' => $this->price,
-            'final_price' => $this->when(isset($this->final_price), $this->final_price),
+            'price_final' => $this->price_final,
             'discount_percent' => $this->discount_percent,
-            'image' => $this->image,
+            'image' => $firstImage,
             'category' => $this->category->name,
             'category_parent' => $this->category->parent ? $this->category->parent->name : null,
             'category_url' => $this->category->url,
-            'type' => $this->type->description,
-            'color' => $this->color,
+            'brand' => $this->brand->name,
             'status' => $this->status,
-            'images' => $this->images->map(function ($image) {
+            'images' => $this->product_image
+                ->groupBy('color_id')
+                ->map(function ($groupedItems, $color) {
                 return [
-                    'id' => $image->id,
-                    'image' => $image->image
+                    'color_id' => $color,
+                    'color_name' => $groupedItems->first()->color->name,
+                    'color' => $groupedItems->first()->color->color,
+                    'items' => $groupedItems->map(function ($item) {
+                        return [
+                            'image' => $item->image
+                        ];
+                    }),
                 ];
-            }), 
-            'sizes' => $this->product_size->map(function ($size) {
+            }),
+            'inventories' => $this->inventories
+                ->groupBy('month_year')
+                ->map(function ($groupedItems, $monthYear) {
                 return [
-                    'id' => $size->id,
-                    'size_id' => $size->size_id,
-                    'size_name' => $size->size->name,
-                    'quantity' => $size->quantity,
-                    'stock' => $size->stock,
+                    'month_year' => $monthYear,
+                    'items' => $groupedItems->map(function ($item) {
+                        return [
+                            'product_id' => $item->product_id,
+                            'size_id' => $item->size_id,
+                            'size_name' => $item->size->name,
+                            'color_id' => $item->color_id,
+                            'color_name' => $item->color->name,
+                            'total_initial' => $item->total_initial,
+                            'total_import' => $item->total_import,
+                            'total_export' => $item->total_export,
+                            'total_final' => $item->total_final,
+                        ];
+                    }),
                 ];
-            }), 
+            }),
             'reviews' => $this->reviews->map(function ($review) {
                 return [
                     'id' => $review->id,
@@ -64,6 +89,25 @@ class ProductResource extends JsonResource
             'deleted_at' => $this->deleted_at,
             
         ];
+    }
+
+    public function groupImagesByColor()
+    {
+        $groupedImages = [];
+        foreach ($this->product_image as $image) {
+            $colorId = $image['color_id'];
+            if (!isset($groupedImages[$colorId])) {
+                $groupedImages[$colorId] = [
+                    'color' => $image['color'],
+                    'images' => [],
+                ];
+            }
+            $groupedImages[$colorId]['images'][] = [
+                'id' => $image['id'],
+                'image' => $image['image'],
+            ];
+        }
+        return array_values($groupedImages);
     }
 
 }

@@ -12,7 +12,7 @@ class PaymentMethod extends Model
     /**
      * Database table name
      */
-    protected $table = 'payment_methods';
+    protected $table = 'payment_method';
 
     /**
      * Use timestamps 

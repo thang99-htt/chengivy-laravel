@@ -17,9 +17,26 @@ class AuthController extends Controller
                 'device_name' => 'required',
             ],
         );
-        $staff = Staff::where('email', $request->email)->first();
+        $staff = Staff::with('roles.permission_role.permission')->where('email', $request->email)->first();
 
-        if(!Auth::guard('admin')->attempt(['email'=>$request['email'], 'password'=>$request->password,'status'=>1])) {
+        $permissionIDs = [];
+        foreach ($staff->roles as $role) {
+            foreach ($role->permission_role as $permissionRole) {
+                $permissionIDs[] = $permissionRole->permission->id;
+            }
+        }
+
+        $staff->permissionIDs = $permissionIDs;
+
+        $staffData = [
+            'id' => $staff->id,
+            'name' => $staff->name,
+            'email' => $staff->email,
+            'password' => $staff->password,
+            'permissionIDs' => $permissionIDs,
+        ];
+
+        if(!Auth::guard('admin')->attempt(['email'=>$request['email'], 'password'=>$request->password,'actived'=>1])) {
             throw ValidationException::withMessages([
                 'email' => ['Email hoặc mật khẩu không đúng.'],
             ]);
@@ -29,7 +46,7 @@ class AuthController extends Controller
         
         return response()->json([
             'token' => $token,
-            'staff' => $staff
+            'staff' => $staffData
         ]);
     }
 

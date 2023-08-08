@@ -34,7 +34,6 @@ class User extends Authenticatable
      * @var array<int, string>
      */
     protected $hidden = [
-        'password',
         'remember_token',
     ];
 
@@ -56,8 +55,8 @@ class User extends Authenticatable
         return $this->belongsToMany(Ward::class, 'contacts')->withPivot(['id', 'address', 'phone']);
     }
     
-    public function contacts()
+    public function delivery_address()
     {
-        return $this->hasMany(Contact::class, 'user_id');
+        return $this->hasMany(DeliveryAddress::class, 'user_id');
     }
 }

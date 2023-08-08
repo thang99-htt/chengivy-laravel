@@ -28,12 +28,16 @@ class Order extends Model
         'staff_id',
         'user_id',
         'status_id',
-        'payment_id',
-        'contact_id',
-        'order_date',
-        'estimate_date',
-        'cancle_date',
-        'receipt_date',
+        'payment_method_id',
+        'voucher_id',
+        'ordered_at',
+        'confirmed_at',
+        'estimated_at',
+        'cancled_at',
+        'receipted_at',
+        'total_value',
+        'fee',
+        'total_discount',
         'total_price',
         'paid',
         'note',
@@ -59,9 +63,9 @@ class Order extends Model
         return $this->belongsTo(Status::class, 'status_id');
     }
 
-    public function payment()
+    public function payment_method()
     {
-        return $this->belongsTo(PaymentMethod::class, 'payment_id');
+        return $this->belongsTo(PaymentMethod::class, 'payment_method_id');
     }
 
     public function contact()

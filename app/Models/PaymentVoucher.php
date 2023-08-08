@@ -12,7 +12,7 @@ class PaymentVoucher extends Model
     /**
      * Database table name
      */
-    protected $table = 'payment_vouchers';
+    protected $table = 'payment_voucher';
 
     /**
      * Use timestamps 
@@ -25,9 +25,10 @@ class PaymentVoucher extends Model
      * Mass assignable columns
      */
     protected $fillable = [
+        'staff_id',
+        'supplier_id',
         'date',
-        'total_price',
-        'description'
+        'total_price'
     ];
 
     /**

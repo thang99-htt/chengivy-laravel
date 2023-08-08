@@ -6,10 +6,10 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Product;
 use App\Models\Size;
-use App\Models\Images;
-use App\Models\ProductSize;
+use App\Models\ProductImage;
+use App\Models\Inventory;
 use App\Models\Category;
-use App\Models\Type;
+use App\Models\Brand;
 use App\Models\Color;
 use Intervention\Image\Facades\Image;
 use App\Http\Resources\ProductResource;
@@ -19,17 +19,17 @@ class ProductsController extends Controller
 {
     public function index()
     {
-        $products = Product::with('category','type', 'images', 'product_size.size', 'reviews.images_review')->orderBy('created_at', 'DESC')->get();
+        $products = Product::with('category','brand', 'product_image', 'inventories.size', 'reviews.review_image')->orderBy('created_at', 'DESC')->get();
         return response()->json(ProductResource::collection($products));
     }
 
     public function create()
     {
         $categories = Category::select('id', 'name')->get();
-        $types = Type::select('id', 'name', 'description')->get();        
+        $brands = Brand::select('id', 'name', 'description')->get();        
         return response()->json([
             'categories' => $categories,
-            'types' => $types,
+            'brands' => $brands,
         ]);
     }
 
@@ -50,7 +50,7 @@ class ProductsController extends Controller
         $product->description = $request['description'];
         $product->price = $request['price'];
         $product->image = $imageName;
-        $product->type_id = $request['type_id'];
+        $product->brand_id = $request['brand_id'];
         $product->discount_percent = $request['discount_percent'];
         $product->save();
         return response()->json($product);
@@ -68,10 +68,10 @@ class ProductsController extends Controller
         return response()->json($sizes);
     }
 
-    public function typeAll()
+    public function brandAll()
     {
-        $types = Type::get();
-        return response()->json($types);
+        $brands = Brand::get();
+        return response()->json($brands);
     }
     
     public function colorAll()
@@ -82,7 +82,7 @@ class ProductsController extends Controller
 
     public function view($id)
     {
-        $product = Product::with('category','type', 'images', 'product_size.size', 'reviews.images_review')->find($id);
+        $product = Product::with('category','brand', 'product_image', 'inventories.size', 'reviews.images_review')->find($id);
         return response()->json(new ProductResource($product));
     }
 
@@ -97,7 +97,7 @@ class ProductsController extends Controller
             $upload_path = public_path()."/storage/uploads/products/";
             $img->save($upload_path.$imageName);
         }
-        $image = new Images();
+        $image = new ProductImage();
         $image->product_id = $request['id'];
         $image->image = $imageName;
         $image->save();
@@ -106,16 +106,16 @@ class ProductsController extends Controller
 
     public function deleteImage(Request $request)
     {
-        $productImage = Images::select('image')->where('id', $request->id)->first();
+        $productImage = ProductImage::select('image')->where('id', $request->id)->first();
         unlink(public_path()."/storage/uploads/products/". $productImage->image);
-        Images::where('id', $request->id)->delete();
+        ProductImage::where('id', $request->id)->delete();
         return response()->json(['success'=>'true'], 200);
     }
 
     public function addSize(Request $request) {
-        $size = ProductSize::where(['product_id' => $request['id'], 'size_id' => $request['size']])->first();
+        $size = Inventory::where(['product_id' => $request['id'], 'size_id' => $request['size']])->first();
         if(!$size) {
-            $productsize = new ProductSize; 
+            $productsize = new Inventory; 
             $productsize->product_id = $request['id'];
             $productsize->size_id =  $request['size'];
             $productsize->quantity =  $request['quantity'];
@@ -129,7 +129,7 @@ class ProductsController extends Controller
 
     public function deleteSize(Request $request)
     {
-        ProductSize::where('id', $request->id)->delete();
+        Inventory::where('id', $request->id)->delete();
         return response()->json(['success'=>'true'], 200);
     }
 
@@ -154,7 +154,7 @@ class ProductsController extends Controller
             'purchase_price' => $request['purchase_price'],
             'price' => $request['price'],
             'image' => $imageName,
-            'type_id' => $request['type_id'],
+            'brand_id' => $request['brand_id'],
             'discount_percent' => $request['discount_percent']
         ]);
 

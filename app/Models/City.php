@@ -9,7 +9,6 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property varchar $name name
  * @property timestamp $created_at created at
  * @property timestamp $updated_at updated at
- * @property timestamp $deleted_at deleted at
  * @property \Illuminate\Database\Eloquent\Collection $district hasMany
    
  */

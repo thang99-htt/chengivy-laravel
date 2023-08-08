@@ -5,14 +5,14 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class ProductSize extends Model
+class Inventory extends Model
 {
     use HasFactory;
 
     /**
      * Database table name
      */
-    protected $table = 'product_size';
+    protected $table = 'inventories';
 
     /**
      * Use timestamps 
@@ -25,10 +25,14 @@ class ProductSize extends Model
      * Mass assignable columns
      */
     protected $fillable = [
+        'month_year',
         'product_id',
         'size_id',
-        'quantity',
-        'stock'
+        'color_id',
+        'total_initial',
+        'total_import',
+        'total_export',
+        'total_final'
     ];
 
     /**
@@ -36,13 +40,18 @@ class ProductSize extends Model
      */
     protected $dates = [];
 
-    public static function getProductQuantity($product_id, $size_id) {
-        $getProductQuantity = ProductSize::select('quantity', 'stock')->where(['product_id'=>$product_id, 'size_id'=>$size_id])->first();
-        return $getProductQuantity->stock;
-    }
+    // public static function getProductQuantity($product_id, $size_id) {
+    //     $getProductQuantity = Inventory::select('quantity', 'stock')->where(['product_id'=>$product_id, 'size_id'=>$size_id])->first();
+    //     return $getProductQuantity->stock;
+    // }
 
     public function size()
     {
         return $this->belongsTo(Size::class, 'size_id');
+    }
+
+    public function color()
+    {
+        return $this->belongsTo(Color::class, 'color_id');
     }
 }

@@ -10,14 +10,9 @@ use Intervention\Image\Facades\Image;
 
 class CategoriesController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
     public function index()
     {
-        $categories = Category::with(['parent'])->orderBy('created_at', 'DESC')->get();
+        $categories = Category::with(['parent'])->get();
         return response()->json($categories);
     }
 
@@ -27,12 +22,6 @@ class CategoriesController extends Controller
         return response()->json($categories);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
     public function store(Request $request)
     {
         // try {
@@ -68,25 +57,12 @@ class CategoriesController extends Controller
         return response()->json($category);
     }
 
-    /**
-     * Display the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
     public function show($id)
     {
         $category = Category::find($id);
         return response()->json($category);
     }
 
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
     public function update(Request $request, $id)
     {
         $image_current = Category::select('image')->where('id', $id)->first();
@@ -112,20 +88,17 @@ class CategoriesController extends Controller
         return response()->json($category);
     }
 
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function destroy($id)
+    public function destroyIds(Request $request)
     {
-        $category = Category::find($id);
-        if($category->image != null) {
-            unlink(public_path()."/storage/uploads/categories/". $category->image);
-        }
-        $category->delete();
-        return response()->json(['success'=>'true'], 200);
+        $selectedIds = $request->all(); // Lấy danh sách selectedIds từ request
+        $categories = Category::whereIn('id', $selectedIds)->get(); // Sử dụng whereIn để lấy các bản ghi tương ứng với selectedIds
+        foreach($categories as $category) {
+            $category->delete(); // Xóa từng bản ghi Category
+        }      
+        return response()->json([
+            'success' => true,
+            'message' => "Deleted All."
+        ], 200);
     }
 
     public function updateCategoryStatus($id, Request $request) {

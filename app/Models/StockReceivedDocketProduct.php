@@ -12,7 +12,7 @@ class ImportCouponProduct extends Model
     /**
      * Database table name
      */
-    protected $table = 'import_coupon_product';
+    protected $table = 'stock_received_docket_product';
 
     /**
      * Use timestamps 
@@ -25,15 +25,15 @@ class ImportCouponProduct extends Model
      * Mass assignable columns
      */
     protected $fillable = [
-        'import_coupon_id',
+        'stock_received_docket_id',
         'product_id',
         'quantity',
         'price',
     ];
 
-    public function import_coupon()
+    public function stock_received_docket()
     {
-        return $this->belongsTo(ImportCoupon::class, 'import_coupon_id');
+        return $this->belongsTo(ImportCoupon::class, 'stock_received_docket_id');
     }
 
     public function product()

@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Category;
-use App\Models\Type;
+use App\Models\Brand;
 use App\Models\Images;
 use App\Models\Size;
 
@@ -30,13 +30,13 @@ class Product extends Model
      */
     protected $fillable = [
         'category_id',
+        'brand_id',
         'name',
-        'description',
-        'price',
         'image',
-        'type_id',
-        'color_id',
+        'price',
         'discount_percent',
+        'price_final',
+        'description',
         'status',
     ];
 
@@ -50,26 +50,21 @@ class Product extends Model
         return $this->belongsTo(Category::class, 'category_id');
     }
 
-    public function type()
+    public function brand()
     {
-        return $this->belongsTo(Type::class, 'type_id');
+        return $this->belongsTo(Brand::class, 'brand_id');
     }
 
-    public function color()
-    {
-        return $this->belongsTo(Color::class, 'color_id');
-    }
-
-    public function images() {
-        return $this->hasMany(Images::class);
+    public function product_image() {
+        return $this->hasMany(ProductImage::class);
     }
     
     public function sizes() {
-        return $this->belongsToMany(Size::class, 'product_size')->withPivot(['id', 'quantity', 'stock']);
+        return $this->belongsToMany(Size::class, 'inventories');
     }
 
-    public function product_size() {
-        return $this->hasMany(ProductSize::class);
+    public function inventories() {
+        return $this->hasMany(Inventory::class);
     }
 
     public static function getDiscountPrice($id) {

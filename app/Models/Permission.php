@@ -41,4 +41,13 @@ class Permission extends Model
     public function roles() {
         return $this->belongsToMany(Role::class, 'permission_role');
     }
+
+    public function childs() {
+        return $this->hasMany(Permission::class, 'group_id');
+    }
+
+    public static function permissions() {
+        $getPermissions = Permission::with(['childs'])->where(['group_id' => 0])->get()->toArray();
+        return $getPermissions;
+    }
 }

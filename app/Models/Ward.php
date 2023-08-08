@@ -11,7 +11,6 @@ use App\Models\User;
  * @property varchar $name name
  * @property timestamp $created_at created at
  * @property timestamp $updated_at updated at
- * @property timestamp $deleted_at deleted at
  * @property District $district belongsTo
  * @property \Illuminate\Database\Eloquent\Collection $contact hasMany
    

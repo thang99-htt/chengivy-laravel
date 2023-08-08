@@ -10,21 +10,20 @@ use Illuminate\Database\Eloquent\Model;
  * @property varchar $name name
  * @property timestamp $created_at created at
  * @property timestamp $updated_at updated at
- * @property timestamp $deleted_at delet
  * @property User $user belongsToed at
  * @property Ward $ward belongsTo
  * @property \Illuminate\Database\Eloquent\Collection $contact hasMany
    
  */
 
-class Contact extends Model
+class DeliveryAddress extends Model
 {
     use HasFactory;
 
     /**
      * Database table name
      */
-    protected $table = 'contacts';
+    protected $table = 'delivery_address';
 
     /**
      * Use timestamps 
@@ -38,16 +37,11 @@ class Contact extends Model
      */
     protected $fillable = [
         'user_id',
-        'ward_id',
         'name',
         'address',
-        'phone'
+        'phone',
+        'default'
     ];
-
-    public function ward()
-    {
-        return $this->belongsTo(Ward::class, 'ward_id');
-    }
 
     public function user()
     {

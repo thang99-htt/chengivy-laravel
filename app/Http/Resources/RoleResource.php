@@ -25,12 +25,6 @@ class RoleResource extends JsonResource
                     'description' => $permissions->permission->description,
                 ];
             }), 
-            'staffs' => $this->role_staff->map(function ($staffs) {
-                return [
-                    'id' => $staffs->staff->id,
-                    'name' => $staffs->staff->name,
-                ];
-            }),
         ];
     }
 }

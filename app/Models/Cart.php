@@ -28,7 +28,8 @@ class Cart extends Model
     protected $fillable = [
         'user_id',
         'product_id',
-        'size',
+        'size_id',
+        'color_id',
         'quantity',
     ];
 
@@ -44,7 +45,12 @@ class Cart extends Model
 
     public function size()
     {
-        return $this->belongsTo(Size::class, 'size');
+        return $this->belongsTo(Size::class, 'size_id');
+    }
+
+    public function color()
+    {
+        return $this->belongsTo(Color::class, 'color_id');
     }
 
     public function sizes()

@@ -5,14 +5,14 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Type extends Model
+class ProductImage extends Model
 {
     use HasFactory;
 
     /**
      * Database table name
      */
-    protected $table = 'types';
+    protected $table = 'product_image';
 
     /**
      * Use timestamps 
@@ -25,16 +25,18 @@ class Type extends Model
      * Mass assignable columns
      */
     protected $fillable = [
-        'name',
-        'description',
+        'product_id',
+        'color_id',
+        'image',
     ];
 
     /**
      * Date time columns.
      */
     protected $dates = [];
-    
-    public function products() {
-        return $this->hasMany(Product::class, 'status_id');
+
+    public function color()
+    {
+        return $this->belongsTo(Color::class, 'color_id');
     }
 }

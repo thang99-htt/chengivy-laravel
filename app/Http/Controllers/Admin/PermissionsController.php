@@ -15,8 +15,8 @@ class PermissionsController extends Controller
      */
     public function index()
     {
-        $permissions = Permission::orderBy('created_at', 'DESC')->get();
-        return response()->json($permissions); 
+        $permissions = Permission::permissions();
+        return response()->json($permissions);
     }
 
     /**
@@ -31,7 +31,7 @@ class PermissionsController extends Controller
         $permission->name = $request['name'];
         $permission->description = $request['description'];
         $permission->save();
-        return response()->json('Permission created!');;
+        return response()->json('Permission created!');
     }
 
     /**
