@@ -10,6 +10,9 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use App\Http\Resources\StaffResource;
 
+use App\Mail\StaffMail;
+use App\Jobs\SendStaffMail;
+
 class StaffsController extends Controller
 {
     public function index()
@@ -20,44 +23,39 @@ class StaffsController extends Controller
     }
 
     public function store(Request $request)
-{
-    $staff = new Staff;
-    $staff->name = $request->input('name');
-    $staff->email = $request->input('email');
-    $staff->password = Hash::make($request->input('password'));
-    $staff->phone = $request->input('phone');
-    $staff->identity_card = $request->input('identity_card');
-    $staff->gender = $request->input('gender');
-    $staff->birth_date = $request->input('birth_date');
-    $staff->address = $request->input('address_detail') . ", " . $request->input('address');
-    
-    if ($request->input('gender') == 'Nữ') {
-        $staff->avatar = 'female.jpg';
-    } else {
-        $staff->avatar = 'male.jpg';
+    {
+        $staff = new Staff;
+        $staff->name = $request->input('name');
+        $staff->email = $request->input('email');
+        $staff->password = Hash::make($request->input('password'));
+        $staff->phone = $request->input('phone');
+        $staff->identity_card = $request->input('identity_card');
+        $staff->gender = $request->input('gender');
+        $staff->birth_date = $request->input('birth_date');
+        $staff->address = $request->input('address_detail') . ", " . $request->input('address');
+        
+        if ($request->input('gender') == 'Nữ') {
+            $staff->avatar = 'female.jpg';
+        } else {
+            $staff->avatar = 'male.jpg';
+        }
+        
+        $staff->save();
+
+        
+        $getRoles = $request['role_id'];
+        foreach($getRoles as $item) {
+            $roleStaff = new RoleStaff;
+            $roleStaff->staff_id = $staff->id;
+            $roleStaff->role_id = $item;
+            $roleStaff->save();
+        }
+        
+        // Gửi email bất đồng bộ trong hàng đợi
+        SendStaffMail::dispatch($staff->name, $staff->email, $request->input('password'));
+
+        return response()->json($staff, 200);
     }
-    
-    $staff->save();
-
-    $getRoles = $request['role_id'];
-    foreach($getRoles as $item) {
-        $roleStaff = new RoleStaff;
-        $roleStaff->staff_id = $staff->id;
-        $roleStaff->role_id = $item;
-        $roleStaff->save();
-    }
-    
-
-    // Thêm công việc gửi email vào hàng đợi
-    Mail::queue(function ($mail) use ($staff) {
-        $mail->to($staff->email)
-            ->subject('Mật khẩu đăng nhập Chengivy Store')
-            ->setBody('Xin chào, ' . $staff->name . '!' . "\n" .
-                      'Mật khẩu đăng nhập của bạn là: ' . $staff->password);
-    });
-
-    return response()->json($staff, 200);
-}
 
 
     public function show($id)

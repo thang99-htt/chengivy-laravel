@@ -14,8 +14,8 @@ use Intervention\Image\Facades\Image;
 use App\Http\Resources\ProductResource;
 use Carbon\Carbon;
 
-use Google_Client;
-use Google\Service\Drive as Google_Service_Drive;
+use App\Jobs\UploadToGoogleDrive;
+use App\Jobs\DeleteFromGoogleDrive;
 
 class ProductsController extends Controller
 {
@@ -56,37 +56,16 @@ class ProductsController extends Controller
 
                 foreach ($colorItem['items'] as $imageItem) {
                     $base64Image = $imageItem['image'];
+                    $colorId = $colorItem['color_id'];
 
-                    $imageData = base64_decode(preg_replace('#^data:image/\w+;base64,#i', '', $base64Image));
-                    
-                    // Initialize Google Client
-                    $client = new Google_Client();
-                    $client->setClientId(env('GOOGLE_DRIVE_CLIENT_ID'));
-                    $client->setClientSecret(env('GOOGLE_DRIVE_CLIENT_SECRET'));
-                    $client->refreshToken(env('GOOGLE_DRIVE_REFRESH_TOKEN'));
-                    $service = new Google_Service_Drive($client);
-
-                    // Create metadata for the file
-                    $fileMetadata = new Google_Service_Drive\DriveFile([
-                        'name' => $productId . $productBra . $productCat . uniqid() . '.jpg', // Modify the naming convention as needed
-                        'parents' => [env('GOOGLE_DRIVE_FOLDER_ID')],
-                    ]);
-
-                    // Upload the file to Google Drive
-                    $uploadedFile = $service->files->create($fileMetadata, [
-                        'data' => $imageData,
-                        'uploadType' => 'multipart',
-                        'fields' => 'id',
-                    ]);
-
-                    $DRIVE_CONFIG_URL = 'https://docs.google.com/uc?id=';
-                    $imageLink = $DRIVE_CONFIG_URL.$uploadedFile->id;
-                    
-                    $productImage = new ProductImage();
-                    $productImage->product_id = $productId;
-                    $productImage->color_id = $colorId;
-                    $productImage->image = $imageLink;
-                    $productImage->save();
+                    // Enqueue job to upload image
+                    UploadToGoogleDrive::dispatch(
+                        $productId,
+                        $productCat,
+                        $productBra,
+                        $colorId,
+                        $base64Image
+                    );
                 }
             }
         }
@@ -148,45 +127,23 @@ class ProductsController extends Controller
                 foreach ($newImages as $colorItem) {
                     $colorId = $colorItem['color_id'];
                     foreach ($colorItem['items'] as $imageItem) {
-                        $base64Image = $imageItem['image'];
-        
-                        $imageData = base64_decode(preg_replace('#^data:image/\w+;base64,#i', '', $base64Image));
-                        
-                        // Initialize Google Client
-                        $client = new Google_Client();
-                        $client->setClientId(env('GOOGLE_DRIVE_CLIENT_ID'));
-                        $client->setClientSecret(env('GOOGLE_DRIVE_CLIENT_SECRET'));
-                        $client->refreshToken(env('GOOGLE_DRIVE_REFRESH_TOKEN'));
-                        $service = new Google_Service_Drive($client);
-        
-                        // Create metadata for the file
-                        $fileMetadata = new Google_Service_Drive\DriveFile([
-                            'name' => $productId . $productBra . $productCat . uniqid() . '.jpg', // Modify the naming convention as needed
-                            'parents' => [env('GOOGLE_DRIVE_FOLDER_ID')],
-                        ]);
-        
-                        // Upload the file to Google Drive
-                        $uploadedFile = $service->files->create($fileMetadata, [
-                            'data' => $imageData,
-                            'uploadType' => 'multipart',
-                            'fields' => 'id',
-                        ]);
-        
-                        $DRIVE_CONFIG_URL = 'https://docs.google.com/uc?id=';
-                        $imageLink = $DRIVE_CONFIG_URL.$uploadedFile->id;
-                        
-                        $productImage = new ProductImage();
-                        $productImage->product_id = $productId;
-                        $productImage->color_id = $colorId;
-                        $productImage->image = $imageLink;
-                        $productImage->save();
+                        $base64Image = $imageItem['image'];    
+                        // Enqueue job to upload image
+                        UploadToGoogleDrive::dispatch(
+                            $productId,
+                            $productCat,
+                            $productBra,
+                            $colorId,
+                            $base64Image
+                        );
                     }
                 }
             }
 
             if ($removedImages) {
                 foreach ($removedImages as $image) {
-                    $image->delete();
+                    $imageLink = $image->image;
+                    DeleteFromGoogleDrive::dispatch($image->id, $imageLink);
                 }
             }
         }
@@ -290,17 +247,20 @@ class ProductsController extends Controller
 
     public function detail($id) {
         $maxMonthYear = Inventory::where('product_id', $id)->orderBy('month_year', 'desc')->first();
-        $maxMonthYear = $maxMonthYear->month_year;
 
-        $product = Product::with(['category','brand', 'product_image', 
-            'inventories' => function ($query) use ($maxMonthYear) {
-                $query->where('month_year', $maxMonthYear);
-            }, 'reviews.images_review'])
+        if ($maxMonthYear) {
+            $maxMonthYear = $maxMonthYear->month_year;
+    
+            $product = Product::with(['category','brand', 'product_image', 
+                'inventories' => function ($query) use ($maxMonthYear) {
+                    $query->where('month_year', $maxMonthYear);
+                }, 'reviews.images_review'])
+                ->where('status', 1)->find($id);
+        } else {
+            $product = Product::with(['category','brand', 'product_image'])
             ->where('status', 1)->find($id);
+        }
         return response()->json(new ProductResource($product));
-
-        
-        // return response()->json($maxMonthYear);
     }
 
     
