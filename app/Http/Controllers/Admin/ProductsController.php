@@ -9,50 +9,87 @@ use App\Models\Size;
 use App\Models\ProductImage;
 use App\Models\Inventory;
 use App\Models\Category;
-use App\Models\Brand;
 use App\Models\Color;
 use Intervention\Image\Facades\Image;
 use App\Http\Resources\ProductResource;
 use Carbon\Carbon;
 
+use Google_Client;
+use Google\Service\Drive as Google_Service_Drive;
+
 class ProductsController extends Controller
 {
     public function index()
     {
-        $products = Product::with('category','brand', 'product_image', 'inventories.size', 'reviews.review_image')->orderBy('created_at', 'DESC')->get();
-        return response()->json(ProductResource::collection($products));
+        $product = Product::with('category','brand', 'product_image', 'inventories.size', 
+            'reviews.images_review')->orderBy('created_at', 'DESC')->limit(10)->get();
+        return response()->json(ProductResource::collection($product));
     }
-
-    public function create()
-    {
-        $categories = Category::select('id', 'name')->get();
-        $brands = Brand::select('id', 'name', 'description')->get();        
-        return response()->json([
-            'categories' => $categories,
-            'brands' => $brands,
-        ]);
-    }
-
+    
     public function store(Request $request)
     {
-        if($request->image) {
-            $strpos = strpos($request->image, ';');
-            $sub = substr($request->image, 0, $strpos);
-            $ex = explode("/", $sub)[1];
-            $imageName = time().".".$ex;
-            $img = Image::make($request->image);
-            $upload_path = public_path()."/storage/uploads/products/";
-            $img->save($upload_path.$imageName);
-        }
         $product = new Product;
         $product->category_id = $request['category_id'];
+        $product->brand_id = $request['brand_id'];
         $product->name = $request['name'];
         $product->description = $request['description'];
         $product->price = $request['price'];
-        $product->image = $imageName;
-        $product->brand_id = $request['brand_id'];
-        $product->discount_percent = $request['discount_percent'];
+
+        if ($request['discount_percent']) {
+            $product->discount_percent = $request['discount_percent'];
+            $product->price_final = $request['price'] - ($request['price'] * $request['discount_percent']) / 100;
+        } else {
+            $product->discount_percent = 0;
+            $product->price_final = $request['price'];
+        }
+
         $product->save();
+        $productId = $product->id;
+        $productCat = $product->category_id;
+        $productBra = $product->brand_id;
+
+        $imagesData = $request['images'];
+
+        if ($imagesData) {
+            foreach ($imagesData as $colorItem) {
+                $colorId = $colorItem['color_id'];
+
+                foreach ($colorItem['items'] as $imageItem) {
+                    $base64Image = $imageItem['image'];
+
+                    $imageData = base64_decode(preg_replace('#^data:image/\w+;base64,#i', '', $base64Image));
+                    
+                    // Initialize Google Client
+                    $client = new Google_Client();
+                    $client->setClientId(env('GOOGLE_DRIVE_CLIENT_ID'));
+                    $client->setClientSecret(env('GOOGLE_DRIVE_CLIENT_SECRET'));
+                    $client->refreshToken(env('GOOGLE_DRIVE_REFRESH_TOKEN'));
+                    $service = new Google_Service_Drive($client);
+
+                    // Create metadata for the file
+                    $fileMetadata = new Google_Service_Drive\DriveFile([
+                        'name' => $productId . $productBra . $productCat . uniqid() . '.jpg', // Modify the naming convention as needed
+                        'parents' => [env('GOOGLE_DRIVE_FOLDER_ID')],
+                    ]);
+
+                    // Upload the file to Google Drive
+                    $uploadedFile = $service->files->create($fileMetadata, [
+                        'data' => $imageData,
+                        'uploadType' => 'multipart',
+                        'fields' => 'id',
+                    ]);
+
+                    $DRIVE_CONFIG_URL = 'https://docs.google.com/uc?id=';
+                    $imageLink = $DRIVE_CONFIG_URL.$uploadedFile->id;
+                    
+                    $productImage = new ProductImage();
+                    $productImage->product_id = $productId;
+                    $productImage->color_id = $colorId;
+                    $productImage->image = $imageLink;
+                    $productImage->save();
+                }
+            }
+        }
         return response()->json($product);
     }
 
@@ -62,16 +99,133 @@ class ProductsController extends Controller
         return response()->json($product);
     }
 
+    public function update($id, Request $request)
+    {
+        $product = Product::find($id);
+        $product->category_id = $request['category_id'];
+        $product->brand_id = $request['brand_id'];
+        $product->name = $request['name'];
+        $product->description = $request['description'];
+        $product->price = $request['price'];
+
+        if ($request['discount_percent']) {
+            $product->discount_percent = $request['discount_percent'];
+            $product->price_final = $request['price'] - ($request['price'] * $request['discount_percent']) / 100;
+        } else {
+            $product->discount_percent = 0;
+            $product->price_final = $request['price'];
+        }
+
+        $product->save();
+        $productId = $product->id;
+        $productCat = $product->category_id;
+        $productBra = $product->brand_id;
+
+        $existingImages = [];
+        $existingColorIds = [];
+        $newImages = [];  
+        $removedImages = [];
+
+        $imagesData = $request['images'];
+        if ($imagesData) {
+            // Assuming you already have $productId defined
+            $existingImages = ProductImage::where(['product_id' => $productId])->get();
+            
+            // Extract existing color_ids from $existingImages
+            $existingColorIds = $existingImages->pluck('color_id')->toArray();
+
+            // Filter imagesData to include only images with color_ids not in existingColorIds
+            $newImages = array_filter($imagesData, function ($colorItem) use ($existingColorIds) {
+                return !in_array($colorItem['color_id'], $existingColorIds);
+            });
+
+            // Find images in existingImages that are not in newImages, excluding common ones
+            $removedImages = $existingImages->filter(function ($existingImage) use ($imagesData) {
+                return !in_array($existingImage->color_id, array_column($imagesData, 'color_id'));
+            });
+
+            if ($newImages) { 
+                foreach ($newImages as $colorItem) {
+                    $colorId = $colorItem['color_id'];
+                    foreach ($colorItem['items'] as $imageItem) {
+                        $base64Image = $imageItem['image'];
+        
+                        $imageData = base64_decode(preg_replace('#^data:image/\w+;base64,#i', '', $base64Image));
+                        
+                        // Initialize Google Client
+                        $client = new Google_Client();
+                        $client->setClientId(env('GOOGLE_DRIVE_CLIENT_ID'));
+                        $client->setClientSecret(env('GOOGLE_DRIVE_CLIENT_SECRET'));
+                        $client->refreshToken(env('GOOGLE_DRIVE_REFRESH_TOKEN'));
+                        $service = new Google_Service_Drive($client);
+        
+                        // Create metadata for the file
+                        $fileMetadata = new Google_Service_Drive\DriveFile([
+                            'name' => $productId . $productBra . $productCat . uniqid() . '.jpg', // Modify the naming convention as needed
+                            'parents' => [env('GOOGLE_DRIVE_FOLDER_ID')],
+                        ]);
+        
+                        // Upload the file to Google Drive
+                        $uploadedFile = $service->files->create($fileMetadata, [
+                            'data' => $imageData,
+                            'uploadType' => 'multipart',
+                            'fields' => 'id',
+                        ]);
+        
+                        $DRIVE_CONFIG_URL = 'https://docs.google.com/uc?id=';
+                        $imageLink = $DRIVE_CONFIG_URL.$uploadedFile->id;
+                        
+                        $productImage = new ProductImage();
+                        $productImage->product_id = $productId;
+                        $productImage->color_id = $colorId;
+                        $productImage->image = $imageLink;
+                        $productImage->save();
+                    }
+                }
+            }
+
+            if ($removedImages) {
+                foreach ($removedImages as $image) {
+                    $image->delete();
+                }
+            }
+        }
+
+        return response()->json([
+            'success' => 'success',
+            'message' => "Cập nhật thành công",
+        ]);
+    }
+
+    public function updateProductStatus($id, Request $request) {
+        $product = Product::find($id);
+        $product->status = !$request->status;
+        $product->save();
+        
+        return response()->json([
+            'success' => true,
+            'product' => $product,
+        ]);
+    }
+
+    public function destroy($id)
+    {
+        $product = Product::find($id);
+        // $product->delete();
+        // if($product->delete()) {
+        //     if($product->image != null) {
+        //         unlink(public_path()."/storage/uploads/products/". $product->image);
+        //     }
+        // }
+        $product->deleted_at = Carbon::now('Asia/Ho_Chi_Minh');
+        $product->save();
+        return response()->json(['success'=>'true'], 200);
+    }
+
     public function sizeAll()
     {
         $sizes = Size::get();
         return response()->json($sizes);
-    }
-
-    public function brandAll()
-    {
-        $brands = Brand::get();
-        return response()->json($brands);
     }
     
     public function colorAll()
@@ -80,10 +234,80 @@ class ProductsController extends Controller
         return response()->json($colors);
     }
 
-    public function view($id)
-    {
-        $product = Product::with('category','brand', 'product_image', 'inventories.size', 'reviews.images_review')->find($id);
+    public function type()
+    {        
+        $newProducts = Product::with('category', 'product_image', 'brand')->orderBy('created_at','DESC')->limit(4)->get();
+
+        // Special Products
+        $specialNewProduct = Product::with('category', 'brand')->where('brand_id', 3)->orderBy('created_at','asc')->limit(1)->get();
+        $specialHighestPriceProduct = Product::with('category')->where('brand_id', 3)->orderBy('price','desc')->limit(1)->get();
+        $bestSellerProducts = Product::with('category', 'brand')->orderBy('created_at','desc')->limit(8)->inRandomOrder()->get();
+
+        return response()->json([
+            'newProducts' => ProductResource::collection($newProducts),
+            'specialNewProduct' => ProductResource::collection($specialNewProduct),
+            'specialHighestPriceProduct' => ProductResource::collection($specialHighestPriceProduct),
+            'bestSellerProducts' => ProductResource::collection($bestSellerProducts),
+        ]);
+    }
+
+    public function listing($url) {
+        $categoryCount = Category::where(['url' => $url, 'status' => 1])->count();
+        if($categoryCount > 0) {
+            $categoryDetails = Category::categoryDetails($url);
+            $products = Product::with('category','brand', 'product_image', 'inventories.size', 'reviews.images_review')->whereIn('category_id', $categoryDetails['catIds'])->where('status', 1)->orderBy('created_at', 'DESC')->get();
+                foreach($products as $key => $value) {
+                    $getDiscountPrice = Product::getDiscountPrice($products[$key]['id']);
+                    if($getDiscountPrice > 0) {
+                        $products[$key]['final_price'] = $getDiscountPrice;
+                    } else {
+                        $products[$key]['final_price'] = $products[$key]['price'];
+                    }
+                }
+                return response()->json(ProductResource::collection($products));
+        } else {
+            $message = "Category URL incorect!";
+            return response()->json([
+                'status' => false,
+                'message' => $message
+            ], 422);
+        }
+
+    }
+
+    public function listingAll() {
+        $products = Product::with('category','brand', 'product_image', 'inventories.size', 'reviews.images_review')->where('status', 1)->orderBy('created_at', 'DESC')->get();
+        foreach($products as $key => $value) {
+            $getDiscountPrice = Product::getDiscountPrice($products[$key]['id']);
+            if($getDiscountPrice > 0) {
+                $products[$key]['final_price'] = $getDiscountPrice;
+            } else {
+                $products[$key]['final_price'] = $products[$key]['price'];
+            }
+        }
+        return response()->json(ProductResource::collection($products));
+    }
+
+    public function detail($id) {
+        $maxMonthYear = Inventory::where('product_id', $id)->orderBy('month_year', 'desc')->first();
+        $maxMonthYear = $maxMonthYear->month_year;
+
+        $product = Product::with(['category','brand', 'product_image', 
+            'inventories' => function ($query) use ($maxMonthYear) {
+                $query->where('month_year', $maxMonthYear);
+            }, 'reviews.images_review'])
+            ->where('status', 1)->find($id);
         return response()->json(new ProductResource($product));
+
+        
+        // return response()->json($maxMonthYear);
+    }
+
+    
+    public function getInventory($product_id, $size_id)
+    {
+        $getProductStock = Inventory::where(['$product_id' => $product_id, 'size_id' => $size_id]);
+        return response()->json($getProductStock, 200);
     }
 
     public function addImage(Request $request)
@@ -133,57 +357,6 @@ class ProductsController extends Controller
         return response()->json(['success'=>'true'], 200);
     }
 
-    public function update($id, Request $request)
-    {
-        $image_current = Product::select('image')->where('id', $id)->first();
-        if($request->image == $image_current->image) {
-            $imageName = $image_current->image;
-        } else {
-            $strpos = strpos($request->image, ';');
-            $sub = substr($request->image, 0, $strpos);
-            $ex = explode("/", $sub)[1];
-            $imageName = time().".".$ex;
-            $img = Image::make($request->image);
-            $upload_path = public_path()."/storage/uploads/products/";
-            $img->save($upload_path.$imageName);
-        }
-        $product = Product::where('id', $id)->update([
-            'category_id' => $request['category_id'],
-            'name' => $request['name'],
-            'description' => $request['description'],
-            'purchase_price' => $request['purchase_price'],
-            'price' => $request['price'],
-            'image' => $imageName,
-            'brand_id' => $request['brand_id'],
-            'discount_percent' => $request['discount_percent']
-        ]);
-
-        return response()->json($product);
-    }
-
-    public function updateProductStatus($id, Request $request) {
-        $product = Product::find($id);
-        $product->status = !$request->status;
-        $product->save();
-        
-        return response()->json([
-            'success' => true,
-            'product' => $product,
-        ]);
-    }
-
-    public function destroy($id)
-    {
-        $product = Product::find($id);
-        // $product->delete();
-        // if($product->delete()) {
-        //     if($product->image != null) {
-        //         unlink(public_path()."/storage/uploads/products/". $product->image);
-        //     }
-        // }
-        $product->deleted_at = Carbon::now('Asia/Ho_Chi_Minh');
-        $product->save();
-        return response()->json(['success'=>'true'], 200);
-    }
+    
 
 }

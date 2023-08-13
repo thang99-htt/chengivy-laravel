@@ -4,7 +4,7 @@ namespace App\Http\Resources;
 
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class ImportCouponResource extends JsonResource
+class StockReceivedDocketResource extends JsonResource
 {
     /**
      * Transform the resource into an array.
@@ -20,11 +20,13 @@ class ImportCouponResource extends JsonResource
             'supplier' => $this->supplier,
             'payment_voucher' => $this->payment_voucher,
             'date' => $this->date,
+            'form' => $this->form,
             'total_price' => $this->total_price,
             'value_added' => $this->value_added,
             'total_value' => $this->total_value,
             'image' => $this->image,
-            'products' => $this->import_coupon_product->map(function ($product) {
+            'note' => $this->note,
+            'products' => $this->stock_received_docket_product->map(function ($product) {
                 return [
                     'id' => $product->product->id,
                     'category' => $product->product->category->name,

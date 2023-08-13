@@ -49,12 +49,12 @@ class StaffsController extends Controller
     
 
     // Thêm công việc gửi email vào hàng đợi
-    // Mail::queue(function ($mail) use ($staff) {
-    //     $mail->to($staff->email)
-    //         ->subject('Mật khẩu đăng nhập Chengivy Store')
-    //         ->setBody('Xin chào, ' . $staff->name . '!' . "\n" .
-    //                   'Mật khẩu đăng nhập của bạn là: ' . $staff->password);
-    // });
+    Mail::queue(function ($mail) use ($staff) {
+        $mail->to($staff->email)
+            ->subject('Mật khẩu đăng nhập Chengivy Store')
+            ->setBody('Xin chào, ' . $staff->name . '!' . "\n" .
+                      'Mật khẩu đăng nhập của bạn là: ' . $staff->password);
+    });
 
     return response()->json($staff, 200);
 }

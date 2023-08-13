@@ -80,37 +80,41 @@ class OrdersController extends Controller
 
         
         foreach($getCartItems as $item) {
-            // Save table order_product
-            $orderItem = new OrderProduct;
-            $orderItem->order_id = $order_id;
-            $orderItem->product_id = $item['product_id'];
-            $orderItem->size = $item->size->name;
-            $orderItem->color = $item->color->name;
-            $orderItem->quantity = $item['quantity'];
-            $orderItem->price = $item['product']['price'];
-            if($item['product']['discount_percent'] > 0) {
-                $orderItem->price_discount = $item['product']['price_final'];
-            } else {
-                $orderItem->price_discount = 0;
+            
+            $inventory = Inventory::where(['product_id' => $item->product_id, 
+            'color_id' => $item->color_id, 'size_id' => $item->size_id])->orderByDesc('month_year')->first();
+            $item['inventory'] = $inventory;
+            
+            if($item->inventory->total_final > 0){
+                // Save table order_product
+                $orderItem = new OrderProduct;
+                $orderItem->order_id = $order_id;
+                $orderItem->product_id = $item['product_id'];
+                $orderItem->size = $item->size->name;
+                $orderItem->color = $item->color->name;
+                $orderItem->quantity = $item['quantity'];
+                $orderItem->price = $item['product']['price'];
+                if($item['product']['discount_percent'] > 0) {
+                    $orderItem->price_discount = $item['product']['price_final'];
+                } else {
+                    $orderItem->price_discount = 0;
+                }
+                $orderItem->save();
+                // Delete in cart
+                Cart::where([
+                    'user_id' => $id,
+                    'product_id' => $item->product_id,
+                    'color_id' => $item->color->id,
+                    'size_id' => $item->size->id
+                ])->delete();
+                
+                Inventory::where(['product_id' => $item['product_id'], 'size_id' => $item['size_id'],
+                    'color_id' => $item['color_id']])->update([
+                        'total_export' => $inventory->total_export + $item['quantity'],
+                        'total_final' => $inventory->total_final - $item['quantity']
+                ]);
             }
-            $orderItem->save();
 
-            // Delete in cart
-            Cart::where([
-                'user_id' => $id,
-                'product_id' => $item->product_id,
-                'color_id' => $item->color->id,
-                'size_id' => $item->size->id
-            ])->delete();
-
-            $inventory = Inventory::where(['product_id' => $item['product_id'], 
-                'size_id' => $item['size_id'], 'color_id' => $item['color_id']])->first();
-
-            Inventory::where(['product_id' => $item['product_id'], 'size_id' => $item['size_id'],
-                'color_id' => $item['color_id']])->update([
-                    'total_export' => $inventory->total_export + $item['quantity'],
-                    'total_final' => $inventory->total_final - $item['quantity']
-            ]);
         }
         
         return response()->json([

@@ -14,13 +14,19 @@ class ProductResource extends JsonResource
      */
     public function toArray($request)
     {
-        $groupedImages = $this->groupImagesByColor();
-        $firstImage = null;
+        $colorGroups = $this->product_image
+            ->groupBy('color_id')
+            ->sortBy('color_id'); // Sắp xếp nhóm màu theo thứ tự color_id
 
-        if (!empty($groupedImages) && isset($groupedImages[0]['images'][0]['image'])) {
-            $firstImage = $groupedImages[0]['images'][0]['image'];
+        $firstColorGroup = $colorGroups->first(); // Lấy nhóm màu đầu tiên
+
+        $firstColorImage = null;
+
+        if ($firstColorGroup) {
+            $firstColorImage = $firstColorGroup
+                ->first() // Lấy hình ảnh đầu tiên trong nhóm màu đầu tiên
+                ->image;
         }
-
         return [
             'id' => $this->id,
             'name' => $this->name,
@@ -28,12 +34,16 @@ class ProductResource extends JsonResource
             'price' => $this->price,
             'price_final' => $this->price_final,
             'discount_percent' => $this->discount_percent,
-            'image' => $firstImage,
+            'category_id' => $this->category->id,
             'category' => $this->category->name,
             'category_parent' => $this->category->parent ? $this->category->parent->name : null,
             'category_url' => $this->category->url,
             'brand' => $this->brand->name,
+            'brand_id' => $this->brand->id,
             'status' => $this->status,
+            'total_export' => $this->inventories->sum('total_export'),
+            'total_likes' => $this->favorites->count(),
+            'image' => $firstColorImage,
             'images' => $this->product_image
                 ->groupBy('color_id')
                 ->map(function ($groupedItems, $color) {
@@ -47,12 +57,14 @@ class ProductResource extends JsonResource
                         ];
                     }),
                 ];
-            }),
+            })->toArray(),
             'inventories' => $this->inventories
                 ->groupBy('month_year')
                 ->map(function ($groupedItems, $monthYear) {
+                $totalExport = $groupedItems->sum('total_export');
                 return [
                     'month_year' => $monthYear,
+                    'totalExport' => $totalExport,
                     'items' => $groupedItems->map(function ($item) {
                         return [
                             'product_id' => $item->product_id,
@@ -67,7 +79,7 @@ class ProductResource extends JsonResource
                         ];
                     }),
                 ];
-            }),
+            })->toArray(),
             'reviews' => $this->reviews->map(function ($review) {
                 return [
                     'id' => $review->id,
@@ -89,25 +101,6 @@ class ProductResource extends JsonResource
             'deleted_at' => $this->deleted_at,
             
         ];
-    }
-
-    public function groupImagesByColor()
-    {
-        $groupedImages = [];
-        foreach ($this->product_image as $image) {
-            $colorId = $image['color_id'];
-            if (!isset($groupedImages[$colorId])) {
-                $groupedImages[$colorId] = [
-                    'color' => $image['color'],
-                    'images' => [],
-                ];
-            }
-            $groupedImages[$colorId]['images'][] = [
-                'id' => $image['id'],
-                'image' => $image['image'],
-            ];
-        }
-        return array_values($groupedImages);
     }
 
 }

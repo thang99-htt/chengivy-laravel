@@ -5,30 +5,29 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Product;
-use App\Models\ImportCouponProduct;
-use App\Models\ImportCoupon;
-use App\Http\Resources\ImportCouponResource;
-use Carbon\Carbon;
+use App\Models\StockReceivedDocket;
+use App\Models\StockReceivedDocketProduct;
+use App\Http\Resources\StockReceivedDocketResource;
 use Intervention\Image\Facades\Image;
 
-class ImportCouponsController extends Controller
+class StockReceivedDocketsController extends Controller
 {
     public function index()
     {
-        $orders = ImportCoupon::orderBy('created_at', 'DESC')->get();
+        $orders = StockReceivedDocket::orderBy('created_at', 'DESC')->get();
         
-        return response(ImportCouponResource::collection($orders));
+        return response(StockReceivedDocketResource::collection($orders));
     }
 
     public function show($id)
     {
-        $order = ImportCoupon::with('import_coupon_product.product')->find($id);
-        return response()->json(new ImportCouponResource($order));
+        $order = StockReceivedDocket::with('import_coupon_product.product')->find($id);
+        return response()->json(new StockReceivedDocketResource($order));
     }
 
     public function store($id, Request $request)
     {
-        $importCoupon = new ImportCoupon;
+        $importCoupon = new StockReceivedDocket;
         $importCoupon->staff_id = $id;
         $importCoupon->supplier_id = $request->supplier_id;
         $importCoupon->payment_voucher_id = $request->payment_voucher_id;
@@ -55,7 +54,7 @@ class ImportCouponsController extends Controller
 
         
         foreach($request->products as $item) {
-            $importCouponProduct = new ImportCouponProduct();
+            $importCouponProduct = new StockReceivedDocketProduct();
             $importCouponProduct->import_coupon_id = $importCouponId;
             $importCouponProduct->product_id = $item['id'];
             $importCouponProduct->quantity = $item['quantity'];
@@ -70,7 +69,7 @@ class ImportCouponsController extends Controller
 
     public function destroy($id)
     {
-        $product = ImportCoupon::find($id);
+        $product = StockReceivedDocket::find($id);
         if($product->image != null) {
             unlink(public_path()."/storage/uploads/products/". $product->image);
         }

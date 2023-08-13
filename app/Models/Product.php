@@ -81,8 +81,14 @@ class Product extends Model
     }
 
     public function carts() {
-        return $this->belongsToMany(Carts::class, 'carts_products')->withPivot(['id', 'quantity']);
+        return $this->belongsToMany(Cart::class, 'carts')->withPivot(['id', 'quantity']);
     }
+
+    public function favorites()
+    {
+        return $this->hasMany(Favorite::class);
+    }
+    
 
     public function reviews()
     {

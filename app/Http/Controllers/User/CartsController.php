@@ -34,7 +34,8 @@ class CartsController extends Controller
 
             
             $inventory = Inventory::where(['product_id' => $item->product_id, 
-            'color_id' => $item->color_id, 'size_id' => $item->size_id])->orderByDesc('month_year')->first();
+                'color_id' => $item->color_id, 'size_id' => $item->size_id])->orderByDesc('month_year')->first();
+                
             $item['inventory'] = $inventory;
             
             if($item->inventory->total_final > 0){
@@ -55,17 +56,18 @@ class CartsController extends Controller
     {
         $product = Product::find($request->product_id);
         $inventory = Inventory::where(['product_id' => $request->product_id, 
-            'size_id' => $request->size_id, 'color_id' => $request->color_id])->first();
+            'size_id' => $request->size_id, 'color_id' => $request->color_id])->orderByDesc('month_year')->first();
         
         if($inventory->total_final >= $request->quantity) {
             // Check existed Size
             $cart = Cart::where(['user_id' => $id, 'product_id' => $request->product_id, 
-                'size_id' => $request->size_id, 'color_id' => $request->color_id])->first();     
+                'size_id' => $request->size_id, 'color_id' => $request->color_id])->first();    
+
             if($cart) {
-                $cartId = Cart::find($cart->id);
-                if($inventory->total_final >= ($cartId->quantity + $request->quantity)) {
-                    $cartId->quantity = $cartId->quantity + $request->quantity;
-                    $cartId->save();
+                if($inventory->total_final >= ($cart->quantity + $request->quantity)) {
+                    Cart::where(['user_id' => $id, 'product_id' => $request->product_id, 
+                        'size_id' => $request->size_id, 'color_id' => $request->color_id])
+                        ->update(['quantity' => $cart->quantity + $request->quantity]);
                     return response()->json([
                         'success'=>'success',
                         'message'=> "Bạn đã thêm " . $product->name . " vào giỏ hàng của mình."
@@ -97,14 +99,13 @@ class CartsController extends Controller
                 'message'=>"Rất tiếc, bạn chỉ có thể mua tối đa " . $inventory->total_final . " sản phẩm"
             ]);
         }       
-        // return response()->json($inventory); 
     }
 
     public function updateQuantity(Request $request) {
         $product = Product::find($request->product_id);
         
         $inventory = Inventory::where(['product_id' => $request->product_id, 
-            'size_id' => $request->size_id, 'color_id' => $request->color_id])->first();
+            'size_id' => $request->size_id, 'color_id' => $request->color_id])->orderByDesc('month_year')->first();
             
         if($inventory->total_final >= $request->quantity) {
             Cart::where(['user_id' => $request->user_id, 'product_id' => $request->product_id, 
@@ -138,7 +139,7 @@ class CartsController extends Controller
             'product_id' => $request->product_id,
             'size_id' => $request->size_id,
             'color_id' => $request->color_id
-        ])->first();
+        ])->orderByDesc('month_year')->first();
 
         if ($cart_existed) {
             $new_quantity = $cart_existed->quantity + $request->quantity;   

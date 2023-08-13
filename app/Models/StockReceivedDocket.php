@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class ImportCoupon extends Model
+class StockReceivedDocket extends Model
 {
     use HasFactory;
 
@@ -57,8 +57,8 @@ class ImportCoupon extends Model
         return $this->belongsTo(PaymentVoucher::class, 'payment_voucher_id');
     }
 
-    public function import_coupon_product()
+    public function stock_received_docket_product()
     {
-        return $this->hasMany(ImportCouponProduct::class, 'import_coupon_id');
+        return $this->hasMany(StockReceivedDocketProduct::class, 'stock_received_docket_id');
     }
 }
