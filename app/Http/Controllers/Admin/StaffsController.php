@@ -10,7 +10,6 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use App\Http\Resources\StaffResource;
 
-use App\Mail\StaffMail;
 use App\Jobs\SendStaffMail;
 
 class StaffsController extends Controller

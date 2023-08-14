@@ -7,7 +7,7 @@ use App\Http\Controllers\Admin\BrandsController;
 use App\Http\Controllers\Admin\ProductsController;
 use App\Http\Controllers\Admin\OrdersController;
 use App\Http\Controllers\Admin\StatisticalsController;
-
+use App\Http\Controllers\Admin\StockReceivedDocketsController;
 
 /*
 |--------------------------------------------------------------------------
@@ -25,8 +25,11 @@ Route::delete('admin/roles/', [App\Http\Controllers\Admin\RolesController::class
 
 Route::apiResource('/admin/suppliers', App\Http\Controllers\Admin\SuppliersController::class);
 Route::apiResource('/admin/payment-vouchers', App\Http\Controllers\Admin\PaymentVouchersController::class);
+
+Route::prefix('/admin/import/stock-received-docket')->group( function() {
+    Route::post('/add/{id}', [StockReceivedDocketsController::class, 'store']);
+});
 Route::apiResource('/admin/import/stock-received-docket', App\Http\Controllers\Admin\StockReceivedDocketsController::class);
-Route::post('admin/import/stock-received-docket/add/{id}', [App\Http\Controllers\Admin\StockReceivedDocketsController::class, 'store']);
 
 Route::apiResource('/admin/permissions', App\Http\Controllers\Admin\PermissionsController::class);
 

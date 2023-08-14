@@ -7,22 +7,22 @@ use Illuminate\Http\Request;
 use App\Models\Product;
 use App\Models\StockReceivedDocket;
 use App\Models\StockReceivedDocketProduct;
-use App\Http\Resources\StockReceivedDocketResource;
+// use App\Http\Resources\StockReceivedDocketResource;
 use Intervention\Image\Facades\Image;
-
+use App\Models\Supplier;
 class StockReceivedDocketsController extends Controller
 {
     public function index()
     {
         $orders = StockReceivedDocket::orderBy('created_at', 'DESC')->get();
         
-        return response(StockReceivedDocketResource::collection($orders));
+        // return response(StockReceivedDocketResource::collection($orders));
     }
 
     public function show($id)
     {
         $order = StockReceivedDocket::with('import_coupon_product.product')->find($id);
-        return response()->json(new StockReceivedDocketResource($order));
+        // return response()->json(new StockReceivedDocketResource($order));
     }
 
     public function store($id, Request $request)

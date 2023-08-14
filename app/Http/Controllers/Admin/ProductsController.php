@@ -22,7 +22,7 @@ class ProductsController extends Controller
     public function index()
     {
         $product = Product::with('category','brand', 'product_image', 'inventories.size', 
-            'reviews.images_review')->orderBy('created_at', 'DESC')->limit(10)->get();
+            'reviews.images_review')->orderBy('created_at', 'DESC')->get();
         return response()->json(ProductResource::collection($product));
     }
     
@@ -270,32 +270,6 @@ class ProductsController extends Controller
         return response()->json($getProductStock, 200);
     }
 
-    public function addImage(Request $request)
-    {
-        if($request->img) {
-            $strpos = strpos($request->img, ';');
-            $sub = substr($request->img, 0, $strpos);
-            $ex = explode("/", $sub)[1];
-            $imageName = time().".".$ex;
-            $img = Image::make($request->img);
-            $upload_path = public_path()."/storage/uploads/products/";
-            $img->save($upload_path.$imageName);
-        }
-        $image = new ProductImage();
-        $image->product_id = $request['id'];
-        $image->image = $imageName;
-        $image->save();
-        return response()->json("ok");
-    }
-
-    public function deleteImage(Request $request)
-    {
-        $productImage = ProductImage::select('image')->where('id', $request->id)->first();
-        unlink(public_path()."/storage/uploads/products/". $productImage->image);
-        ProductImage::where('id', $request->id)->delete();
-        return response()->json(['success'=>'true'], 200);
-    }
-
     public function addSize(Request $request) {
         $size = Inventory::where(['product_id' => $request['id'], 'size_id' => $request['size']])->first();
         if(!$size) {
@@ -317,6 +291,5 @@ class ProductsController extends Controller
         return response()->json(['success'=>'true'], 200);
     }
 
-    
 
 }
