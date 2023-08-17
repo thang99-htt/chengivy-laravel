@@ -24,7 +24,6 @@ class OrdersController extends Controller
     // id = id_user
     public function store($id, Request $request)
     {
-        // Total_price of Order
         $getCartItems = Cart::with(['product.inventories'
             => function ($query) {
                 $query->where('month_year', function ($subQuery) {
@@ -34,23 +33,23 @@ class OrdersController extends Controller
             }])->orderby('created_at', 'Desc')->where('user_id', $id)->get();
 
         $order_total_price = 0;
-        $order_total_value = 0;
+        $order_total_price_after_discount = 0;
         
         foreach($getCartItems as $item) {
             $item_total_price = 0;
-            $item_total_value = 0;
+            $item_total_price_after_discount = 0;
 
             $inventory = Inventory::where(['product_id' => $item->product_id, 
                 'color_id' => $item->color_id, 'size_id' => $item->size_id])->orderByDesc('month_year')->first();
             $item['inventory'] = $inventory;
             
             if($item->inventory->total_final > 0){
-                $item_total_price += $item['product']['price_final']*$item['quantity'];
-                $item_total_value += $item['product']['price']*$item['quantity'];
+                $item_total_price += $item['product']['price']*$item['quantity'];
+                $item_total_price_after_discount += $item['product']['price_final']*$item['quantity'];
             }
             
             $order_total_price += $item_total_price;
-            $order_total_value += $item_total_value;
+            $order_total_price_after_discount += $item_total_price_after_discount;
         }
 
         // Save table orders
@@ -58,19 +57,28 @@ class OrdersController extends Controller
         $order->staff_id = 1;
         $order->user_id = $id;
         $order->payment_method_id = $request['payment_method_id'];
-        $order->voucher_id = $request['voucher_id'];
+        $order->voucher_id = 4;
         $order->address_receiver = $request['delivery_address']['address'];
         $order->name_receiver = $request['delivery_address']['name'];
         $order->phone_receiver = $request['delivery_address']['phone'];
-        $order->name_receiver = 'Thang';
-        $order->phone_receiver = '0399191404';
         $order->status_id = 1;
         $order->ordered_at = Carbon::now('Asia/Ho_Chi_Minh');
         $order->estimated_at = Carbon::now('Asia/Ho_Chi_Minh')->addDays(3);
-        $order->total_value = $order_total_value;
+
+        $order->total_price = $order_total_price;
         $order->fee = 25000;
-        $order->total_discount = $order->total_value - $order_total_price;
-        $order->total_price = $order_total_price + $order->fee;
+
+        $total_discount = 0;
+
+        if($request['voucher_id'] == 1) {
+            $total_discount = ($order_total_price - $order_total_price_after_discount) + ($order_total_price_after_discount*0.15);
+            $order->total_discount = $total_discount;
+        } 
+        else {
+            $total_discount = ($order_total_price - $order_total_price_after_discount) + 200000;
+        }
+        $order->total_value = ($order_total_price + 25000) - $total_discount;
+
         if($request['note'] != null)
             $order->note = $request['note'];
         $order->paid = $request->paid;        

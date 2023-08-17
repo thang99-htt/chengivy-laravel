@@ -56,8 +56,12 @@ class CartsController extends Controller
     {
         $product = Product::find($request->product_id);
         $inventory = Inventory::where(['product_id' => $request->product_id, 
-            'size_id' => $request->size_id, 'color_id' => $request->color_id])->orderByDesc('month_year')->first();
-        
+                'size_id' => $request->size_id, 'color_id' => $request->color_id])
+                ->where('total_final', '>', 0)
+                ->orderByDesc('month_year')
+                ->orderBy('color_id')
+                ->orderBy('size_id')
+                ->first();
         if($inventory->total_final >= $request->quantity) {
             // Check existed Size
             $cart = Cart::where(['user_id' => $id, 'product_id' => $request->product_id, 

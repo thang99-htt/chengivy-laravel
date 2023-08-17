@@ -28,7 +28,8 @@ class PaymentVoucher extends Model
         'staff_id',
         'supplier_id',
         'date',
-        'total_price'
+        'total_price',
+        'description'
     ];
 
     /**
@@ -36,4 +37,13 @@ class PaymentVoucher extends Model
      */
     protected $dates = [];
 
+    public function staff()
+    {
+        return $this->belongsTo(Staff::class, 'staff_id');
+    }
+
+    public function supplier()
+    {
+        return $this->belongsTo(Supplier::class, 'supplier_id');
+    }
 }

@@ -49,7 +49,7 @@ class OrdersController extends Controller
 
             $invoice = new Invoice();
             $invoice->date = Carbon::now('Asia/Ho_Chi_Minh');
-            $invoice->total_price = $order->total_price;
+            $invoice->total_value = $order->total_value;
             $invoice->save();
     
             $invoice_id = $invoice->id;

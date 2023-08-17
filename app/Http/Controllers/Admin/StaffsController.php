@@ -7,7 +7,6 @@ use Illuminate\Http\Request;
 use App\Models\Staff;
 use App\Models\RoleStaff;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Mail;
 use App\Http\Resources\StaffResource;
 
 use App\Jobs\SendStaffMail;

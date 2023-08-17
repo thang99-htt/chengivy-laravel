@@ -9,12 +9,20 @@ use App\Models\Favorite;
 use App\Models\Inventory;
 use App\Models\Cart;
 use App\Models\Size;
+use App\Models\Color;
+use App\Http\Resources\ProductResource;
 
 class FavoritesController extends Controller
 {
     public function index($id)
     {
-        $getFavoriteItems = Favorite::with(['product'])->orderby('created_at', 'Desc')->where('user_id', $id)->get();
+        $getFavoriteItems = Favorite::with(['product'])->orderBy('created_at', 'desc')->where('user_id', $id)->get();
+
+        foreach ($getFavoriteItems as $key => $value) {
+            $item = new ProductResource($value->product);
+            $getFavoriteItems[$key]->products = $item;
+        }
+
         $favoriteCount = $getFavoriteItems->count();
         return response()->json([
             'getFavoriteItems' => $getFavoriteItems,
@@ -53,22 +61,31 @@ class FavoritesController extends Controller
         $productUnavailables = [];
         $productAvailables = [];
         $selectedIds = $request->all();
-        foreach ($selectedIds as $product) {
-            // Tìm kiếm và lưu trữ $productSize vào mảng
-            $productSize = Inventory::where('product_id', $product['id'])->first();
-            $size = Size::select('name')->where('id', $productSize->size_id)->first();
-            if($productSize->stock >= 1) {
+        
+        foreach ($selectedIds as $product_id) {
+            $product = Product::find($product_id);
+
+            $inventory = Inventory::where('product_id', $product_id)
+                ->where('total_final', '>', 0)
+                ->orderByDesc('month_year')
+                ->orderBy('color_id')
+                ->orderBy('size_id')
+                ->first();
+
+            if($inventory->total_final >= 1) {
                 // Check existed Size
-                $cart = Cart::where(['user_id' => $id, 'product_id' => $product['id'], 
-                    'size' => $size->name])->first();     
+                $cart = Cart::where(['user_id' => $id, 'product_id' => $product_id, 
+                    'size_id' => $inventory->size_id, 'color_id' => $inventory->color_id])->first();    
+
                 if($cart) {
-                    $cartId = Cart::find($cart->id);
-                    if($productSize->stock >= ($cartId->quantity + 1)) {
-                        $cartId->quantity = $cartId->quantity + 1;
-                        $cartId->save();
-                        $check = true;
+                    if($inventory->total_final >= ($cart->quantity + 1)) {
+                        Cart::where(['user_id' => $id, 'product_id' => $product_id, 
+                            'size_id' => $inventory->size_id, 'color_id' => $inventory->color_id])
+                            ->update(['quantity' => $cart->quantity + 1]);
+
                         $productAvailables[] = $product['name'];
                         Favorite::where(['user_id' => $id, 'product_id' => $product['id']])->delete();
+                        
                     } else {
                         $check = false;
                         $productUnavailables[] = $product['name'];
@@ -77,12 +94,15 @@ class FavoritesController extends Controller
                     // Save Product in Carts table
                     $item = new Cart;
                     $item->user_id = $id;
-                    $item->product_id = $product['id'];
-                    $item->size = $size->name;
+                    $item->product_id = $product_id;
+                    $item->size_id = $inventory->size_id;
+                    $item->color_id = $inventory->color_id;
                     $item->quantity = 1;
                     $item->save();
+                    
                     $check = true;
                     $productAvailables[] = $product['name'];
+                    
                     Favorite::where(['user_id' => $id, 'product_id' => $product['id']])->delete();
                 }
             }
@@ -98,25 +118,13 @@ class FavoritesController extends Controller
             ]);
         } else {
             return response()->json([
-                'success'=>'warning',
+                'success'=>$productAvailables,
                 'message'=>"Rất tiếc, số lượng sản phẩm " . implode(', ', $productUnavailables) . " không đủ."
             ]);
         }
     }
 
-    public function destroy($id)
-    {
-        $favorite = Favorite::find($id);
-        $product = Product::where('id', $favorite->product_id)->first();
-        $product = $product->name;
-        $favorite->delete();
-        return response()->json([
-            'success' => 'success',
-            'message' => "Bạn đã xóa " . $product . " khỏi danh sách yêu thích."
-        ], 200);
-    }
-    
-    public function destroyByUser($user, $product)
+    public function destroy($user, $product)
     {
         $pro = Product::where('id', $product)->first();
         Favorite::where(['user_id' => $user, 'product_id' => $product])->delete();
@@ -124,5 +132,6 @@ class FavoritesController extends Controller
             'success' => 'success',
             'message' => $pro->name . ' được xóa khỏi danh sách yêu thích.'
         ], 200);
-    }
+    }    
+    
 }

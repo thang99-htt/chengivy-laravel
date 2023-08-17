@@ -45,7 +45,7 @@
             <p>Dưới đây là thông tin đăng nhập của bạn:</p>
             <p><strong>Email đăng nhập:</strong> {{ $staffEmail }}</p>
             <p><strong>Mật khẩu đăng nhập:</strong> <span class="password">{{ $staffPassword }}</span></p>
-            <p>Vui lòng đăng nhập vào hệ thống và đổi mật khẩu ngay sau khi đăng nhập thành công.</p>
+            <p>Vui lòng <a href="http://localhost:3000/login">đăng nhập vào hệ thống</a> và đổi mật khẩu ngay sau khi đăng nhập thành công.</p>
         </div>
         <p>Xin cảm ơn và chúc bạn một ngày làm việc hiệu quả tại cửa hàng!</p>
     </div>

@@ -26,9 +26,6 @@ Route::delete('admin/roles/', [App\Http\Controllers\Admin\RolesController::class
 Route::apiResource('/admin/suppliers', App\Http\Controllers\Admin\SuppliersController::class);
 Route::apiResource('/admin/payment-vouchers', App\Http\Controllers\Admin\PaymentVouchersController::class);
 
-Route::prefix('/admin/import/stock-received-docket')->group( function() {
-    Route::post('/add/{id}', [StockReceivedDocketsController::class, 'store']);
-});
 Route::apiResource('/admin/import/stock-received-docket', App\Http\Controllers\Admin\StockReceivedDocketsController::class);
 
 Route::apiResource('/admin/permissions', App\Http\Controllers\Admin\PermissionsController::class);
@@ -55,7 +52,7 @@ Route::prefix('/admin/products')->group( function() {
     Route::get('/colors',[ProductsController::class, 'colorAll']);
     Route::get('/{url}',[ProductsController::class, 'listing']);
     Route::get('/detail/{id}',[ProductsController::class, 'detail']);
-    Route::get('/get-inventory/product-{product}/size-{size}',[ProductsController::class, 'getInventory']); 
+    Route::get('/inventories',[ProductsController::class, 'inventories']); 
     Route::post('/add-image',[ProductsController::class, 'addImage']);
     Route::post('/add-size',[ProductsController::class, 'addSize']);
     Route::put('{id}/{status}', [ProductsController::class, 'updateProductStatus']);
@@ -87,11 +84,10 @@ Route::prefix('/cart')->group( function() {
 });
 
 Route::prefix('/favorite')->group( function() {
+    Route::post('/add/{id}',[App\Http\Controllers\User\FavoritesController::class, 'store']); 
     Route::post('/add-to-cart/{id}',[App\Http\Controllers\User\FavoritesController::class, 'addToCart']); 
     Route::get('/{id}',[App\Http\Controllers\User\FavoritesController::class, 'index']); 
-    Route::put('{id}/{quantity}', [App\Http\Controllers\User\FavoritesController::class, 'updateQuantity']);
-    Route::delete('/{id}',[App\Http\Controllers\User\FavoritesController::class, 'destroy']); 
-    Route::delete('/delete-by-user/{user}/{product}',[App\Http\Controllers\User\FavoritesController::class, 'destroyByUser']); 
+    Route::delete('/{user}/{product}',[App\Http\Controllers\User\FavoritesController::class, 'destroy']); 
 });
 
 Route::get('/addresses/cities',[App\Http\Controllers\User\AddressesController::class, 'getCities']);

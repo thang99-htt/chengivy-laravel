@@ -16,7 +16,7 @@ class StockReceivedDocketResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'staff' => $this->staff->name,
+            'staff' => $this->staff,
             'supplier' => $this->supplier,
             'payment_voucher' => $this->payment_voucher,
             'date' => $this->date,
@@ -25,7 +25,7 @@ class StockReceivedDocketResource extends JsonResource
             'value_added' => $this->value_added,
             'total_value' => $this->total_value,
             'image' => $this->image,
-            'note' => $this->note,
+            'description' => $this->description,
             'products' => $this->stock_received_docket_product->map(function ($product) {
                 return [
                     'id' => $product->product->id,
@@ -34,7 +34,7 @@ class StockReceivedDocketResource extends JsonResource
                     'description' => $product->product->description,
                     'image' => $product->product->image,
                     'price' => $product->product->price,
-                    'type' => $product->product->type->name,
+                    'brand' => $product->product->brand->name,
                     'discount_percent' => $product->product->discount_percent,
                     'quantity' => $product->quantity,
                     'purchase_price' => $product->price,
