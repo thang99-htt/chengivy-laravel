@@ -14,6 +14,7 @@ use Intervention\Image\Facades\Image;
 use App\Http\Resources\ProductResource;
 use Carbon\Carbon;
 
+use Illuminate\Support\Facades\Validator;
 use App\Jobs\UploadToGoogleDrive;
 use App\Jobs\DeleteFromGoogleDrive;
 
@@ -28,48 +29,71 @@ class ProductsController extends Controller
     
     public function store(Request $request)
     {
-        $product = new Product;
-        $product->category_id = $request['category_id'];
-        $product->brand_id = $request['brand_id'];
-        $product->name = $request['name'];
-        $product->description = $request['description'];
-        $product->price = $request['price'];
+        $validator = Validator::make($request->all(), [
+            'name' => 'required',
+            'images' => 'required',
+            'price' => 'required',
+            'discount_percent' => 'max:2',
+            'description' => 'required',
+            'category_id' => 'required',
+            'brand_id' => 'required',
+        ], [
+            'name.required' => 'Vui lòng nhập tên sản phẩm.',
+            'description.required' => 'Vui lòng nhập mô tả.',
+            'price.required' => 'Vui lòng nhập giá.',
+            'discount_percent.max' => 'Phần trăm giảm giá có nhiều nhất 2 chữ số.',
+            'category_id.required' => 'Vui lòng chọn danh mục.',
+            'brand_id.required' => 'Vui lòng chọn thương hiệu.',
+            'images.required' => 'Vui lòng thêm các hình ảnh.',
+        ]);
+        
+        if ($validator->fails()) {
+            return response()->json($validator->errors(), 422);
 
-        if ($request['discount_percent']) {
-            $product->discount_percent = $request['discount_percent'];
-            $product->price_final = $request['price'] - ($request['price'] * $request['discount_percent']) / 100;
         } else {
-            $product->discount_percent = 0;
-            $product->price_final = $request['price'];
-        }
-
-        $product->save();
-        $productId = $product->id;
-        $productCat = $product->category_id;
-        $productBra = $product->brand_id;
-
-        $imagesData = $request['images'];
-
-        if ($imagesData) {
-            foreach ($imagesData as $colorItem) {
-                $colorId = $colorItem['color_id'];
-
-                foreach ($colorItem['items'] as $imageItem) {
-                    $base64Image = $imageItem['image'];
+            $product = new Product;
+            $product->category_id = $request['category_id'];
+            $product->brand_id = $request['brand_id'];
+            $product->name = $request['name'];
+            $product->description = $request['description'];
+            $product->price = $request['price'];
+    
+            if ($request['discount_percent']) {
+                $product->discount_percent = $request['discount_percent'];
+                $product->price_final = $request['price'] - ($request['price'] * $request['discount_percent']) / 100;
+            } else {
+                $product->discount_percent = 0;
+                $product->price_final = $request['price'];
+            }
+    
+            $product->save();
+            $productId = $product->id;
+            $productCat = $product->category_id;
+            $productBra = $product->brand_id;
+    
+            $imagesData = $request['images'];
+    
+            if ($imagesData) {
+                foreach ($imagesData as $colorItem) {
                     $colorId = $colorItem['color_id'];
-
-                    // Enqueue job to upload image
-                    UploadToGoogleDrive::dispatch(
-                        $productId,
-                        $productCat,
-                        $productBra,
-                        $colorId,
-                        $base64Image
-                    );
+    
+                    foreach ($colorItem['items'] as $imageItem) {
+                        $base64Image = $imageItem['image'];
+                        $colorId = $colorItem['color_id'];
+    
+                        // Enqueue job to upload image
+                        UploadToGoogleDrive::dispatch(
+                            $productId,
+                            $productCat,
+                            $productBra,
+                            $colorId,
+                            $base64Image
+                        );
+                    }
                 }
             }
+            return response()->json($product);
         }
-        return response()->json($product);
     }
 
     public function show($id)
