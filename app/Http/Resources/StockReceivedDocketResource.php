@@ -17,8 +17,11 @@ class StockReceivedDocketResource extends JsonResource
         return [
             'id' => $this->id,
             'staff' => $this->staff,
+            'staff_id' => $this->staff->id,
             'supplier' => $this->supplier,
+            'supplier_id' => $this->supplier->id,
             'payment_voucher' => $this->payment_voucher,
+            'payment_voucher_id' => $this->payment_voucher_id,
             'date' => $this->date,
             'form' => $this->form,
             'total_price' => $this->total_price,
@@ -26,21 +29,42 @@ class StockReceivedDocketResource extends JsonResource
             'total_value' => $this->total_value,
             'image' => $this->image,
             'description' => $this->description,
-            'products' => $this->stock_received_docket_product->map(function ($product) {
-                return [
-                    'id' => $product->product->id,
-                    'category' => $product->product->category->name,
-                    'name' => $product->product->name,
-                    'description' => $product->product->description,
-                    'image' => $product->product->image,
-                    'price' => $product->product->price,
-                    'brand' => $product->product->brand->name,
-                    'discount_percent' => $product->product->discount_percent,
-                    'quantity' => $product->quantity,
-                    'purchase_price' => $product->price,
-                ];
-            }), 
+            'items' => $this->stock_received_docket_product->map(function ($item) {
+                $colorGroups = $item->product->product_image // Use $item instead of $this->stock_received_docket_product->product
+                    ->groupBy('color_id')
+                    ->sortBy('color_id');
+            
+                $firstColorGroup = $colorGroups->first();
+                $firstColorImage = null;
+            
+                if ($firstColorGroup) {
+                    $firstColorImage = $firstColorGroup
+                        ->first()
+                        ->image;
+                }
 
+                return [
+                    'product_id' => $item->product->id,
+                    'product_name' => $item->product->name,
+                    'product_image' => $firstColorImage,
+                    'price' => $item->product->price,
+                    'quantity' => $item->quantity,
+                    'price_purchase' => $item->price,
+                ];
+            }),
+            'inventories' => $this->stock_received_docket_product->flatMap(function ($item) {
+                return $item->stock_received_docket_product_detail->map(function ($detailItem) {
+                    return [
+                        'product_id' => $detailItem->product->id,
+                        'color_id' => $detailItem->color->id,
+                        'color_name' => $detailItem->color->name,
+                        'size_id' => $detailItem->size->id,
+                        'size_name' => $detailItem->size->name,
+                        'quantity' => $detailItem->quantity,
+                    ];
+                });
+            }),
+            
         ];
     }
 }

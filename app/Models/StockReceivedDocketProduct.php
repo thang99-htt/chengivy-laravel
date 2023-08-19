@@ -31,13 +31,13 @@ class StockReceivedDocketProduct extends Model
         'price',
     ];
 
-    public function stock_received_docket()
-    {
-        return $this->belongsTo(ImportCoupon::class, 'stock_received_docket_id');
-    }
-
     public function product()
     {
         return $this->belongsTo(Product::class, 'product_id');
+    }
+
+    public function stock_received_docket_product_detail()
+    {
+        return $this->hasMany(StockReceivedDocketProductDetail::class, 'stock_received_docket_product_id');
     }
 }

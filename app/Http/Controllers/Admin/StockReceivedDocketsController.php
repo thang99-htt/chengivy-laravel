@@ -12,50 +12,55 @@ use App\Models\Inventory;
 use App\Models\PaymentVoucher;
 use Illuminate\Support\Facades\Validator;
 use App\Jobs\UploadImportToGoogleDrive;
+use App\Models\StockReceivedDocketProductDetail;
+use App\Jobs\DeleteImportFromGoogleDrive;
 
 class StockReceivedDocketsController extends Controller
 {
     public function index()
     {
-        $payments = StockReceivedDocket::orderBy('created_at', 'DESC')->get();
+        $import = StockReceivedDocket::orderBy('created_at', 'DESC')->get();
         
-        return response(StockReceivedDocketResource::collection($payments));
+        return response(StockReceivedDocketResource::collection($import));
     }
 
     public function show($id)
     {
-        $order = StockReceivedDocket::with('import_coupon_product.product')->find($id);
-        // return response()->json(new StockReceivedDocketResource($order));
+        $import = StockReceivedDocket::with('stock_received_docket_product.product.product_image')->find($id);
+        return response()->json(new StockReceivedDocketResource($import));
     }
 
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'supplier_id' => 'required',
-            'payment_voucher_id' => 'required',
             'items' => 'required',
             'inventories' => 'required',
             'form' => 'required',
+            'supplier_id' => 'required',
+            'payment_voucher_id' => 'required',
+            'description' => 'required',
+            'image' => 'required',
             'total_price' => 'required',
             'value_added' => 'required',
             'total_value' => 'required',
-            'description' => 'required',
-            'image' => 'required',
         ], [
+            'items.required' => 'Vui lòng chọn các sản phẩm.',
+            'inventories.required' => 'Vui lòng nhập phân loại sản phẩm.',
+            'form.required' => 'Vui lòng chọn hình thức.',
             'supplier_id.required' => 'Vui lòng chọn nhà cung cấp.',
             'payment_voucher_id.required' => 'Vui lòng chọn phiếu chi.',
+            'description.required' => 'Vui lòng nhập mô tả.',
+            'image.required' => 'Vui lòng chọn chứng từ.',
             'total_price.required' => 'Vui lòng nhập tổng tiền.',
             'value_added.required' => 'Vui lòng nhập giá trị gia tăng.',
             'total_value.required' => 'Vui lòng nhập tổng giá trị.',
-            'form.required' => 'Vui lòng chọn hình thức.',
-            'description.required' => 'Vui lòng nhập mô tả.',
-            'image.required' => 'Vui lòng chọn chứng từ.',
-            'items.required' => 'Vui lòng chọn các sản phẩm.',
-            'inventories.required' => 'Vui lòng nhập phân loại sản phẩm.',
         ]);
         
         if ($validator->fails()) {
-            return response()->json($validator->errors(), 422);
+            return response()->json([
+                'success' => 'warning',
+                'message' => $validator->errors()
+            ], 422);
 
         } else {
             $payment_voucher = PaymentVoucher::find($request->payment_voucher_id);
@@ -104,6 +109,20 @@ class StockReceivedDocketsController extends Controller
                     $importProduct->quantity = $item['quantity'];
                     $importProduct->price = $item['price_purchase'];
                     $importProduct->save();
+                    
+                    $importProductId = $importProduct->id;
+
+                    foreach ($request->inventories as $inventory) {
+                        if ($inventory['product_id'] == $item['product_id']) {
+                            $importProductDetail = new StockReceivedDocketProductDetail();
+                            $importProductDetail->stock_received_docket_product_id = $importProductId;
+                            $importProductDetail->product_id = $inventory['product_id'];
+                            $importProductDetail->color_id = $inventory['color_id'];
+                            $importProductDetail->size_id = $inventory['size_id'];
+                            $importProductDetail->quantity = $inventory['quantity'];
+                            $importProductDetail->save();
+                        }
+                    }
                 }
                 
                 foreach($request->inventories as $inventory) {
@@ -118,7 +137,7 @@ class StockReceivedDocketsController extends Controller
                         $importInventory->product_id = $inventory['product_id'];
                         $importInventory->color_id = $inventory['color_id'];
                         $importInventory->size_id = $inventory['size_id'];
-                        $importInventory->total_initial = 0;
+                        $importInventory->total_initial = $existingInventory['total_initial'];
                         $importInventory->total_import = $inventory['quantity'];
                         $importInventory->total_export = 0;
                         $importInventory->total_final = $inventory['quantity'];
@@ -128,9 +147,10 @@ class StockReceivedDocketsController extends Controller
                             'product_id' => $inventory['product_id'], 'color_id' => $inventory['color_id'], 
                             'size_id' => $inventory['size_id']])->update([
                                 'total_import' => $existingInventory['total_import'] + $inventory['quantity'],
+                                'total_final' => $existingInventory['total_final'] + $inventory['quantity'],
                             ]);
                     }
-        
+
                 }
         
                 return response()->json([
@@ -138,10 +158,143 @@ class StockReceivedDocketsController extends Controller
                     'message' => "Phiếu nhập được lập thành công",
                 ]); 
             }
+        }
+    }
+
+    public function update(Request $request, $id) {
+        
+        $import = StockReceivedDocket::find($id);
+        $payment_voucher = PaymentVoucher::find($request->payment_voucher_id);
+
+        $importTotal = $request->total_value;
+        $relatedStockReceivedDockets = StockReceivedDocket::where('payment_voucher_id', $request->payment_voucher_id)->get();
+        foreach ($relatedStockReceivedDockets as $relatedImport) {
+            if ($relatedImport['id'] != $id) {
+                $importTotal += $relatedImport->total_value;
+            }
+        }
+
+        if ($payment_voucher['total_price'] < $importTotal) {
+            return response()->json([
+                'success' => 'warning',
+                'message' => "Tổng giá trị nhập vượt quá giá trị phiếu chi.",
+            ]); 
+        } else {
+            
+            if($request->image != $import['image']) {
+                $base64Image = $request->image;
+                $imageLink = $import['image'];
+                DeleteImportFromGoogleDrive::dispatch($imageLink);
+                UploadImportToGoogleDrive::dispatch($import, $base64Image);
+            }
+
+
+            $import->staff_id = $request->staff_id;
+            $import->supplier_id = $request->supplier_id;
+            $import->payment_voucher_id = $request->payment_voucher_id;
+            $import->date = $request->date;
+            $import->total_price = $request->total_price;
+            $import->value_added = $request->value_added;
+            $import->total_value = $request->total_value;
+            $import->form = $request->form;
+            $import->description = $request->description;
+
+            $import->save();
+
+            
+
+            $existingImportProduct = StockReceivedDocketProduct::where('stock_received_docket_id', $id)->get();
+            foreach($existingImportProduct as $importProduct) {
+                $existingImportProductDetail = 
+                    StockReceivedDocketProductDetail::where('stock_received_docket_product_id', $importProduct['id'])->get();
+                    
+                foreach($existingImportProductDetail as $importProductDetail) {
+                    // Update Inventories        
+                    $currentMonthYear = date('Ym');  // Lấy tháng và năm hiện tại dưới dạng chuỗi "YYYYMM"
+                    $existingInventory = Inventory::where(['month_year' => $currentMonthYear, 
+                        'product_id' => $importProductDetail['product_id'], 
+                        'color_id' => $importProductDetail['color_id'], 
+                        'size_id' => $importProductDetail['size_id']])->first();
+                    
+                    if($existingInventory) {
+                        Inventory::where(['month_year' => $currentMonthYear, 
+                        'product_id' => $importProductDetail['product_id'], 
+                        'color_id' => $importProductDetail['color_id'], 
+                        'size_id' => $importProductDetail['size_id']])
+                        ->update([
+                            'total_import' => $existingInventory['total_import'] - $importProductDetail['quantity'],
+                            'total_final' => $existingInventory['total_final'] - $importProductDetail['quantity']
+                            ]);
+                    }
+
+                    $importProductDetail->delete();
+                }
+
+                $importProduct->delete();
+            }
+
+            foreach($request->items as $item) {
+                $product = Product::find($item['product_id']);
+                if($product['price'] != $item['price']) {
+                    $product->price = $item['price'];
+                    $product->price_final = ($item['price']*(100-$product['discount_percent']))/100;
+                    $product->save();
+                }
+                $importProduct = new StockReceivedDocketProduct();
+                $importProduct->stock_received_docket_id = $id;
+                $importProduct->product_id = $item['product_id'];
+                $importProduct->quantity = $item['quantity'];
+                $importProduct->price = $item['price_purchase'];
+                $importProduct->save();
+                
+                $importProductId = $importProduct->id;
+
+                foreach ($request->inventories as $inventory) {
+                    if ($inventory['product_id'] == $item['product_id']) {
+                        $importProductDetail = new StockReceivedDocketProductDetail();
+                        $importProductDetail->stock_received_docket_product_id = $importProductId;
+                        $importProductDetail->product_id = $inventory['product_id'];
+                        $importProductDetail->color_id = $inventory['color_id'];
+                        $importProductDetail->size_id = $inventory['size_id'];
+                        $importProductDetail->quantity = $inventory['quantity'];
+                        $importProductDetail->save();
+                    }
+                }
+            }
+
+            foreach($request->inventories as $inventory) {
+                $currentMonthYear = date('Ym');  // Lấy tháng và năm hiện tại dưới dạng chuỗi "YYYYMM"
+                    $existingInventory = Inventory::where(['month_year' => $currentMonthYear, 
+                        'product_id' => $inventory['product_id'], 'color_id' => $inventory['color_id'], 
+                        'size_id' => $inventory['size_id']])->first();
+
+                if(!$existingInventory) {
+                    $importInventory = new Inventory();
+                    $importInventory->month_year = $currentMonthYear;
+                    $importInventory->product_id = $inventory['product_id'];
+                    $importInventory->color_id = $inventory['color_id'];
+                    $importInventory->size_id = $inventory['size_id'];
+                    $importInventory->total_initial = $existingInventory['total_initial'];
+                    $importInventory->total_import = $inventory['quantity'];
+                    $importInventory->total_export = 0;
+                    $importInventory->total_final = $inventory['quantity'];
+                    $importInventory->save();
+                } else {
+                    Inventory::where(['month_year' => $currentMonthYear, 
+                        'product_id' => $inventory['product_id'], 'color_id' => $inventory['color_id'], 
+                        'size_id' => $inventory['size_id']])->update([
+                            'total_import' => $existingInventory['total_import'] + $inventory['quantity'],
+                            'total_final' => $existingInventory['total_final'] + $inventory['quantity'],
+                        ]);
+                }
+            }
+    
+            return response()->json([
+                'success' => 'success',
+                'message' => "Phiếu nhập được cập nhật thành công",
+            ]); 
 
         }
-        
-
     }
 
     public function destroy($id)

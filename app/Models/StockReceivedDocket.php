@@ -61,4 +61,9 @@ class StockReceivedDocket extends Model
     {
         return $this->hasMany(StockReceivedDocketProduct::class, 'stock_received_docket_id');
     }
+
+    public function stock_received_docket_product_detail()
+    {
+        return $this->hasMany(StockReceivedDocketProductDetail::class, 'stock_received_docket_id');
+    }
 }
