@@ -23,7 +23,7 @@ class ProductsController extends Controller
     public function index()
     {
         $product = Product::with('category','brand', 'product_image', 'inventories.size', 
-            'reviews.images_review')->orderBy('created_at', 'DESC')->get();
+            'reviews.review_image')->orderBy('created_at', 'DESC')->get();
         return response()->json(ProductResource::collection($product));
     }
     
@@ -236,7 +236,7 @@ class ProductsController extends Controller
         $categoryCount = Category::where(['url' => $url, 'status' => 1])->count();
         if($categoryCount > 0) {
             $categoryDetails = Category::categoryDetails($url);
-            $products = Product::with('category','brand', 'product_image', 'inventories.size', 'reviews.images_review')->whereIn('category_id', $categoryDetails['catIds'])->where('status', 1)->orderBy('created_at', 'DESC')->get();
+            $products = Product::with('category','brand', 'product_image', 'inventories.size', 'reviews.review_image')->whereIn('category_id', $categoryDetails['catIds'])->where('status', 1)->orderBy('created_at', 'DESC')->get();
                 foreach($products as $key => $value) {
                     $getDiscountPrice = Product::getDiscountPrice($products[$key]['id']);
                     if($getDiscountPrice > 0) {
@@ -257,7 +257,7 @@ class ProductsController extends Controller
     }
 
     public function listingAll() {
-        $products = Product::with('category','brand', 'product_image', 'inventories.size', 'reviews.images_review')->where('status', 1)->orderBy('created_at', 'DESC')->get();
+        $products = Product::with('category','brand', 'product_image', 'inventories.size', 'reviews.review_image')->where('status', 1)->orderBy('created_at', 'DESC')->get();
         foreach($products as $key => $value) {
             $getDiscountPrice = Product::getDiscountPrice($products[$key]['id']);
             if($getDiscountPrice > 0) {
@@ -278,10 +278,10 @@ class ProductsController extends Controller
             $product = Product::with(['category','brand', 'product_image', 
                 'inventories' => function ($query) use ($maxMonthYear) {
                     $query->where('month_year', $maxMonthYear);
-                }, 'reviews.images_review'])
+                }, 'reviews.review_image'])
                 ->where('status', 1)->find($id);
         } else {
-            $product = Product::with(['category','brand', 'product_image'])
+            $product = Product::with(['category','brand', 'product_image', 'reviews.review_image'])
             ->where('status', 1)->find($id);
         }
         return response()->json(new ProductResource($product));

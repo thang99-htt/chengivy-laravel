@@ -28,8 +28,10 @@ class Review extends Model
     protected $fillable = [
         'user_id',
         'product_id',
+        'classify',
         'content',
-        'rate',
+        'star',
+        'fitted_value',
         'status'
     ];
 
@@ -43,8 +45,9 @@ class Review extends Model
         return $this->belongsTo(Product::class, 'product_id');
     }
 
-    public function images_review() {
-        return $this->hasMany(ImagesReview::class);
+
+    public function review_image() {
+        return $this->hasMany(ReviewImage::class);
     }
 
     public function user()

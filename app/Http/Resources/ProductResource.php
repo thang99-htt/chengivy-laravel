@@ -27,6 +27,7 @@ class ProductResource extends JsonResource
                 ->first() // Lấy hình ảnh đầu tiên trong nhóm màu đầu tiên
                 ->image;
         }
+
         return [
             'id' => $this->id,
             'name' => $this->name,
@@ -80,22 +81,36 @@ class ProductResource extends JsonResource
                     }),
                 ];
             })->toArray(),
-            'reviews' => $this->reviews->map(function ($review) {
-                return [
-                    'id' => $review->id,
-                    'user' => $review->user->name,
-                    'content' => $review->content,
-                    'rate' => $review->rate,
-                    'status' => $review->status,
-                    'created_at' => $review->created_at,
-                    'images_review' => $review->images_review->map(function ($image) {
-                        return [
-                            'id' => $image->id,
-                            'image' => $image->image
-                        ];
-                    }),
-                ];
-            }), 
+            'reviews' => [
+                'average_star_rating' => $this->reviews->avg('star') > 0 ? $this->reviews->avg('star') : 0,
+                'fitted_value_distribution' => $this->reviews->count() > 0 ? [
+                    'value_1' => $this->reviews->where('fitted_value', 1)->count() / $this->reviews->count() * 100,
+                    'value_2' => $this->reviews->where('fitted_value', 2)->count() / $this->reviews->count() * 100,
+                    'value_3' => $this->reviews->where('fitted_value', 3)->count() / $this->reviews->count() * 100,
+                ] : [
+                    'value_1' => 0,
+                    'value_2' => 0,
+                    'value_3' => 0,
+                ],
+                'items' => $this->reviews->map(function ($review) {
+                    return [
+                        'id' => $review->id,
+                        'user' => $review->user->name,
+                        'classify' => $review->classify,
+                        'date' => $review->date,
+                        'star' => $review->star,
+                        'fitted_value' => $review->fitted_value,
+                        'content' => $review->content,
+                        'status' => $review->status,
+                        'images' => $review->review_image->map(function ($image) {
+                            return [
+                                'id' => $image->id,
+                                'image' => $image->image
+                            ];
+                        }),
+                    ];
+                })
+            ], 
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
             'deleted_at' => $this->deleted_at,

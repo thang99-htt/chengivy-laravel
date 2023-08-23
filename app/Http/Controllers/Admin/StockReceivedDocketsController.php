@@ -125,37 +125,97 @@ class StockReceivedDocketsController extends Controller
                     }
                 }
                 
+                $sizesNew = [];
+                $sizesOld = [];
+                $firstInventory = null;
+
                 foreach($request->inventories as $inventory) {
                     $currentMonthYear = date('Ym');  // Lấy tháng và năm hiện tại dưới dạng chuỗi "YYYYMM"
-                    $existingInventory = Inventory::where(['month_year' => $currentMonthYear, 
+                    $existingInventoryCurrent = Inventory::where(['month_year' => $currentMonthYear, 
                         'product_id' => $inventory['product_id'], 'color_id' => $inventory['color_id'], 
                         'size_id' => $inventory['size_id']])->first();
         
-                    if(!$existingInventory) {
+                    // Tính tháng và năm của cuối tháng cũ
+                    $lastMonth = date('m', strtotime('-1 month'));
+                    $lastYear = date('Y', strtotime('-1 month'));
+                    $lastMonthYear = $lastYear . str_pad($lastMonth, 2, '0', STR_PAD_LEFT);
+                        
+                    $existingInventory = Inventory::where([
+                        'month_year' => $lastMonthYear,  // Sử dụng tháng và năm cuối tháng cũ
+                        'product_id' => $inventory['product_id'], 
+                        'color_id' => $inventory['color_id'], 
+                        'size_id' => $inventory['size_id']
+                    ])->first();
+                    $sizesNew[] = $existingInventory;
+
+
+                    if ($firstInventory === null) {
+                        $firstInventory = $inventory;
+                        // Truy vấn dữ liệu từ mảng kết hợp $sizesOld
+                        $existingInventory1 = Inventory::where([
+                            'month_year' => $lastMonthYear,
+                            'product_id' => $firstInventory['product_id'],
+                            'color_id' => $firstInventory['color_id'],
+                        ])->get();
+                        foreach($existingInventory1 as $size) {
+                            $sizesOld[] = $size; 
+                        }
+                    }
+                    
+
+                    if(!$existingInventoryCurrent) {
                         $importInventory = new Inventory();
                         $importInventory->month_year = $currentMonthYear;
                         $importInventory->product_id = $inventory['product_id'];
                         $importInventory->color_id = $inventory['color_id'];
                         $importInventory->size_id = $inventory['size_id'];
-                        $importInventory->total_initial = $existingInventory['total_initial'];
-                        $importInventory->total_import = $inventory['quantity'];
-                        $importInventory->total_export = 0;
-                        $importInventory->total_final = $inventory['quantity'];
+                        $importInventory->total_initial = $existingInventory['total_final'];
+                        
+                        $importInventory->total_import = $existingInventory['total_import'] 
+                                                        + $inventory['quantity'];
+                        $importInventory->total_export = $existingInventory['total_export'];
+                        $importInventory->total_final = $existingInventory['total_final'] 
+                                                        + $inventory['quantity'];
+                                                        
                         $importInventory->save();
                     } else {
                         Inventory::where(['month_year' => $currentMonthYear, 
                             'product_id' => $inventory['product_id'], 'color_id' => $inventory['color_id'], 
                             'size_id' => $inventory['size_id']])->update([
-                                'total_import' => $existingInventory['total_import'] + $inventory['quantity'],
-                                'total_final' => $existingInventory['total_final'] + $inventory['quantity'],
+                                'total_import' => $existingInventoryCurrent['total_import'] + $inventory['quantity'],
+                                'total_final' => $existingInventoryCurrent['total_final'] + $inventory['quantity'],
                             ]);
                     }
 
                 }
         
+                $itemsOnlyInOld = array_diff($sizesOld, $sizesNew);
+
+                foreach($itemsOnlyInOld as $inventory) {
+                    $existingInventory = Inventory::where([
+                        'month_year' => $lastMonthYear,  // Sử dụng tháng và năm cuối tháng cũ
+                        'product_id' => $inventory['product_id'], 
+                        'color_id' => $inventory['color_id'], 
+                        'size_id' => $inventory['size_id']
+                    ])->first();
+                    
+                    $importInventory = new Inventory();
+                    $importInventory->month_year = $currentMonthYear;
+                    $importInventory->product_id = $inventory['product_id'];
+                    $importInventory->color_id = $inventory['color_id'];
+                    $importInventory->size_id = $inventory['size_id'];
+                    $importInventory->total_initial = $existingInventory['total_final'];
+                    
+                    $importInventory->total_import = $existingInventory['total_import'];
+                    $importInventory->total_export = $existingInventory['total_export'];
+                    $importInventory->total_final = $existingInventory['total_final'];
+                                                    
+                    $importInventory->save();
+                }
+
                 return response()->json([
                     'success' => 'success',
-                    'message' => "Phiếu nhập được lập thành công",
+                    'message' => "Phiếu nhập được lập thành công"
                 ]); 
             }
         }

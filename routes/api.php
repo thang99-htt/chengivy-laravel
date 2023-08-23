@@ -117,9 +117,9 @@ Route::put('orders/purchase/receipt-{id}', [App\Http\Controllers\User\OrdersCont
 
 Route::put('user/update-profile/{id}', [App\Http\Controllers\User\UsersController::class, 'updateProfile']);
 Route::put('user/update-password/{id}', [App\Http\Controllers\User\UsersController::class, 'updatePassword']);
-Route::post('reviews/add',[App\Http\Controllers\User\ReviewsController::class, 'store']);
 
 Route::get('admin/reviews',[App\Http\Controllers\Admin\ReviewsController::class, 'index']);
+Route::post('admin/reviews/',[App\Http\Controllers\Admin\ReviewsController::class, 'store']);
 Route::put('admin/reviews/{id}/{status}', [App\Http\Controllers\Admin\ReviewsController::class, 'updateReviewStatus']);
 
 Route::post('register', [App\Http\Controllers\User\AuthController::class, 'register']);

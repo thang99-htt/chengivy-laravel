@@ -24,8 +24,9 @@ class OrderResource extends JsonResource
 
         return [
             'id' => $this->id,
-            'staff' => $this->staff->name,
+            'staff' => $this->staff,
             'payment_method' => $this->payment_method,
+            'voucher' => $this->voucher,
             'total_value' => $this->total_value,
             'fee' => $this->fee,
             'total_discount' => $this->total_discount,
@@ -37,10 +38,11 @@ class OrderResource extends JsonResource
             'estimated_at' => $this->estimated_at,
             'cancled_at' => $this->cancled_at,
             'receipted_at' => $this->receipted_at,
+            'note' => $this->note,
         
             'user_account_detail' => $this->user,
-            'user_name' => $this->name_receiver,
-            'user_phone' => $this->phone_receiver,
+            'name_receiver' => $this->name_receiver,
+            'phone_receiver' => $this->phone_receiver,
             'user_address_detail' => $user_address_detail,
             'user_address' => $user_address,
 
@@ -52,8 +54,8 @@ class OrderResource extends JsonResource
                     'size' => $orderDetail->size,
                     'color' => $orderDetail->color,
                     'price' => $orderDetail->product->price,
-                    'quantity' => $orderDetail->quantity,
                     'price_discount' => $orderDetail->price_discount,
+                    'quantity' => $orderDetail->quantity,
                 ];
             }),          
         ];

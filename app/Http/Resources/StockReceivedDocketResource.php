@@ -58,6 +58,7 @@ class StockReceivedDocketResource extends JsonResource
                         'product_id' => $detailItem->product->id,
                         'color_id' => $detailItem->color->id,
                         'color_name' => $detailItem->color->name,
+                        'color' => $detailItem->color->color,
                         'size_id' => $detailItem->size->id,
                         'size_name' => $detailItem->size->name,
                         'quantity' => $detailItem->quantity,
