@@ -46,15 +46,17 @@ Route::delete('/admin/brands', [BrandsController::class, 'destroyIds']);
 
 Route::prefix('/admin/products')->group( function() {
     Route::get('/',[ProductsController::class, 'index']); 
+    Route::get('/sales',[ProductsController::class, 'getSales']); 
     Route::get('/all',[ProductsController::class, 'listingAll']);
     Route::get('/type',[ProductsController::class, 'type']); 
     Route::get('/sizes',[ProductsController::class, 'sizeAll']);
     Route::get('/colors',[ProductsController::class, 'colorAll']);
+    Route::get('/inventories',[ProductsController::class, 'getInventories']); 
     Route::get('/{url}',[ProductsController::class, 'listing']);
     Route::get('/detail/{id}',[ProductsController::class, 'detail']);
-    Route::get('/inventories',[ProductsController::class, 'inventories']); 
     Route::post('/add-image',[ProductsController::class, 'addImage']);
     Route::post('/add-size',[ProductsController::class, 'addSize']);
+    Route::put('update-product-sale', [ProductsController::class, 'updateProductsSale']);
     Route::put('{id}/{status}', [ProductsController::class, 'updateProductStatus']);
     Route::delete('/delete-image/{id}',[ProductsController::class, 'deleteImage']);
     Route::delete('/delete-size/{id}',[ProductsController::class, 'deleteSize']);

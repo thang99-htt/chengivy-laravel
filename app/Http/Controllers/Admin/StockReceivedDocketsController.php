@@ -128,17 +128,18 @@ class StockReceivedDocketsController extends Controller
                 $sizesNew = [];
                 $sizesOld = [];
                 $firstInventory = null;
-
+                
+                $currentMonthYear = date('Ym');  // Lấy tháng và năm hiện tại dưới dạng chuỗi "YYYYMM"
+                $lastMonth = date('m', strtotime('-1 month'));
+                $lastYear = date('Y', strtotime('-1 month'));
+                $lastMonthYear = $lastYear . str_pad($lastMonth, 2, '0', STR_PAD_LEFT);
+                
                 foreach($request->inventories as $inventory) {
-                    $currentMonthYear = date('Ym');  // Lấy tháng và năm hiện tại dưới dạng chuỗi "YYYYMM"
                     $existingInventoryCurrent = Inventory::where(['month_year' => $currentMonthYear, 
                         'product_id' => $inventory['product_id'], 'color_id' => $inventory['color_id'], 
                         'size_id' => $inventory['size_id']])->first();
         
                     // Tính tháng và năm của cuối tháng cũ
-                    $lastMonth = date('m', strtotime('-1 month'));
-                    $lastYear = date('Y', strtotime('-1 month'));
-                    $lastMonthYear = $lastYear . str_pad($lastMonth, 2, '0', STR_PAD_LEFT);
                         
                     $existingInventory = Inventory::where([
                         'month_year' => $lastMonthYear,  // Sử dụng tháng và năm cuối tháng cũ
@@ -191,26 +192,35 @@ class StockReceivedDocketsController extends Controller
         
                 $itemsOnlyInOld = array_diff($sizesOld, $sizesNew);
 
-                foreach($itemsOnlyInOld as $inventory) {
-                    $existingInventory = Inventory::where([
-                        'month_year' => $lastMonthYear,  // Sử dụng tháng và năm cuối tháng cũ
-                        'product_id' => $inventory['product_id'], 
-                        'color_id' => $inventory['color_id'], 
-                        'size_id' => $inventory['size_id']
-                    ])->first();
-                    
-                    $importInventory = new Inventory();
-                    $importInventory->month_year = $currentMonthYear;
-                    $importInventory->product_id = $inventory['product_id'];
-                    $importInventory->color_id = $inventory['color_id'];
-                    $importInventory->size_id = $inventory['size_id'];
-                    $importInventory->total_initial = $existingInventory['total_final'];
-                    
-                    $importInventory->total_import = $existingInventory['total_import'];
-                    $importInventory->total_export = $existingInventory['total_export'];
-                    $importInventory->total_final = $existingInventory['total_final'];
-                                                    
-                    $importInventory->save();
+                if($itemsOnlyInOld) {
+                    foreach($itemsOnlyInOld as $inventory) {
+                        $existingInventory = Inventory::where([
+                            'month_year' => $lastMonthYear,  // Sử dụng tháng và năm cuối tháng cũ
+                            'product_id' => $inventory['product_id'], 
+                            'color_id' => $inventory['color_id'], 
+                            'size_id' => $inventory['size_id']
+                        ])->first();
+                        
+                        $existingInventoryCurrent = Inventory::where(['month_year' => $currentMonthYear, 
+                        'product_id' => $inventory['product_id'], 'color_id' => $inventory['color_id'], 
+                        'size_id' => $inventory['size_id']])->first();
+
+                        if(!$existingInventoryCurrent) {
+                            $importInventory = new Inventory();
+                            $importInventory->month_year = $currentMonthYear;
+                            $importInventory->product_id = $inventory['product_id'];
+                            $importInventory->color_id = $inventory['color_id'];
+                            $importInventory->size_id = $inventory['size_id'];
+                            $importInventory->total_initial = $existingInventory['total_final'];
+                            
+                            $importInventory->total_import = $existingInventory['total_import'];
+                            $importInventory->total_export = $existingInventory['total_export'];
+                            $importInventory->total_final = $existingInventory['total_final'];
+                                                            
+                            $importInventory->save();
+                        }
+                    }
+
                 }
 
                 return response()->json([

@@ -288,11 +288,47 @@ class ProductsController extends Controller
     }
 
     
-    public function getInventory($product_id, $size_id)
+    public function getInventories()
     {
-        $getProductStock = Inventory::where(['$product_id' => $product_id, 'size_id' => $size_id]);
-        return response()->json($getProductStock, 200);
+        $products = Product::with(['product_image'])
+            ->orderBy('created_at', 'DESC')
+            ->get();
+
+        foreach ($products as $product) {
+            // Determine the maximum month and year for this product's inventories
+            $maxMonthYear = $product->inventories->max('month_year');
+
+            $totalImport = $product->inventories->sum('total_import');
+            $product->total_import = $totalImport;
+
+            $totalExport = $product->inventories->sum('total_export');
+            $product->total_export = $totalExport;
+
+            $totalFinal = $product->inventories->sum('total_final');
+            $product->total_final = $totalFinal;
+
+            $firstImage = $product->product_image->first();
+            if ($firstImage) {
+                $product->image = $firstImage->image;
+            }
+
+            // Fetch inventory entries for the determined max month and year with size relationship
+            $inventoryEntries = Inventory::with('size', 'color')
+                ->where('month_year', $maxMonthYear)
+                ->where('product_id', $product->id)
+                ->orderBy('color_id')
+                ->orderBy('size_id')
+                ->get();
+
+            // Assign the inventory entries to a new property, preserving the original eager loaded data
+            $product->filtered_inventories = $inventoryEntries;
+        }
+
+        return response()->json($products);
     }
+
+
+
 
     public function addSize(Request $request) {
         $size = Inventory::where(['product_id' => $request['id'], 'size_id' => $request['size']])->first();
@@ -316,4 +352,26 @@ class ProductsController extends Controller
     }
 
 
+    public function getSales()
+    {
+        $product = Product::with('category', 'brand', 'product_image', 
+            'inventories.size', 'reviews.review_image')
+            ->where('discount_percent', '>', 0)
+            ->orderBy('created_at', 'DESC')
+            ->get();
+        return response()->json(ProductResource::collection($product));
+    }
+
+    public function updateProductsSale(Request $request)
+    {
+        $products = $request->all();
+        foreach($products as $item) {
+            $product = Product::find($item['id']);
+            $product->price = $item['price'];
+            $product->discount_percent = $item['discount_percent'];
+            $product->price_final = $item['price_final'];
+            $product->save();
+        }
+        return response()->json(['success'=>'true'], 200);
+    }
 }
