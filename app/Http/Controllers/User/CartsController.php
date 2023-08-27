@@ -23,11 +23,13 @@ class CartsController extends Controller
                 });
             }])->orderby('created_at', 'Desc')->where('user_id', $id)->get();
         $into_money = 0;
+        $total_price = 0;
         $count_item = 0;
         
         foreach($getCartItems as $item) {
             $productImage = ProductImage::where(['product_id' => $item->product_id, 'color_id' => $item->color_id])->first();
             $item['total_price'] = 0;
+            $item['total_value'] = 0;
             $item['size_name'] = $item->size->name;
             $item['color_name'] = $item->color->name;
             $item['image'] = $productImage->image;
@@ -39,14 +41,17 @@ class CartsController extends Controller
             $item['inventory'] = $inventory;
             
             if($item->inventory->total_final > 0){
-                $item['total_price'] += $item['product']['price_final']*$item['quantity'];
+                $item['total_price'] += $item['product']['price']*$item['quantity'];
+                $item['total_value'] += $item['product']['price_final']*$item['quantity'];
             }
-            $into_money += $item['total_price'];
+            $total_price += $item['total_price'];
+            $into_money += $item['total_value'];
 
             $count_item++;
         }
         return response()->json([
             'getCartItems' => $getCartItems,
+            'total_price' => $total_price,
             'into_money' => $into_money,
             'count_item' => $count_item
         ]);

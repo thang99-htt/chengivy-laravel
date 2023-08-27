@@ -170,13 +170,20 @@ class StockReceivedDocketsController extends Controller
                         $importInventory->product_id = $inventory['product_id'];
                         $importInventory->color_id = $inventory['color_id'];
                         $importInventory->size_id = $inventory['size_id'];
-                        $importInventory->total_initial = $existingInventory['total_final'];
-                        
-                        $importInventory->total_import = $existingInventory['total_import'] 
-                                                        + $inventory['quantity'];
-                        $importInventory->total_export = $existingInventory['total_export'];
-                        $importInventory->total_final = $existingInventory['total_final'] 
-                                                        + $inventory['quantity'];
+                        if($existingInventory) {
+                            $importInventory->total_initial = $existingInventory['total_final'];
+                            
+                            $importInventory->total_import = $existingInventory['total_import'] 
+                                                            + $inventory['quantity'];
+                            $importInventory->total_export = $existingInventory['total_export'];
+                            $importInventory->total_final = $existingInventory['total_final'] 
+                                                            + $inventory['quantity'];
+                        } else {
+                            $importInventory->total_initial = 0;
+                            $importInventory->total_import = $inventory['quantity'];
+                            $importInventory->total_export = 0;
+                            $importInventory->total_final = $inventory['quantity'];
+                        }
                                                         
                         $importInventory->save();
                     } else {
@@ -212,7 +219,6 @@ class StockReceivedDocketsController extends Controller
                             $importInventory->color_id = $inventory['color_id'];
                             $importInventory->size_id = $inventory['size_id'];
                             $importInventory->total_initial = $existingInventory['total_final'];
-                            
                             $importInventory->total_import = $existingInventory['total_import'];
                             $importInventory->total_export = $existingInventory['total_export'];
                             $importInventory->total_final = $existingInventory['total_final'];

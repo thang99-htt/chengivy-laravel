@@ -8,6 +8,8 @@ use App\Http\Controllers\Admin\ProductsController;
 use App\Http\Controllers\Admin\OrdersController;
 use App\Http\Controllers\Admin\StatisticalsController;
 use App\Http\Controllers\Admin\StockReceivedDocketsController;
+use App\Http\Controllers\Admin\VouchersController;
+use App\Http\Controllers\Admin\VouchersControllersController;
 
 /*
 |--------------------------------------------------------------------------
@@ -43,6 +45,8 @@ Route::apiResource('/admin/categories', CategoriesController::class);
 
 Route::apiResource('/admin/brands', BrandsController::class);
 Route::delete('/admin/brands', [BrandsController::class, 'destroyIds']);
+Route::get('/admin/vouchers/voucher-by-user-{id}', [VouchersController::class, 'voucherByUser']);
+Route::apiResource('/admin/vouchers', VouchersController::class);
 
 Route::prefix('/admin/products')->group( function() {
     Route::get('/',[ProductsController::class, 'index']); 
@@ -121,8 +125,10 @@ Route::put('user/update-profile/{id}', [App\Http\Controllers\User\UsersControlle
 Route::put('user/update-password/{id}', [App\Http\Controllers\User\UsersController::class, 'updatePassword']);
 
 Route::get('admin/reviews',[App\Http\Controllers\Admin\ReviewsController::class, 'index']);
+Route::get('admin/reviews/{id}',[App\Http\Controllers\Admin\ReviewsController::class, 'show']);
 Route::post('admin/reviews/',[App\Http\Controllers\Admin\ReviewsController::class, 'store']);
-Route::put('admin/reviews/{id}/{status}', [App\Http\Controllers\Admin\ReviewsController::class, 'updateReviewStatus']);
+Route::put('admin/reviews/{id}', [App\Http\Controllers\Admin\ReviewsController::class, 'update']);
+Route::put('admin/reviews/user-{id}', [App\Http\Controllers\Admin\ReviewsController::class, 'updateReviewStatus']);
 
 Route::post('register', [App\Http\Controllers\User\AuthController::class, 'register']);
 Route::post('admin/login', [App\Http\Controllers\Admin\AuthController::class, 'login']);

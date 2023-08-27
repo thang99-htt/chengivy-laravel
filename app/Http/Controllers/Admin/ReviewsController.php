@@ -20,6 +20,12 @@ class ReviewsController extends Controller
         return response(ReviewResource::collection($reviews));
     }
 
+    public function show($id)
+    {
+        $review = Review::with('user','product','review_image')->find($id);
+        return response()->json(new ReviewResource($review));
+    }
+
     public function store(Request $request)
     {
         foreach($request->all() as $item) {
@@ -55,10 +61,25 @@ class ReviewsController extends Controller
     }
 
     public function updateReviewStatus($id, Request $request) {
-        $review = Review::find($id);
-        $review->status = !$request->status;
+        $review = Review::find($request->id);
+        if($request->status == 0) {
+            $review->status = 1;
+        } else {
+            $review->status = 0;
+        }
         $review->save();
         
+        return response()->json([
+            'success' => true,
+        ],200);
+    }
+
+    public function update($id, Request $request)
+    {
+        $review = Review::find($id);
+        $review->reply = $request->reply;
+        $review->save();
+
         return response()->json([
             'success' => true,
         ],200);

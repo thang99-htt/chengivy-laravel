@@ -105,6 +105,7 @@ class ProductResource extends JsonResource
                         'star' => $review->star,
                         'fitted_value' => $review->fitted_value,
                         'content' => $review->content,
+                        'reply' => $review->reply,
                         'status' => $review->status,
                         'images' => $review->review_image->map(function ($image) {
                             return [

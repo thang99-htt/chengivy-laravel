@@ -32,32 +32,14 @@ class OrdersController extends Controller
                 });
             }])->orderby('created_at', 'Desc')->where('user_id', $id)->get();
 
-        $order_total_price = 0;
-        $order_total_price_after_discount = 0;
-        
-        foreach($getCartItems as $item) {
-            $item_total_price = 0;
-            $item_total_price_after_discount = 0;
-
-            $inventory = Inventory::where(['product_id' => $item->product_id, 
-                'color_id' => $item->color_id, 'size_id' => $item->size_id])->orderByDesc('month_year')->first();
-            $item['inventory'] = $inventory;
-            
-            if($item->inventory->total_final > 0){
-                $item_total_price += $item['product']['price']*$item['quantity'];
-                $item_total_price_after_discount += $item['product']['price_final']*$item['quantity'];
-            }
-            
-            $order_total_price += $item_total_price;
-            $order_total_price_after_discount += $item_total_price_after_discount;
-        }
-
         // Save table orders
         $order = new Order;
         $order->staff_id = 1;
         $order->user_id = $id;
         $order->payment_method_id = $request['payment_method_id'];
-        $order->voucher_id = 4;
+        if($request['voucher_id']) {
+            $order->voucher_id = $request['voucher_id'];
+        }
         $order->address_receiver = $request['delivery_address']['address'];
         $order->name_receiver = $request['delivery_address']['name'];
         $order->phone_receiver = $request['delivery_address']['phone'];
@@ -65,19 +47,10 @@ class OrdersController extends Controller
         $order->ordered_at = Carbon::now('Asia/Ho_Chi_Minh');
         $order->estimated_at = Carbon::now('Asia/Ho_Chi_Minh')->addDays(3);
 
-        $order->total_price = $order_total_price;
+        $order->total_price = $request['total_price'];
         $order->fee = 25000;
-
-        $total_discount = 0;
-
-        if($request['voucher_id'] == 1) {
-            $total_discount = ($order_total_price - $order_total_price_after_discount) + ($order_total_price_after_discount*0.15);
-            $order->total_discount = $total_discount;
-        } 
-        else {
-            $total_discount = ($order_total_price - $order_total_price_after_discount) + 200000;
-        }
-        $order->total_value = ($order_total_price + 25000) - $total_discount;
+        $order->total_discount = $request['total_discount'];
+        $order->total_value = $request['total_value'];
 
         if($request['note'] != null)
             $order->note = $request['note'];
@@ -195,7 +168,7 @@ class OrdersController extends Controller
     public function cancleOrder($id) {
         $order = Order::find($id);
         $order->status_id = 10;
-        $order->cancle_date = Carbon::now('Asia/Ho_Chi_Minh');
+        $order->cancled_at = Carbon::now('Asia/Ho_Chi_Minh');
         $order->save();
         
         return response()->json([
