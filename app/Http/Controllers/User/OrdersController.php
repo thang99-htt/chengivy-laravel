@@ -8,7 +8,7 @@ use App\Models\Product;
 use App\Models\Order;
 use App\Models\OrderProduct;
 use App\Models\Inventory;
-use App\Models\Size;
+use App\Models\Voucher;
 use App\Models\Cart;
 use Carbon\Carbon;
 use App\Http\Resources\OrderResource;
@@ -39,6 +39,10 @@ class OrdersController extends Controller
         $order->payment_method_id = $request['payment_method_id'];
         if($request['voucher_id']) {
             $order->voucher_id = $request['voucher_id'];
+
+            $voucher = Voucher::find($request['voucher_id']);
+            $voucher->quantity_remain = $voucher->quantity_remain -1;
+            $voucher->save();
         }
         $order->address_receiver = $request['delivery_address']['address'];
         $order->name_receiver = $request['delivery_address']['name'];
@@ -76,7 +80,7 @@ class OrdersController extends Controller
                 $orderItem->quantity = $item['quantity'];
                 $orderItem->price = $item['product']['price'];
                 if($item['product']['discount_percent'] > 0) {
-                    $orderItem->price_discount = $item['product']['price_final'];
+                    $orderItem->price_discount = $item['product']['price'] - $item['product']['price_final'];
                 } else {
                     $orderItem->price_discount = 0;
                 }
@@ -110,41 +114,43 @@ class OrdersController extends Controller
         $order = new Order;
         $order->staff_id = 1;
         $order->user_id = $id;
-        $order->contact_id = $request->contact_id;
-        $order->payment_id = $request->payment_id;
-        $order->status_id = 1;
-        $order->order_date = Carbon::now('Asia/Ho_Chi_Minh');
-        $order->estimate_date = Carbon::now('Asia/Ho_Chi_Minh')->addDays(3);
-
-        if($request->discount_percent > 0) {
-            $order->total_price = $request->final_price + 25000;
-        } else {
-            $order->total_price = $request->price + 25000;
+        $order->payment_method_id = $request['payment_method_id'];
+        if($request['voucher_id']) {
+            $order->voucher_id = $request['voucher_id'];
         }
-        
+        $order->address_receiver = $request['delivery_address']['address'];
+        $order->name_receiver = $request['delivery_address']['name'];
+        $order->phone_receiver = $request['delivery_address']['phone'];
+        $order->status_id = 1;
+        $order->ordered_at = Carbon::now('Asia/Ho_Chi_Minh');
+        $order->estimated_at = Carbon::now('Asia/Ho_Chi_Minh')->addDays(3);
+
+        $order->total_price = $request['total_price'];
+        $order->fee = 25000;
+        $order->total_discount = $request['total_discount'];
+        $order->total_value = $request['total_value'];
+
         if($request['note'] != null)
             $order->note = $request['note'];
-
         $order->paid = $request->paid;        
         $order->save();
 
         $order_id = $order->id;
 
-        // Save table order_product
         $orderItem = new OrderProduct;
         $orderItem->order_id = $order_id;
         $orderItem->product_id = $request['product_id'];
-        $orderItem->size = $request['sizes'][0]['size_name'];
+        $orderItem->size = $request->size_name;
+        $orderItem->color = $request->color_name;
         $orderItem->quantity = 1;
-
-        if($request->discount_percent > 0) {
-            $orderItem->price = $request->final_price;
+        $orderItem->price = $request['price'];
+        if($request['discount_percent'] > 0) {
+            $orderItem->price_discount = $request['price'] - $request['price_final'];
         } else {
-            $orderItem->price = $request->price + 25000;
+            $orderItem->price_discount = 0;
         }
-
         $orderItem->save();
-
+        
         return response()->json([
             'success' => 'success',
             'message' => 'Đơn hàng đặt thành công.'

@@ -24,17 +24,6 @@ class CategoriesController extends Controller
 
     public function store(Request $request)
     {
-        // try {
-        //     $request->validate([
-        //         'parent_id' => 'required',
-        //         'name' => 'required',
-        //         'description' => 'required',
-        //         'url' => 'required',
-        //     ]);
-        // } catch (ValidationException $e) {
-        //     return response()->json(['error' => $e->errors()], 400);
-        // }
-
         if($request->image) {
             $strpos = strpos($request->image, ';');
             $sub = substr($request->image, 0, $strpos);

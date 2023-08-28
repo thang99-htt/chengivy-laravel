@@ -9,6 +9,8 @@ use App\Models\Voucher;
 use App\Models\Order;
 use App\Models\User;
 use Intervention\Image\Facades\Image;
+use App\Jobs\UploadVoucherToGoogleDrive;
+use App\Jobs\DeleteVoucherFromGoogleDrive;
 
 class VouchersController extends Controller
 {
@@ -25,40 +27,43 @@ class VouchersController extends Controller
         $user = User::find($id);
         $order = Order::where('user_id', $user->id)->first(); // Lấy order đầu tiên của người dùng
 
+        // Lấy ngày hiện tại
+        $currentDate = now();
+
         if ($order) {
-            $vouchers = Voucher::get()->slice(1);
+            // Lấy danh sách các phiếu giảm giá với điều kiện ngày kết thúc lớn hơn ngày hiện tại và id khác 1 và quantity_remain lớn hơn 0
+            $vouchers = Voucher::where('date_end', '>', $currentDate)
+                               ->where('id', '<>', 1)
+                               ->where('quantity_remain', '>', 0)
+                               ->get();
         } else {
-            $vouchers = Voucher::get();
+            // Lấy danh sách các phiếu giảm giá với điều kiện ngày kết thúc lớn hơn ngày hiện tại và quantity_remain lớn hơn 0
+            $vouchers = Voucher::where('date_end', '>', $currentDate)
+                               ->where('quantity_remain', '>', 0)
+                               ->get();
         }
 
-        return response()->json($vouchers);
-    }
-
-    public function create()
-    {     
-        $vouchers = Voucher::vouchers();
         return response()->json($vouchers);
     }
 
     public function store(Request $request)
     {
-        if($request->image) {
-            $strpos = strpos($request->image, ';');
-            $sub = substr($request->image, 0, $strpos);
-            $ex = explode("/", $sub)[1];
-            $imageName = time().".".$ex;
-            $img = Image::make($request->image);
-            $upload_path = public_path()."/storage/uploads/vouchers/";
-            $img->save($upload_path.$imageName);
-        }
-        else {
-            $imageName = "";
-        }
         $voucher = new voucher;
         $voucher->name = $request['name'];
-        $voucher->description = $request['description'];
-        $voucher->image = $imageName;
+        $voucher->date_start = $request['date_start'];
+        $voucher->date_end = $request['date_end'];
+        $voucher->condition = $request['condition'];
+        $voucher->level = $request['level'];
+        $voucher->discount = $request['discount'];
+        $voucher->quantity_initial = $request['quantity_initial'];
+        $voucher->quantity_remain = $request['quantity_initial'];
         $voucher->save();
+        $base64Image = $request->image;
+        
+        $voucher->save();
+
+        UploadVoucherToGoogleDrive::dispatch($voucher, $base64Image);
+
         return response()->json($voucher);
     }
 
@@ -70,23 +75,25 @@ class VouchersController extends Controller
 
     public function update(Request $request, $id)
     {
-        $image_current = Voucher::select('image')->where('id', $id)->first();
-        if($request->image == $image_current->image) {
-            $imageName = $image_current->image;
-        } else {
-            $strpos = strpos($request->image, ';');
-            $sub = substr($request->image, 0, $strpos);
-            $ex = explode("/", $sub)[1];
-            $imageName = time().".".$ex;
-            $img = Image::make($request->image);
-            $upload_path = public_path()."/storage/uploads/vouchers/";
-            $img->save($upload_path.$imageName);
+        $voucher = Voucher::find($id);
+        $voucher->name = $request['name'];
+        $voucher->date_start = $request['date_start'];
+        $voucher->date_end = $request['date_end'];
+        $voucher->level = $request['level'];
+        $voucher->discount = $request['discount'];
+        $voucher->quantity_remain = $request['quantity_initial'];
+        $voucher->quantity_initial = $request['quantity_initial'];
+        $voucher->condition = $request['condition'];
+        $voucher->save();
+
+        $imageLink = $voucher->image;
+        
+        if($imageLink) {
+            DeleteVoucherFromGoogleDrive::dispatch($imageLink);
         }
-        $voucher = Voucher::where('id', $id)->update([
-            'name' => $request['name'],
-            'image' => $imageName,
-            'description' => $request['description'],
-        ]);
+        $base64Image = $request->image;
+        
+        UploadVoucherToGoogleDrive::dispatch($voucher, $base64Image);
 
         return response()->json($voucher);
     }

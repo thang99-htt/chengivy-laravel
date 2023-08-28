@@ -9,7 +9,6 @@ use App\Http\Controllers\Admin\OrdersController;
 use App\Http\Controllers\Admin\StatisticalsController;
 use App\Http\Controllers\Admin\StockReceivedDocketsController;
 use App\Http\Controllers\Admin\VouchersController;
-use App\Http\Controllers\Admin\VouchersControllersController;
 
 /*
 |--------------------------------------------------------------------------
@@ -47,16 +46,16 @@ Route::apiResource('/admin/brands', BrandsController::class);
 Route::delete('/admin/brands', [BrandsController::class, 'destroyIds']);
 Route::get('/admin/vouchers/voucher-by-user-{id}', [VouchersController::class, 'voucherByUser']);
 Route::apiResource('/admin/vouchers', VouchersController::class);
+Route::delete('admin/vouchers/', [VouchersController::class, 'destroyIds']);
 
 Route::prefix('/admin/products')->group( function() {
     Route::get('/',[ProductsController::class, 'index']); 
     Route::get('/sales',[ProductsController::class, 'getSales']); 
-    Route::get('/all',[ProductsController::class, 'listingAll']);
+    Route::get('/hiddens',[ProductsController::class, 'getHiddens']); 
     Route::get('/type',[ProductsController::class, 'type']); 
     Route::get('/sizes',[ProductsController::class, 'sizeAll']);
     Route::get('/colors',[ProductsController::class, 'colorAll']);
     Route::get('/inventories',[ProductsController::class, 'getInventories']); 
-    Route::get('/{url}',[ProductsController::class, 'listing']);
     Route::get('/detail/{id}',[ProductsController::class, 'detail']);
     Route::post('/add-image',[ProductsController::class, 'addImage']);
     Route::post('/add-size',[ProductsController::class, 'addSize']);
