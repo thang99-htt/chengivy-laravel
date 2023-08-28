@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\Validator;
 use App\Models\StockReceivedDocketProductDetail;
 use App\Jobs\UploadImportToGoogleDrive;
 use App\Jobs\DeleteImportFromGoogleDrive;
-
+use Carbon\Carbon;
 class StockReceivedDocketsController extends Controller
 {
     public function index()
@@ -129,10 +129,9 @@ class StockReceivedDocketsController extends Controller
                 $sizesOld = [];
                 $firstInventory = null;
                 
-                $currentMonthYear = date('Ym');  // Lấy tháng và năm hiện tại dưới dạng chuỗi "YYYYMM"
-                $lastMonth = date('m', strtotime('-1 month'));
-                $lastYear = date('Y', strtotime('-1 month'));
-                $lastMonthYear = $lastYear . str_pad($lastMonth, 2, '0', STR_PAD_LEFT);
+                $inputDate = $request->date;
+                $carbonDate = Carbon::parse($inputDate);
+                $currentMonthYear = $carbonDate->format('Ym');
                 
                 foreach($request->inventories as $inventory) {
                     $existingInventoryCurrent = Inventory::where(['month_year' => $currentMonthYear, 
@@ -140,24 +139,28 @@ class StockReceivedDocketsController extends Controller
                         'size_id' => $inventory['size_id']])->first();
         
                     // Tính tháng và năm của cuối tháng cũ
-                        
                     $existingInventory = Inventory::where([
-                        'month_year' => $lastMonthYear,  // Sử dụng tháng và năm cuối tháng cũ
-                        'product_id' => $inventory['product_id'], 
-                        'color_id' => $inventory['color_id'], 
+                        'product_id' => $inventory['product_id'],
+                        'color_id' => $inventory['color_id'],
                         'size_id' => $inventory['size_id']
-                    ])->first();
+                    ])
+                    ->where('month_year', '<', $currentMonthYear) // Select months earlier than the current month
+                    ->orderBy('month_year', 'desc') // Order by month_year in descending order
+                    ->first();
+
                     $sizesNew[] = $existingInventory;
 
 
                     if ($firstInventory === null) {
                         $firstInventory = $inventory;
                         // Truy vấn dữ liệu từ mảng kết hợp $sizesOld
-                        $existingInventory1 = Inventory::where([
-                            'month_year' => $lastMonthYear,
-                            'product_id' => $firstInventory['product_id'],
-                            'color_id' => $firstInventory['color_id'],
-                        ])->get();
+                        $existingInventory1 =  Inventory::where([
+                            'product_id' => $inventory['product_id'],
+                            'color_id' => $inventory['color_id']
+                        ])
+                        ->where('month_year', '<', $currentMonthYear) 
+                        ->orderBy('month_year', 'desc') 
+                        ->get();
                         foreach($existingInventory1 as $size) {
                             $sizesOld[] = $size; 
                         }
@@ -201,12 +204,14 @@ class StockReceivedDocketsController extends Controller
 
                 if($itemsOnlyInOld) {
                     foreach($itemsOnlyInOld as $inventory) {
-                        $existingInventory = Inventory::where([
-                            'month_year' => $lastMonthYear,  // Sử dụng tháng và năm cuối tháng cũ
-                            'product_id' => $inventory['product_id'], 
-                            'color_id' => $inventory['color_id'], 
+                        $existingInventory =  Inventory::where([
+                            'product_id' => $inventory['product_id'],
+                            'color_id' => $inventory['color_id'],
                             'size_id' => $inventory['size_id']
-                        ])->first();
+                        ])
+                        ->where('month_year', '<', $currentMonthYear) // Select months earlier than the current month
+                        ->orderBy('month_year', 'desc') // Order by month_year in descending order
+                        ->first();
                         
                         $existingInventoryCurrent = Inventory::where(['month_year' => $currentMonthYear, 
                         'product_id' => $inventory['product_id'], 'color_id' => $inventory['color_id'], 
@@ -286,7 +291,10 @@ class StockReceivedDocketsController extends Controller
                     
                 foreach($existingImportProductDetail as $importProductDetail) {
                     // Update Inventories        
-                    $currentMonthYear = date('Ym');  // Lấy tháng và năm hiện tại dưới dạng chuỗi "YYYYMM"
+                    $inputDate = $request->date;
+                    $carbonDate = Carbon::parse($inputDate);
+                    $currentMonthYear = $carbonDate->format('Ym');
+
                     $existingInventory = Inventory::where(['month_year' => $currentMonthYear, 
                         'product_id' => $importProductDetail['product_id'], 
                         'color_id' => $importProductDetail['color_id'], 
@@ -339,8 +347,11 @@ class StockReceivedDocketsController extends Controller
             }
 
             foreach($request->inventories as $inventory) {
-                $currentMonthYear = date('Ym');  // Lấy tháng và năm hiện tại dưới dạng chuỗi "YYYYMM"
-                    $existingInventory = Inventory::where(['month_year' => $currentMonthYear, 
+                $inputDate = $request->date;
+                $carbonDate = Carbon::parse($inputDate);
+                $currentMonthYear = $carbonDate->format('Ym');
+
+                $existingInventory = Inventory::where(['month_year' => $currentMonthYear, 
                         'product_id' => $inventory['product_id'], 'color_id' => $inventory['color_id'], 
                         'size_id' => $inventory['size_id']])->first();
 
