@@ -8,15 +8,13 @@ use App\Models\Product;
 use App\Models\Order;
 use App\Models\OrderProduct;
 use App\Http\Resources\OrderResource;
-use App\Models\Invoice;
-use App\Models\InvoiceProduct;
 use Carbon\Carbon;
 
 class OrdersController extends Controller
 {
     public function index()
     {
-        $orders = Order::orderBy('created_at', 'DESC')->get();
+        $orders = Order::whereDate('ordered_at', '<', '2023-10-01')->orderBy('ordered_at', 'DESC')->get();
         return response(OrderResource::collection($orders));
     }
 
@@ -31,7 +29,7 @@ class OrdersController extends Controller
         if($request->status == 1) {
             $order->staff_id = $staff;
             $order->status_id = 2;
-            $order->confirm_date = Carbon::now('Asia/Ho_Chi_Minh');
+            $order->confirmed_at = Carbon::now('Asia/Ho_Chi_Minh');
         }
         if($request->status == 2)
             $order->status_id = 3;
@@ -46,25 +44,6 @@ class OrdersController extends Controller
         if($request->status == 8) {
             $order->status_id = 9;
             $order->paid = 1;
-
-            $invoice = new Invoice();
-            $invoice->date = Carbon::now('Asia/Ho_Chi_Minh');
-            $invoice->total_value = $order->total_value;
-            $invoice->save();
-    
-            $invoice_id = $invoice->id;
-    
-            $getOrderItems = OrderProduct::with(['product'])->where('order_id', $order->id)->get();
-            
-            foreach($getOrderItems as $item) {
-                $invoiceItem = new InvoiceProduct;
-                $invoiceItem->invoice_id = $invoice_id;
-                $invoiceItem->product_id = $item['product_id'];
-                $invoiceItem->size = $item['size'];
-                $invoiceItem->quantity = $item['quantity'];
-                $invoiceItem->price = $item['product']['price']*$item['quantity'];
-                $invoiceItem->save();
-            }
         }
         $order->save();
         

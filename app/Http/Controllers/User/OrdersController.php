@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\User;
 
+use App\Events\SendNotification;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Product;
@@ -12,6 +13,8 @@ use App\Models\Voucher;
 use App\Models\Cart;
 use Carbon\Carbon;
 use App\Http\Resources\OrderResource;
+use App\Models\Notification;
+use App\Models\User;
 
 class OrdersController extends Controller
 {    
@@ -44,7 +47,7 @@ class OrdersController extends Controller
             $voucher->quantity_remain = $voucher->quantity_remain -1;
             $voucher->save();
         }
-        $order->address_receiver = $request['delivery_address']['address'];
+        $order->address_receiver = $request['delivery_address']['address_detail'] . ", " . $request['delivery_address']['address'];
         $order->name_receiver = $request['delivery_address']['name'];
         $order->phone_receiver = $request['delivery_address']['phone'];
         $order->status_id = 1;
@@ -93,14 +96,40 @@ class OrdersController extends Controller
                     'size_id' => $item->size->id
                 ])->delete();
                 
-                Inventory::where(['product_id' => $item['product_id'], 'size_id' => $item['size_id'],
-                    'color_id' => $item['color_id']])->update([
+                $latestMonthYear = Inventory::where([
+                    'product_id' => $item['product_id'],
+                    'size_id' => $item['size_id'],
+                    'color_id' => $item['color_id']
+                ])->max('month_year');
+                
+                Inventory::where(['product_id' => $item['product_id'], 
+                    'size_id' => $item['size_id'],
+                    'color_id' => $item['color_id'],
+                    'month_year' => $latestMonthYear]
+                    )->update([
                         'total_export' => $inventory->total_export + $item['quantity'],
                         'total_final' => $inventory->total_final - $item['quantity']
                 ]);
             }
 
         }
+
+        $user = User::find($id);
+        event(new SendNotification(
+            $user->name, 
+            1,
+            "Vừa đặt hàng",
+            "http://localhost:3000/admin/orders",
+        ));
+
+        $notification = new Notification();
+        $notification->user = $user->name;
+        $notification->type = 1;
+        $notification->message = "Vừa đặt hàng";
+        $notification->status = 'Chưa đọc';
+        $notification->date = Carbon::now('Asia/Ho_Chi_Minh');
+        $notification->link = "http://localhost:3000/admin/orders";
+        $notification->save();
         
         return response()->json([
             'success' => 'success',
@@ -186,7 +215,7 @@ class OrdersController extends Controller
     public function receiptOrder($id) {
         $order = Order::find($id);
         $order->status_id = 8;
-        $order->receipt_date = Carbon::now('Asia/Ho_Chi_Minh');
+        $order->receipted_at = Carbon::now('Asia/Ho_Chi_Minh');
         $order->save();
         
         return response()->json([

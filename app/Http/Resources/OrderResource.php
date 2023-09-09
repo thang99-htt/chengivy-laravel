@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Models\Color;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class OrderResource extends JsonResource
@@ -47,10 +48,24 @@ class OrderResource extends JsonResource
             'user_address' => $user_address,
 
             'items' => $this->order_product->map(function ($orderDetail) {
+                $selectedImage = null;
+
+                $colorName = $orderDetail->color;
+
+                $color = Color::where('name', $colorName)->first();
+
+                // Find the image with a matching color_id
+                foreach ($orderDetail->product->product_image as $image) {
+                    if ($image->color_id === $color->id) {
+                        $selectedImage = $image->image;
+                        break;
+                    }
+                }
+
                 return [
                     'id' => $orderDetail->product->id,
                     'name' => $orderDetail->product->name,
-                    'image' => $orderDetail->product->product_image[0]->image,
+                    'image' => $selectedImage, // Use the selected image
                     'size' => $orderDetail->size,
                     'color' => $orderDetail->color,
                     'price' => $orderDetail->product->price,

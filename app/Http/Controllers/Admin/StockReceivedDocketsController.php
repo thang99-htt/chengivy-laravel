@@ -65,9 +65,9 @@ class StockReceivedDocketsController extends Controller
         } else {
             $payment_voucher = PaymentVoucher::find($request->payment_voucher_id);
             $stock_received_docket = StockReceivedDocket::where('payment_voucher_id', $request->payment_voucher_id)->get();
-            $importTotal = 0;
+            $importTotal = $request->total_value;
             foreach($stock_received_docket as $import) {
-                $importTotal += $import['total_value'] + $request->total_value;
+                $importTotal += $import['total_value'];
             }
             if($payment_voucher['total_price'] < $importTotal ) {
                 return response()->json([
@@ -154,15 +154,31 @@ class StockReceivedDocketsController extends Controller
                     if ($firstInventory === null) {
                         $firstInventory = $inventory;
                         // Truy vấn dữ liệu từ mảng kết hợp $sizesOld
-                        $existingInventory1 =  Inventory::where([
+                        $existingMonthYear =  Inventory::where([
                             'product_id' => $inventory['product_id'],
                             'color_id' => $inventory['color_id']
                         ])
-                        ->where('month_year', '<', $currentMonthYear) 
-                        ->orderBy('month_year', 'desc') 
-                        ->get();
-                        foreach($existingInventory1 as $size) {
-                            $sizesOld[] = $size; 
+                        ->where('month_year', '<', $currentMonthYear)
+                        ->orderBy('month_year', 'desc')
+                        ->first();
+
+                        $existingInventorySizeOld = [];
+                        if ($existingMonthYear) {
+                            $monthYearToMatch = $existingMonthYear->month_year;
+                        
+                            $existingInventorySizeOld = Inventory::where([
+                                'product_id' => $inventory['product_id'],
+                                'color_id' => $inventory['color_id'],
+                                'month_year' => $monthYearToMatch
+                            ])->get();
+                        }
+
+                        if($existingInventorySizeOld) {
+                            foreach($existingInventorySizeOld as $size) {
+                                if($size->total_final>0) {
+                                    $sizesOld[] = $size; 
+                                }
+                            }
                         }
                     }
                     
@@ -176,9 +192,8 @@ class StockReceivedDocketsController extends Controller
                         if($existingInventory) {
                             $importInventory->total_initial = $existingInventory['total_final'];
                             
-                            $importInventory->total_import = $existingInventory['total_import'] 
-                                                            + $inventory['quantity'];
-                            $importInventory->total_export = $existingInventory['total_export'];
+                            $importInventory->total_import = $inventory['quantity'];
+                            $importInventory->total_export = 0;
                             $importInventory->total_final = $existingInventory['total_final'] 
                                                             + $inventory['quantity'];
                         } else {
@@ -224,9 +239,9 @@ class StockReceivedDocketsController extends Controller
                             $importInventory->color_id = $inventory['color_id'];
                             $importInventory->size_id = $inventory['size_id'];
                             $importInventory->total_initial = $existingInventory['total_final'];
-                            $importInventory->total_import = $existingInventory['total_import'];
-                            $importInventory->total_export = $existingInventory['total_export'];
-                            $importInventory->total_final = $existingInventory['total_final'];
+                            $importInventory->total_import = $inventory['total_import'];
+                            $importInventory->total_export = 0;
+                            $importInventory->total_final = $existingInventory['total_final'] + $inventory['total_import'];
                                                             
                             $importInventory->save();
                         }

@@ -50,6 +50,7 @@ Route::delete('admin/vouchers/', [VouchersController::class, 'destroyIds']);
 
 Route::prefix('/admin/products')->group( function() {
     Route::get('/',[ProductsController::class, 'index']); 
+    Route::get('/get-products',[ProductsController::class, 'getProducts']); 
     Route::get('/sales',[ProductsController::class, 'getSales']); 
     Route::get('/hiddens',[ProductsController::class, 'getHiddens']); 
     Route::get('/type',[ProductsController::class, 'type']); 
@@ -71,7 +72,16 @@ Route::apiResource('/admin/products', ProductsController::class);
 Route::apiResource('/admin/orders', OrdersController::class);
 Route::put('admin/orders/{staff}/{id}/{status}', [OrdersController::class, 'updateOrderStatus']);
 
+Route::get('/admin/statisticals/get-range-date',[StatisticalsController::class, 'getRangeDate']);
+
+Route::get('/admin/statisticals/get-notification',[StatisticalsController::class, 'getNotification']);
+Route::get('/admin/statisticals/get-top-products',[StatisticalsController::class, 'getTopProducts']);
+Route::get('/admin/statisticals/get-inventories',[StatisticalsController::class, 'getInventories']);
 Route::apiResource('/admin/statisticals', StatisticalsController::class);
+Route::post('/admin/statisticals/get-sales',[StatisticalsController::class, 'getSales']);
+Route::post('/admin/statisticals/get-orders',[StatisticalsController::class, 'getOrders']);
+Route::post('/admin/statisticals/get-products',[StatisticalsController::class, 'getProducts']);
+Route::post('/admin/statisticals/send-notification',[StatisticalsController::class, 'sendNotification']);
 
 Route::apiResource('/admin/invoices', App\Http\Controllers\Admin\InvoicesController::class);
 

@@ -4,15 +4,16 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Auth;
 
-class Invoice extends Model
+class Notification extends Model
 {
     use HasFactory;
 
     /**
      * Database table name
      */
-    protected $table = 'invoices';
+    protected $table = 'notifications';
 
     /**
      * Use timestamps 
@@ -25,13 +26,19 @@ class Invoice extends Model
      * Mass assignable columns
      */
     protected $fillable = [
-        'date',
-        'total_price',
+        'user',
+        'message',
+        'type',
+        'link',
+        'status',
+        'date'
     ];
 
-    public function invoice_product()
-    {
-        return $this->hasMany(InvoiceProduct::class, 'invoice_id');
-    }
+    /**
+     * Date time columns.
+     */
+    protected $dates = [];
 
+    
+    
 }

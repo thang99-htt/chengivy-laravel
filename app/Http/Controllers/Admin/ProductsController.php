@@ -22,11 +22,32 @@ class ProductsController extends Controller
 {
     public function index()
     {
-        $product = Product::with('category','brand', 'product_image', 'inventories.size', 
+        $products = Product::with('category','brand', 'product_image', 'inventories.size', 
             'reviews.review_image')->orderBy('created_at', 'DESC')->get();
-        return response()->json(ProductResource::collection($product));
+        return response()->json(ProductResource::collection($products));
     }
-    
+
+    public function getProducts()
+    {
+        // Fetch products with related data using eager loading
+        $products = Product::with(
+            'category',
+            'brand',
+            'product_image',
+            'inventories.size',
+            'reviews.review_image'
+        )
+        ->whereHas('inventories', function ($query) {
+            // Filter products that have non-empty inventories
+            $query->where('total_final', '>', 0);
+        })
+        ->orderBy('created_at', 'DESC')
+        ->get();
+
+        // Return the fetched products as a JSON response using the ProductResource collection
+        return response()->json(ProductResource::collection($products));
+    }
+
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -261,6 +282,7 @@ class ProductsController extends Controller
             ->orderBy('created_at', 'DESC')
             ->get();
 
+        $filteredProducts = [];
         foreach ($products as $product) {
             // Determine the maximum month and year for this product's inventories
             $maxMonthYear = $product->inventories->max('month_year');
@@ -287,11 +309,19 @@ class ProductsController extends Controller
                 ->orderBy('size_id')
                 ->get();
 
+            foreach ($inventoryEntries as $inventoryEntry) {
+                $inventoryEntry->name = $product->name;
+            }
+
             // Assign the inventory entries to a new property, preserving the original eager loaded data
             $product->filtered_inventories = $inventoryEntries;
+
+            if ($product->filtered_inventories->count() > 0) {
+                $filteredProducts[] = $product;
+            }
         }
 
-        return response()->json($products);
+        return response()->json($filteredProducts);
     }
 
     public function addSize(Request $request) {

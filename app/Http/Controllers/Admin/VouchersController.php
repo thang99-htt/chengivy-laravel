@@ -39,8 +39,14 @@ class VouchersController extends Controller
         } else {
             // Lấy danh sách các phiếu giảm giá với điều kiện ngày kết thúc lớn hơn ngày hiện tại và quantity_remain lớn hơn 0
             $vouchers = Voucher::where('date_end', '>', $currentDate)
-                               ->where('quantity_remain', '>', 0)
-                               ->get();
+                   ->where('quantity_remain', '>', 0)
+                   ->get();
+
+            $voucherId1 = Voucher::find(1);
+
+            if ($voucherId1) {
+                $vouchers->prepend($voucherId1);
+            }
         }
 
         return response()->json($vouchers);
