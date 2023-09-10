@@ -8,11 +8,13 @@ use App\Models\Product;
 use App\Models\Size;
 use App\Models\ProductImage;
 use App\Models\Inventory;
-use App\Models\Category;
 use App\Models\Color;
 use Intervention\Image\Facades\Image;
 use App\Http\Resources\ProductResource;
 use Carbon\Carbon;
+
+use App\Models\User;
+use App\Jobs\SendMailProductsWithDiscount;
 
 use Illuminate\Support\Facades\Validator;
 use App\Jobs\UploadToGoogleDrive;
@@ -359,15 +361,66 @@ class ProductsController extends Controller
     public function updateProductsSale(Request $request)
     {
         $products = $request->all();
-        foreach($products as $item) {
+
+        // Lấy danh sách sản phẩm có khuyến mãi
+        $productsWithDiscount = [];
+        foreach ($products as $item) {
             $product = Product::find($item['id']);
             $product->price = $item['price'];
             $product->discount_percent = $item['discount_percent'];
             $product->price_final = $item['price_final'];
             $product->save();
+
+            
+            // Kiểm tra nếu sản phẩm này có trong bảng favorite của người dùng
+            $users = User::whereHas('favorites', function ($query) use ($product) {
+                $query->where('product_id', $product->id);
+            })->get();
+            
+            foreach ($users as $user) {
+                // Thêm sản phẩm vào danh sách sản phẩm khuyến mãi nếu chưa có trong danh sách
+                if (!in_array($product, $productsWithDiscount)) {
+                    $imageProduct = $product->product_image->first();
+                    $product->image = $imageProduct ? $imageProduct->image : null;
+                    if($product->discount_percent>0) {
+                        $productsWithDiscount[] = $product;
+                    }
+                }
+            }
         }
-        return response()->json(['success'=>'true'], 200);
+
+        // Tạo một mảng để lưu thông tin sản phẩm yêu thích của từng người dùng
+    $usersFavoriteProducts = [];
+
+    // Tìm sản phẩm yêu thích của từng người dùng
+    foreach ($productsWithDiscount as $productWithDiscount) {
+        $usersWithFavoriteProduct = User::whereHas('favorites', function ($query) use ($productWithDiscount) {
+            $query->where('product_id', $productWithDiscount->id);
+        })->get();
+
+        // Lưu thông tin sản phẩm vào mảng $usersFavoriteProducts
+        foreach ($usersWithFavoriteProduct as $user) {
+            if (!isset($usersFavoriteProducts[$user->id])) {
+                $usersFavoriteProducts[$user->id] = [
+                    'user' => $user,
+                    'products' => [],
+                ];
+            }
+            $usersFavoriteProducts[$user->id]['products'][] = $productWithDiscount;
+        }
     }
+
+    // Gửi email cho từng người dùng với danh sách sản phẩm yêu thích của họ
+    foreach ($usersFavoriteProducts as $userData) {
+        $user = $userData['user'];
+        $favoriteProducts = $userData['products'];
+
+        SendMailProductsWithDiscount::dispatch($user->name, $user->email, $favoriteProducts);
+    }
+
+        return response()->json(['success' => true], 200);
+    }
+
 
     public function getHiddens()
     {

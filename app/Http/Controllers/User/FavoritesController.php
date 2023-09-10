@@ -8,8 +8,6 @@ use App\Models\Product;
 use App\Models\Favorite;
 use App\Models\Inventory;
 use App\Models\Cart;
-use App\Models\Size;
-use App\Models\Color;
 use App\Http\Resources\ProductResource;
 
 class FavoritesController extends Controller
@@ -20,10 +18,12 @@ class FavoritesController extends Controller
 
         foreach ($getFavoriteItems as $key => $value) {
             $item = new ProductResource($value->product);
+
             $getFavoriteItems[$key]->products = $item;
         }
 
         $favoriteCount = $getFavoriteItems->count();
+
         return response()->json([
             'getFavoriteItems' => $getFavoriteItems,
             'favoriteCount' => $favoriteCount
