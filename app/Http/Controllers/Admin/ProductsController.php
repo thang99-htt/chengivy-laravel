@@ -25,7 +25,7 @@ class ProductsController extends Controller
     public function index()
     {
         $products = Product::with('category','brand', 'product_image', 'inventories.size', 
-            'reviews.review_image')->orderBy('created_at', 'DESC')->get();
+            'reviews.review_image')->orderBy('deleted_at', 'ASC')->orderBy('created_at', 'DESC')->get();
         return response()->json(ProductResource::collection($products));
     }
 
@@ -43,12 +43,15 @@ class ProductsController extends Controller
             // Filter products that have non-empty inventories
             $query->where('total_final', '>', 0);
         })
+        ->where('status', 1) // Thêm điều kiện status là 1
+        ->whereNull('deleted_at') // Thêm điều kiện deleted_at là null
         ->orderBy('created_at', 'DESC')
         ->get();
 
         // Return the fetched products as a JSON response using the ProductResource collection
         return response()->json(ProductResource::collection($products));
     }
+
 
     public function store(Request $request)
     {
@@ -104,14 +107,20 @@ class ProductsController extends Controller
                         $base64Image = $imageItem['image'];
                         $colorId = $colorItem['color_id'];
     
-                        // Enqueue job to upload image
-                        UploadToGoogleDrive::dispatch(
-                            $productId,
-                            $productCat,
-                            $productBra,
-                            $colorId,
-                            $base64Image
-                        );
+                        $strpos = strpos($base64Image, ';');
+                        $sub = substr($base64Image, 0, $strpos);
+                        $ex = explode("/", $sub)[1];
+                        $imageName = $productId.$productCat.$productBra.$colorId.uniqid().".".$ex;
+                        $img = Image::make($base64Image);
+                        $upload_path = public_path()."/storage/uploads/products/";
+                        $img->save($upload_path.$imageName);
+
+                        $productImage = new ProductImage();
+                        $productImage->product_id = $productId;
+                        $productImage->color_id = $colorId;
+                        $productImage->image = "http://localhost:8000/storage/uploads/products/".$imageName;
+                        $productImage->save();
+                        
                     }
                 }
             }
@@ -176,23 +185,29 @@ class ProductsController extends Controller
                     foreach ($colorItem['items'] as $imageItem) {
                         $base64Image = $imageItem['image'];    
                         // Enqueue job to upload image
-                        UploadToGoogleDrive::dispatch(
-                            $productId,
-                            $productCat,
-                            $productBra,
-                            $colorId,
-                            $base64Image
-                        );
+                        $strpos = strpos($base64Image, ';');
+                        $sub = substr($base64Image, 0, $strpos);
+                        $ex = explode("/", $sub)[1];
+                        $imageName = $productId.$productCat.$productBra.$colorId.uniqid().".".$ex;
+                        $img = Image::make($base64Image);
+                        $upload_path = public_path()."/storage/uploads/products/";
+                        $img->save($upload_path.$imageName);
+
+                        $productImage = new ProductImage();
+                        $productImage->product_id = $productId;
+                        $productImage->color_id = $colorId;
+                        $productImage->image = "http://localhost:8000/storage/uploads/products/".$imageName;
+                        $productImage->save();
                     }
                 }
             }
 
-            if ($removedImages) {
-                foreach ($removedImages as $image) {
-                    $imageLink = $image->image;
-                    DeleteFromGoogleDrive::dispatch($image->id, $imageLink);
-                }
-            }
+            // if ($removedImages) {
+            //     foreach ($removedImages as $image) {
+            //         $imageLink = $image->image;
+            //         DeleteFromGoogleDrive::dispatch($image->id, $imageLink);
+            //     }
+            // }
         }
 
         return response()->json([
@@ -216,17 +231,14 @@ class ProductsController extends Controller
         ]);
     }
 
-    public function destroy($id)
+    public function destroyIds(Request $request)
     {
-        $product = Product::find($id);
-        // $product->delete();
-        // if($product->delete()) {
-        //     if($product->image != null) {
-        //         unlink(public_path()."/storage/uploads/products/". $product->image);
-        //     }
-        // }
-        $product->deleted_at = Carbon::now('Asia/Ho_Chi_Minh');
-        $product->save();
+        $selectedIds = $request->all(); // Lấy danh sách selectedIds từ request
+        $products = Product::whereIn('id', $selectedIds)->get(); // Sử dụng whereIn để lấy các bản ghi tương ứng với selectedIds
+        foreach($products as $product) {
+            $product->deleted_at = Carbon::now('Asia/Ho_Chi_Minh');
+            $product->save();
+        }      
         return response()->json(['success'=>'true'], 200);
     }
 

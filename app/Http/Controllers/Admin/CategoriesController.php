@@ -39,7 +39,7 @@ class CategoriesController extends Controller
         $category = new Category;
         $category->parent_id = $request['parent_id'];
         $category->name = $request['name'];
-        $category->image = $imageName;
+        $category->image = "http://localhost:8000/storage/uploads/products/".$imageName;
         $category->description = $request['description'];
         $category->url = $request['url'];
         $category->save();
@@ -69,7 +69,7 @@ class CategoriesController extends Controller
         $category = Category::where('id', $id)->update([
             'parent_id' => $request['parent_id'],
             'name' => $request['name'],
-            'image' => $imageName,
+            'image' => "http://localhost:8000/storage/uploads/categories/". $imageName,
             'description' => $request['description'],
             'url' => $request['url']
         ]);

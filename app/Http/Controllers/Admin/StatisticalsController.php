@@ -110,18 +110,21 @@ class StatisticalsController extends Controller
         // $products_flop = $products_orders->sortBy('count')->first();
         // $products_flop = $products_flop ? $products_flop['product']['name'] : 0;
 
+        $currentYear = Carbon::now()->year; // Lấy năm hiện tại
+
         $revenues = Order::sum('total_value') ?? 0;
+
         $revenues_per_month = Order::whereNotNull('receipted_at')
+            ->whereYear('receipted_at', $currentYear) // Lọc theo năm hiện tại
             ->selectRaw('YEAR(receipted_at) as year, MONTH(receipted_at) as month, SUM(total_value) as revenue')
             ->groupBy('year', 'month')
             ->orderBy('year', 'asc')
             ->orderBy('month', 'asc')
             ->get();
-        $revenues_today = Order::whereDate('created_at', today())->sum('total_value') ?? 0;
-        $revenues_month = Order::whereMonth('created_at', today()->month)->sum('total_value') ?? 0;
 
         $payments = PaymentVoucher::sum('total_price') ?? 0;
-        $payments_per_month = PaymentVoucher::selectRaw('YEAR(date) as year, MONTH(date) as month, SUM(total_price) as payment')
+        $payments_per_month = PaymentVoucher::whereYear('date', $currentYear) // Lọc theo năm hiện tại
+            ->selectRaw('YEAR(date) as year, MONTH(date) as month, SUM(total_price) as payment')
             ->groupBy('year', 'month')
             ->orderBy('year', 'asc')
             ->orderBy('month', 'asc')
@@ -153,7 +156,7 @@ class StatisticalsController extends Controller
             'orders_success' => $orders_success,
             'orders_confirm' => $orders_confirm,
             'products' => $products,
-            'prducts_out_of_stock' => $products_out_of_stock,
+            'products_out_of_stock' => $products_out_of_stock,
             'top_10_best_sellers' => $top_10_best_sellers,
             'revenues' => $revenues,
             'revenues_per_month' => $revenues_per_month,
@@ -586,27 +589,45 @@ class StatisticalsController extends Controller
 
         $missingProductArray = $missingProductInfo->values()->toArray();
 
-        // Lọc những sản phẩm có total_final = 0 từ bảng inventories
-        $outOfStockProducts = $products->filter(function ($product) {
-            return $product->inventories->every(function ($inventory) {
-                return $inventory->total_final == 0;
-            });
-        });
-    
-        // Sử dụng map để chỉ lấy thông tin sản phẩm cần thiết
-        $outOfStockProductInfo = $outOfStockProducts->map(function ($product) {
-            $image = $product->product_image->first();
-            return [
-                'id' => $product->id,
-                'category_id' => $product->category_id,
-                'brand_id' => $product->brand_id,
-                'name' => $product->name,
-                'price' => $product->price_final,
-                'image' => $image ? $image['image'] : null
-            ];
-        });
+        $products_all = Product::get();
 
-        $outOfStockProductInfoArray = $outOfStockProductInfo->values()->toArray();
+        $outOfStockProducts = [];
+
+        foreach ($products_all as $product) {
+            // Tìm month_year cuối cùng có product_id đó
+            $lastMonthYear = Inventory::where('product_id', $product->id)
+                ->where('total_final', 0)
+                ->latest('month_year')
+                ->pluck('month_year')
+                ->first();
+
+            if ($lastMonthYear) {
+                // Tìm sản phẩm có product_id và month_year tương ứng
+                $productOutOfStock = Inventory::where('product_id', $product->id)
+                    ->where('month_year', $lastMonthYear)
+                    ->first();
+
+                if ($productOutOfStock) {
+                    // Lấy thông tin sản phẩm hết hàng và ánh xạ qua product
+                    $outOfStockProducts[] = [
+                        'id' => $product->id,
+                        'category_id' => $product->category_id,
+                        'brand_id' => $product->brand_id,
+                        'name' => $product->name,
+                        'price' => $product->price_final,
+                        'image' => $product->product_image->first() ? $product->product_image->first()->image : null,
+                        // Thêm thông tin từ bảng Inventory
+                        'lastMonthYear' => $lastMonthYear,
+                        'totalExport' => $productOutOfStock->total_export,
+                        'color' => $productOutOfStock->color->name,
+                        'size' => $productOutOfStock->size->name
+
+                        // Thêm thông tin khác cần thiết từ bảng Inventory
+                    ];
+                }
+            }
+        }
+
 
         // Lấy danh sách product_id từ bảng order_product
         $soldProducts = OrderProduct::pluck('product_id')->toArray();
@@ -634,7 +655,7 @@ class StatisticalsController extends Controller
 
         return response()->json([
             'missing_products' => $missingProductArray, // Trả về danh sách sản phẩm chưa nhập hàng
-            'out_of_stock_products' => $outOfStockProductInfoArray, // Trả về danh sách sản phẩm hết hàng,
+            'out_of_stock_products' => $outOfStockProducts, // Trả về danh sách sản phẩm hết hàng,
             'unsold_products' => $unsoldProductInfoArray // Trả về danh sách sản phẩm chưa bán được
         ], 200);
     }

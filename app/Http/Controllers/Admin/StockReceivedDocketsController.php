@@ -259,6 +259,8 @@ class StockReceivedDocketsController extends Controller
 
     public function update(Request $request, $id) {
         
+        $check = false;
+
         $import = StockReceivedDocket::find($id);
         $payment_voucher = PaymentVoucher::find($request->payment_voucher_id);
 
@@ -315,15 +317,19 @@ class StockReceivedDocketsController extends Controller
                         'color_id' => $importProductDetail['color_id'], 
                         'size_id' => $importProductDetail['size_id']])->first();
                     
-                    if($existingInventory) {
-                        Inventory::where(['month_year' => $currentMonthYear, 
-                        'product_id' => $importProductDetail['product_id'], 
-                        'color_id' => $importProductDetail['color_id'], 
-                        'size_id' => $importProductDetail['size_id']])
-                        ->update([
-                            'total_import' => $existingInventory['total_import'] - $importProductDetail['quantity'],
-                            'total_final' => $existingInventory['total_final'] - $importProductDetail['quantity']
-                            ]);
+                    if($existingInventory && $importProductDetail['quantity']) {
+                        if($existingInventory['total_import']>$importProductDetail['quantity']
+                            && $existingInventory['total_final']>$importProductDetail['quantity']) {
+                                Inventory::where(['month_year' => $currentMonthYear, 
+                                'product_id' => $importProductDetail['product_id'], 
+                                'color_id' => $importProductDetail['color_id'], 
+                                'size_id' => $importProductDetail['size_id']])
+                                ->update([
+                                    'total_import' => $existingInventory['total_import'] - $importProductDetail['quantity'],
+                                    'total_final' => $existingInventory['total_final'] - $importProductDetail['quantity']
+                                    ]);
+                                $check = true;
+                            }
                     }
 
                     $importProductDetail->delete();
@@ -381,13 +387,16 @@ class StockReceivedDocketsController extends Controller
                     $importInventory->total_export = 0;
                     $importInventory->total_final = $inventory['quantity'];
                     $importInventory->save();
-                } else {
-                    Inventory::where(['month_year' => $currentMonthYear, 
-                        'product_id' => $inventory['product_id'], 'color_id' => $inventory['color_id'], 
-                        'size_id' => $inventory['size_id']])->update([
-                            'total_import' => $existingInventory['total_import'] + $inventory['quantity'],
-                            'total_final' => $existingInventory['total_final'] + $inventory['quantity'],
-                        ]);
+                } 
+                else {
+                    if($check) {
+                        Inventory::where(['month_year' => $currentMonthYear, 
+                            'product_id' => $inventory['product_id'], 'color_id' => $inventory['color_id'], 
+                            'size_id' => $inventory['size_id']])->update([
+                                'total_import' => $existingInventory['total_import'] + $inventory['quantity'],
+                                'total_final' => $existingInventory['total_final'] + $inventory['quantity'],
+                            ]);
+                    }
                 }
             }
     
