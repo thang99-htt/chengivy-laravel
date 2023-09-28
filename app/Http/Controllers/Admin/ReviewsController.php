@@ -14,9 +14,14 @@ use Carbon\Carbon;
 
 class ReviewsController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $reviews = Review::with('user','product','review_image')->orderBy('created_at', 'DESC')->get();
+        $startDate = Carbon::createFromFormat('d/m/Y', $request->input('startDate'))->startOfDay();
+        $endDate = Carbon::createFromFormat('d/m/Y', $request->input('endDate'))->endOfDay();
+
+        $reviews = Review::with('user','product','review_image')
+            ->whereBetween('date', [$startDate, $endDate])
+            ->orderBy('created_at', 'DESC')->get();
         return response(ReviewResource::collection($reviews));
     }
 
@@ -83,6 +88,21 @@ class ReviewsController extends Controller
         return response()->json([
             'success' => true,
         ],200);
+    }
+
+    public function hiddenIds(Request $request)
+    {
+        $selectedIds = $request->all(); // Lấy danh sách selectedIds từ request
+        $reviews = Review::whereIn('id', $selectedIds['data'])->get(); // Sử dụng whereIn để lấy các bản ghi tương ứng với selectedIds
+        foreach($reviews as $review) {
+            if($review->status == 0) {
+                $review->status = 1;
+            } else {
+                $review->status = 0;
+            }
+            $review->save();
+        }      
+        return response()->json(['success'=>$reviews], 200);
     }
 
 }

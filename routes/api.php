@@ -70,6 +70,7 @@ Route::prefix('/admin/products')->group( function() {
 Route::apiResource('/admin/products', ProductsController::class);
 
 Route::apiResource('/admin/orders', OrdersController::class);
+Route::post('admin/orders/', [OrdersController::class, 'index']);
 Route::put('admin/orders/{staff}/{id}/{status}', [OrdersController::class, 'updateOrderStatus']);
 
 Route::get('/admin/statisticals/get-range-date',[StatisticalsController::class, 'getRangeDate']);
@@ -134,9 +135,10 @@ Route::put('user/update-profile/{id}', [App\Http\Controllers\User\UsersControlle
 Route::put('user/update-password/{id}', [App\Http\Controllers\User\UsersController::class, 'updatePassword']);
 
 Route::get('admin/reviews/{id}',[App\Http\Controllers\Admin\ReviewsController::class, 'show']);
-Route::get('admin/reviews',[App\Http\Controllers\Admin\ReviewsController::class, 'index']);
+Route::post('admin/reviews/all',[App\Http\Controllers\Admin\ReviewsController::class, 'index']);
 Route::post('admin/reviews/',[App\Http\Controllers\Admin\ReviewsController::class, 'store']);
 Route::put('admin/reviews/user-{id}', [App\Http\Controllers\Admin\ReviewsController::class, 'updateReviewStatus']);
+Route::put('admin/reviews/hidden', [App\Http\Controllers\Admin\ReviewsController::class, 'hiddenIds']);
 Route::put('admin/reviews/{id}', [App\Http\Controllers\Admin\ReviewsController::class, 'update']);
 
 Route::post('admin/notifications/reviews/{id}', [App\Http\Controllers\Admin\NotificationsController::class, 'storeReview']);

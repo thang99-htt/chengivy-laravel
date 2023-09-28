@@ -169,37 +169,53 @@ class StatisticalsController extends Controller
 
     public function getRangeDate()
     {
-        $orders_cancle = DB::table('orders')
-            ->where('status_id', 10)
-            ->select(DB::raw('DATE_FORMAT(cancled_at, "%d/%m/%Y") as cancle_date'), DB::raw('count(*) as total'))
-            ->groupBy('cancle_date')
-            ->get();
+        // $orders_cancle = DB::table('orders')
+        //     ->where('status_id', 10)
+        //     ->select(DB::raw('DATE_FORMAT(cancled_at, "%d/%m/%Y") as cancle_date'), DB::raw('count(*) as total'))
+        //     ->groupBy('cancle_date')
+        //     ->get();
 
-        $orders_success = DB::table('orders')
-            ->where('status_id', 9)
-            ->select(DB::raw('DATE_FORMAT(receipted_at, "%d/%m/%Y") as receipt_date'), DB::raw('count(*) as total'))
-            ->groupBy('receipt_date')
-            ->get();
+        // $orders_success = DB::table('orders')
+        //     ->where('status_id', 9)
+        //     ->select(DB::raw('DATE_FORMAT(receipted_at, "%d/%m/%Y") as receipt_date'), DB::raw('count(*) as total'))
+        //     ->groupBy('receipt_date')
+        //     ->get();
 
 
-        $dates = collect()
-            ->concat($orders_cancle->pluck('cancle_date'))
-            ->concat($orders_success->pluck('receipt_date'))
-            ->unique()
-            ->map(function ($date) {
-                $carbonDate = Carbon::createFromFormat('d/m/Y', $date); // Chuyển đổi từ định dạng "d/m/Y"
-                return $carbonDate->format('d/m/Y'); // Chuyển đổi lại thành định dạng "d/m/Y"
-            })
-            ->unique()
-            ->sortBy(function ($date) {
-                return Carbon::createFromFormat('d/m/Y', $date); // Sắp xếp theo thứ tự tăng dần dựa trên Carbon
-            })
-            ->values()
-            ->toArray();
+        // $dates = collect()
+        //     ->concat($orders_cancle->pluck('cancle_date'))
+        //     ->concat($orders_success->pluck('receipt_date'))
+        //     ->unique()
+        //     ->map(function ($date) {
+        //         $carbonDate = Carbon::createFromFormat('d/m/Y', $date); // Chuyển đổi từ định dạng "d/m/Y"
+        //         return $carbonDate->format('d/m/Y'); // Chuyển đổi lại thành định dạng "d/m/Y"
+        //     })
+        //     ->unique()
+        //     ->sortBy(function ($date) {
+        //         return Carbon::createFromFormat('d/m/Y', $date); // Sắp xếp theo thứ tự tăng dần dựa trên Carbon
+        //     })
+        //     ->values()
+        //     ->toArray();
+
+        // return response()->json([
+        //     'start' => reset($dates),
+        //     'end' => end($dates)
+        // ], 200);
+
+
+        // Lấy tháng và năm hiện tại
+        $currentMonth = Carbon::now('Asia/Ho_Chi_Minh')->month;
+        $currentYear = Carbon::now('Asia/Ho_Chi_Minh')->year;
+
+        // Tính toán ngày đầu tiên của tháng
+        $firstDayOfMonth = Carbon::createFromDate($currentYear, $currentMonth, 1);
+
+        // Tính toán ngày cuối cùng của tháng
+        $lastDayOfMonth = $firstDayOfMonth->copy()->endOfMonth();
 
         return response()->json([
-            'start' => reset($dates),
-            'end' => end($dates)
+            'start' => $firstDayOfMonth->format('d/m/Y'),
+            'end' => $lastDayOfMonth->format('d/m/Y')
         ], 200);
     }
 

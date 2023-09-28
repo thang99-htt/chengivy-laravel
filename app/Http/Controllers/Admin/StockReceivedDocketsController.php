@@ -19,7 +19,7 @@ class StockReceivedDocketsController extends Controller
 {
     public function index()
     {
-        $import = StockReceivedDocket::orderBy('created_at', 'DESC')->get();
+        $import = StockReceivedDocket::orderBy('date', 'DESC')->get();
         
         return response(StockReceivedDocketResource::collection($import));
     }

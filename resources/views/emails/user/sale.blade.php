@@ -63,7 +63,7 @@
         }
 
         .price-final {
-            color: #4e943e;
+            color: #e71700;
             font-size: 17px;
             margin-right: 10px;
         }
@@ -95,10 +95,11 @@
     <div class="container">
         <h1>Ưu đãi sản phẩm trong giỏ hàng của bạn!</h1>
         <p>Xin chào, <strong>{{ $userName }}!</strong></p>
+        <p>Chengivy Store kính gửi đến Quý khách hàng thông báo sản phẩm được khách hàng yêu thích hiện đang có chương trình khuyến mãi:</p>
         <div class="message">
             @foreach ($productsWithDiscount as $product)
                 <div class="product">
-                    <img src="{{ $product->image }}" alt="{{ $product->name }}">
+                    <img src="{{ $message->embed($product->image) }}" alt="{{ $product->name }}">
                     <p class="name">{{ $product->name }}</p>
                     <p class="product-price">
                         <span class="price-final">{{ number_format($product->price_final, 0, ',', '.') }} VNĐ</span>
@@ -106,10 +107,14 @@
                     </p>
                 </div>
             @endforeach
-
         </div>
         <div class="cta-button">
             <a href="http://localhost:3000/customer/favorites">Mua ngay để không bỏ lỡ cơ hội tiết kiệm!</a>
+        </div>
+        <div>
+            <p>Mọi thắc mắc cần giải đáp Quý khách vui lòng liên hệ Trung tâm Chăm sóc Khách hàng – Chengivy Store tại (+84) 222 666 8888 hoặc gửi mail theo địa chỉ hi@chengivy.comđể được hỗ trợ.</p>
+            <p>Xin trân trọng cảm ơn Quý khách hàng.</p>
+            <p>Thư này được gửi từ địa chỉ mail không chấp nhận mail đến. Vui lòng không trả lời thư này./.</p>
         </div>
     </div>
 </body>

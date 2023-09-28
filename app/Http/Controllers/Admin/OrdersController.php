@@ -12,9 +12,13 @@ use Carbon\Carbon;
 
 class OrdersController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $orders = Order::whereDate('ordered_at', '<', '2023-10-01')->orderBy('ordered_at', 'DESC')->get();
+        $startDate = Carbon::createFromFormat('d/m/Y', $request->input('startDate'))->startOfDay();
+        $endDate = Carbon::createFromFormat('d/m/Y', $request->input('endDate'))->endOfDay();
+
+        $orders = Order::whereBetween('ordered_at', [$startDate, $endDate])
+            ->orderBy('ordered_at', 'DESC')->get();
         return response(OrderResource::collection($orders));
     }
 
