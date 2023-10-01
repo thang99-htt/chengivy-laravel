@@ -8,7 +8,7 @@ use App\Models\User;
 use App\Models\Profile;
 use App\Models\District;
 use App\Models\Ward;
-use App\Models\Contact;
+use App\Models\DeliveryAddress;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 
@@ -26,13 +26,18 @@ class ProfilesController extends Controller
     }
 
     public function addressOrder($id) {
-        $contact = Contact::find($id);
+        $contact = DeliveryAddress::find($id);
         return response()->json($contact);
     }
 
     public function updateProfileDetails(Request $request) {
         $profile = Profile::with('user')->where('id', Auth::user()->id)->first();
-        Profile::where('id',Auth::user()->id)->update(['phone'=>$request['profile_phone'], 'birth_date'=>$request['profile_birth_date'], 'gender'=>$request['profile_gender']]);
+        Profile::where('id',   Auth::user()->id)
+            ->update([
+                'phone'=>$request['profile_phone'], 
+                'birth_date'=>$request['profile_birth_date'], 
+                'gender'=>$request['profile_gender']
+            ]);
         return redirect()->back()->with('success_message','Profile has been update successfully!');
     }
 
@@ -81,11 +86,11 @@ class ProfilesController extends Controller
     }
     
     public function addAddress(Request $request) {
-        $phone = Contact::where('user_id', Auth::user()->id)->get('phone')->first();
-        $contactOld = Contact::where(['user_id' => Auth::user()->id, 'ward_id' => $request->address_ward, 
+        $phone = DeliveryAddress::where('user_id', Auth::user()->id)->get('phone')->first();
+        $contactOld = DeliveryAddress::where(['user_id' => Auth::user()->id, 'ward_id' => $request->address_ward, 
             'address' => $request->address_detail])->first();
 
-        $contact = new Contact;
+        $contact = new DeliveryAddress;
 
         if(!$contactOld) {
             $contact->user_id = Auth::user()->id;
@@ -100,10 +105,10 @@ class ProfilesController extends Controller
     }
 
     public function updateAdress(Request $request) {
-        $contact = Contact::find($request->id);
-        $phone = Contact::where('user_id', Auth::user()->id)->get('phone')->first();
+        $contact = DeliveryAddress::find($request->id);
+        $phone = DeliveryAddress::where('user_id', Auth::user()->id)->get('phone')->first();
         
-        Contact::where('id', $request->id)->update([
+        DeliveryAddress::where('id', $request->id)->update([
             'user_id' => Auth::user()->id,
             'ward_id'=>$request['update_address_ward'], 
             'address'=>$request['update_address_detail'],
@@ -131,7 +136,7 @@ class ProfilesController extends Controller
     public function deleteAddress(Request $request)
     {
         // Delete product image form products table
-        Contact::where('id', $request->id)->delete();
+        DeliveryAddress::where('id', $request->id)->delete();
         // dd($request->id);
         return redirect()->back()->with('success_message','Contact has been deleted successfully!');
     }

@@ -14,6 +14,8 @@ use Illuminate\Support\Facades\Validator;
 use App\Models\StockReceivedDocketProductDetail;
 use App\Jobs\UploadImportToGoogleDrive;
 use App\Jobs\DeleteImportFromGoogleDrive;
+use App\Models\Order;
+use App\Models\OrderProduct;
 use Carbon\Carbon;
 class StockReceivedDocketsController extends Controller
 {
@@ -35,7 +37,6 @@ class StockReceivedDocketsController extends Controller
         $validator = Validator::make($request->all(), [
             'items' => 'required',
             'inventories' => 'required',
-            'form' => 'required',
             'supplier_id' => 'required',
             'payment_voucher_id' => 'required',
             'description' => 'required',
@@ -46,7 +47,6 @@ class StockReceivedDocketsController extends Controller
         ], [
             'items.required' => 'Vui lòng chọn các sản phẩm.',
             'inventories.required' => 'Vui lòng nhập phân loại sản phẩm.',
-            'form.required' => 'Vui lòng chọn hình thức.',
             'supplier_id.required' => 'Vui lòng chọn nhà cung cấp.',
             'payment_voucher_id.required' => 'Vui lòng chọn phiếu chi.',
             'description.required' => 'Vui lòng nhập mô tả.',
@@ -84,7 +84,6 @@ class StockReceivedDocketsController extends Controller
                 $import->total_price = $request->total_price;
                 $import->value_added = $request->value_added;
                 $import->total_value = $request->total_value;
-                $import->form = $request->form;
                 $import->description = $request->description;
         
                 $base64Image = $request->image;
@@ -258,11 +257,11 @@ class StockReceivedDocketsController extends Controller
     }
 
     public function update(Request $request, $id) {
-        
-        $check = false;
-
         $import = StockReceivedDocket::find($id);
         $payment_voucher = PaymentVoucher::find($request->payment_voucher_id);
+
+        $check = false;
+        $orderIds = [];
 
         $importTotal = $request->total_value;
         $relatedStockReceivedDockets = StockReceivedDocket::where('payment_voucher_id', $request->payment_voucher_id)->get();
@@ -286,22 +285,10 @@ class StockReceivedDocketsController extends Controller
                 UploadImportToGoogleDrive::dispatch($import, $base64Image);
             }
 
-
-            $import->staff_id = $request->staff_id;
-            $import->supplier_id = $request->supplier_id;
-            $import->payment_voucher_id = $request->payment_voucher_id;
-            $import->date = $request->date;
-            $import->total_price = $request->total_price;
-            $import->value_added = $request->value_added;
-            $import->total_value = $request->total_value;
-            $import->form = $request->form;
-            $import->description = $request->description;
-
-            $import->save();
-
-            
-
+            // Danh sach chi tiet phieu nhap hang (stock_received_docket_product)
             $existingImportProduct = StockReceivedDocketProduct::where('stock_received_docket_id', $id)->get();
+            
+            
             foreach($existingImportProduct as $importProduct) {
                 $existingImportProductDetail = 
                     StockReceivedDocketProductDetail::where('stock_received_docket_product_id', $importProduct['id'])->get();
@@ -317,79 +304,126 @@ class StockReceivedDocketsController extends Controller
                         'color_id' => $importProductDetail['color_id'], 
                         'size_id' => $importProductDetail['size_id']])->first();
                     
-                    if($existingInventory && $importProductDetail['quantity']) {
-                        if($existingInventory['total_import']>$importProductDetail['quantity']
-                            && $existingInventory['total_final']>$importProductDetail['quantity']) {
-                                Inventory::where(['month_year' => $currentMonthYear, 
-                                'product_id' => $importProductDetail['product_id'], 
-                                'color_id' => $importProductDetail['color_id'], 
-                                'size_id' => $importProductDetail['size_id']])
-                                ->update([
-                                    'total_import' => $existingInventory['total_import'] - $importProductDetail['quantity'],
-                                    'total_final' => $existingInventory['total_final'] - $importProductDetail['quantity']
-                                    ]);
-                                $check = true;
+                    if($existingInventory) {
+                        if($existingInventory['total_final'] < $importProductDetail['quantity']) {
+                            $check = true;
+                            $findOrder = OrderProduct::where([
+                                    'product_id' => $importProductDetail['product_id']
+                                ])
+                                ->orderBy('order_id', 'DESC')
+                                ->get();
+
+                            $totalCheck = 0;
+                            foreach($findOrder as $order) {
+                                $totalCheck = $totalCheck + $order->quantity;
+                                if($totalCheck >= $importProductDetail['quantity']) {
+                                    $orderIds[] = $order->order_id;
+                                    break;
+                                }
                             }
-                    }
-
-                    $importProductDetail->delete();
-                }
-
-                $importProduct->delete();
-            }
-
-            foreach($request->items as $item) {
-                $product = Product::find($item['product_id']);
-                if($product['price'] != $item['price']) {
-                    $product->price = $item['price'];
-                    $product->price_final = ($item['price']*(100-$product['discount_percent']))/100;
-                    $product->save();
-                }
-                $importProduct = new StockReceivedDocketProduct();
-                $importProduct->stock_received_docket_id = $id;
-                $importProduct->product_id = $item['product_id'];
-                $importProduct->quantity = $item['quantity'];
-                $importProduct->price = $item['price_purchase'];
-                $importProduct->save();
-                
-                $importProductId = $importProduct->id;
-
-                foreach ($request->inventories as $inventory) {
-                    if ($inventory['product_id'] == $item['product_id']) {
-                        $importProductDetail = new StockReceivedDocketProductDetail();
-                        $importProductDetail->stock_received_docket_product_id = $importProductId;
-                        $importProductDetail->product_id = $inventory['product_id'];
-                        $importProductDetail->color_id = $inventory['color_id'];
-                        $importProductDetail->size_id = $inventory['size_id'];
-                        $importProductDetail->quantity = $inventory['quantity'];
-                        $importProductDetail->save();
+                            
+                        }
                     }
                 }
             }
 
-            foreach($request->inventories as $inventory) {
-                $inputDate = $request->date;
-                $carbonDate = Carbon::parse($inputDate);
-                $currentMonthYear = $carbonDate->format('Ym');
-
-                $existingInventory = Inventory::where(['month_year' => $currentMonthYear, 
-                        'product_id' => $inventory['product_id'], 'color_id' => $inventory['color_id'], 
-                        'size_id' => $inventory['size_id']])->first();
-
-                if(!$existingInventory) {
-                    $importInventory = new Inventory();
-                    $importInventory->month_year = $currentMonthYear;
-                    $importInventory->product_id = $inventory['product_id'];
-                    $importInventory->color_id = $inventory['color_id'];
-                    $importInventory->size_id = $inventory['size_id'];
-                    $importInventory->total_initial = $existingInventory['total_initial'];
-                    $importInventory->total_import = $inventory['quantity'];
-                    $importInventory->total_export = 0;
-                    $importInventory->total_final = $inventory['quantity'];
-                    $importInventory->save();
-                } 
-                else {
-                    if($check) {
+            if(!$check) {
+                foreach($existingImportProduct as $importProduct) {
+                    $existingImportProductDetail = 
+                        StockReceivedDocketProductDetail::where('stock_received_docket_product_id', $importProduct['id'])->get();
+                        
+                    foreach($existingImportProductDetail as $importProductDetail) {
+                        // Update Inventories        
+                        $inputDate = $request->date;
+                        $carbonDate = Carbon::parse($inputDate);
+                        $currentMonthYear = $carbonDate->format('Ym');
+    
+                        $existingInventory = Inventory::where(['month_year' => $currentMonthYear, 
+                            'product_id' => $importProductDetail['product_id'], 
+                            'color_id' => $importProductDetail['color_id'], 
+                            'size_id' => $importProductDetail['size_id']])->first();
+                        
+                        if($existingInventory) {
+                            if($existingInventory['total_final'] >= $importProductDetail['quantity']) {
+                                    Inventory::where(['month_year' => $currentMonthYear, 
+                                    'product_id' => $importProductDetail['product_id'], 
+                                    'color_id' => $importProductDetail['color_id'], 
+                                    'size_id' => $importProductDetail['size_id']])
+                                    ->update([
+                                        'total_import' => $existingInventory['total_import'] - $importProductDetail['quantity'],
+                                        'total_final' => $existingInventory['total_final'] - $importProductDetail['quantity']
+                                    ]);
+                            } 
+                        }
+    
+                        $importProductDetail->delete();
+                    }
+    
+                    $importProduct->delete();
+    
+                    $import->staff_id = $request->staff_id;
+                    $import->supplier_id = $request->supplier_id;
+                    $import->payment_voucher_id = $request->payment_voucher_id;
+                    $import->date = $request->date;
+                    $import->total_price = $request->total_price;
+                    $import->value_added = $request->value_added;
+                    $import->total_value = $request->total_value;
+                    $import->description = $request->description;
+    
+                    $import->save(); 
+                }
+    
+                foreach($request->items as $item) {
+                    $product = Product::find($item['product_id']);
+                    if($product['price'] != $item['price']) {
+                        $product->price = $item['price'];
+                        $product->price_final = ($item['price']*(100-$product['discount_percent']))/100;
+                        $product->save();
+                    }
+                    $importProduct = new StockReceivedDocketProduct();
+                    $importProduct->stock_received_docket_id = $id;
+                    $importProduct->product_id = $item['product_id'];
+                    $importProduct->quantity = $item['quantity'];
+                    $importProduct->price = $item['price_purchase'];
+                    $importProduct->save();
+                    
+                    $importProductId = $importProduct->id;
+    
+                    foreach ($request->inventories as $inventory) {
+                        if ($inventory['product_id'] == $item['product_id']) {
+                            $importProductDetail = new StockReceivedDocketProductDetail();
+                            $importProductDetail->stock_received_docket_product_id = $importProductId;
+                            $importProductDetail->product_id = $inventory['product_id'];
+                            $importProductDetail->color_id = $inventory['color_id'];
+                            $importProductDetail->size_id = $inventory['size_id'];
+                            $importProductDetail->quantity = $inventory['quantity'];
+                            $importProductDetail->save();
+                        }
+                    }
+                }
+    
+                foreach($request->inventories as $inventory) {
+                    $inputDate = $request->date;
+                    $carbonDate = Carbon::parse($inputDate);
+                    $currentMonthYear = $carbonDate->format('Ym');
+    
+                    $existingInventory = Inventory::where(['month_year' => $currentMonthYear, 
+                            'product_id' => $inventory['product_id'], 'color_id' => $inventory['color_id'], 
+                            'size_id' => $inventory['size_id']])->first();
+    
+                    if(!$existingInventory) {
+                        $importInventory = new Inventory();
+                        $importInventory->month_year = $currentMonthYear;
+                        $importInventory->product_id = $inventory['product_id'];
+                        $importInventory->color_id = $inventory['color_id'];
+                        $importInventory->size_id = $inventory['size_id'];
+                        $importInventory->total_initial = $existingInventory['total_initial'];
+                        $importInventory->total_import = $inventory['quantity'];
+                        $importInventory->total_export = 0;
+                        $importInventory->total_final = $inventory['quantity'];
+                        $importInventory->save();
+                    } 
+                    else {
                         Inventory::where(['month_year' => $currentMonthYear, 
                             'product_id' => $inventory['product_id'], 'color_id' => $inventory['color_id'], 
                             'size_id' => $inventory['size_id']])->update([
@@ -398,12 +432,17 @@ class StockReceivedDocketsController extends Controller
                             ]);
                     }
                 }
+                return response()->json([
+                    'success' => 'success',
+                    'message' => "Phiếu nhập được cập nhật thành công",
+                ]); 
+            } else {
+                $orderIdsString = implode(', ', $orderIds);
+                return response()->json([
+                    'success' => 'warning',
+                    'message' => "Không thể sửa phiếu nhập hàng, do khách hàng đã đặt. Bạn cần hủy đơn hàng " .$orderIdsString.".",
+                ]); 
             }
-    
-            return response()->json([
-                'success' => 'success',
-                'message' => "Phiếu nhập được cập nhật thành công",
-            ]); 
 
         }
     }

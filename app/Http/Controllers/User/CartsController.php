@@ -40,6 +40,14 @@ class CartsController extends Controller
                 
             $item['inventory'] = $inventory;
             
+            if($item['quantity'] > $item->inventory->total_final) {
+                Cart::where([
+                        'user_id' => $id,
+                        'product_id' => $item['product_id'], 
+                        'size_id' => $item['size_id'],
+                        'color_id' => $item['color_id']
+                    ])->update(['quantity' => $item->inventory->total_final]);
+            }
             if($item->inventory->total_final > 0){
                 $item['total_price'] += $item['product']['price']*$item['quantity'];
                 $item['total_value'] += $item['product']['price_final']*$item['quantity'];

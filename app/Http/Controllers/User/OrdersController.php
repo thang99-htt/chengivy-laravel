@@ -189,7 +189,7 @@ class OrdersController extends Controller
     // with id = user_id
     public function purchaseAll($id)
     {
-        $orders = Order::with(['order_product.product'])->where('user_id', $id)->orderBy('created_at', 'DESC')->get();
+        $orders = Order::with(['order_product.product'])->where('user_id', $id)->orderBy('ordered_at', 'DESC')->get();
         return response()->json(OrderResource::collection($orders));
     }
 
@@ -200,10 +200,10 @@ class OrdersController extends Controller
         return response()->json(new OrderResource($order));
     }
 
-    public function cancleOrder($id) {
+    public function cancelOrder($id) {
         $order = Order::find($id);
         $order->status_id = 10;
-        $order->cancled_at = Carbon::now('Asia/Ho_Chi_Minh');
+        $order->canceled_at = Carbon::now('Asia/Ho_Chi_Minh');
         $order->save();
         
         return response()->json([

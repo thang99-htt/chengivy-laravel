@@ -102,7 +102,7 @@ class ReviewsController extends Controller
             }
             $review->save();
         }      
-        return response()->json(['success'=>$reviews], 200);
+        return response()->json(['success'=>true], 200);
     }
 
 }

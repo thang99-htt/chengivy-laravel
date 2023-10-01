@@ -62,16 +62,19 @@ Route::prefix('/admin/products')->group( function() {
     Route::post('/add-size',[ProductsController::class, 'addSize']);
     Route::put('update-product-sale', [ProductsController::class, 'updateProductsSale']);
     Route::put('{id}/{status}', [ProductsController::class, 'updateProductStatus']);
-    Route::delete('/delete-product',[ProductsController::class, 'destroyIds']);
+    Route::put('/hidden',[ProductsController::class, 'hiddenProduct']);
+    Route::put('/delete',[ProductsController::class, 'deleteProduct']);
     Route::delete('/delete-image/{id}',[ProductsController::class, 'deleteImage']);
     Route::delete('/delete-size/{id}',[ProductsController::class, 'deleteSize']);
 });
 
 Route::apiResource('/admin/products', ProductsController::class);
 
-Route::apiResource('/admin/orders', OrdersController::class);
+// Route::apiResource('/admin/orders', OrdersController::class);
+Route::get('admin/orders/{id}', [OrdersController::class, 'show']);
 Route::post('admin/orders/', [OrdersController::class, 'index']);
 Route::put('admin/orders/{staff}/{id}/{status}', [OrdersController::class, 'updateOrderStatus']);
+Route::put('admin/orders/cancel', [OrdersController::class, 'cancelOrder']);
 
 Route::get('/admin/statisticals/get-range-date',[StatisticalsController::class, 'getRangeDate']);
 
@@ -128,7 +131,7 @@ Route::post('orders/add-buy-now/{id}', [App\Http\Controllers\User\OrdersControll
 Route::get('orders/purchases/user-{id}', [App\Http\Controllers\User\OrdersController::class, 'purchaseAll']);
 Route::get('orders/purchase/order-{id}', [App\Http\Controllers\User\OrdersController::class, 'purchaseShow']);
 Route::get('user/{id}', [App\Http\Controllers\User\UsersController::class, 'infoAccount']);
-Route::put('orders/purchase/cancle-{id}', [App\Http\Controllers\User\OrdersController::class, 'cancleOrder']);
+Route::put('orders/purchase/cancel-{id}', [App\Http\Controllers\User\OrdersController::class, 'cancelOrder']);
 Route::put('orders/purchase/receipt-{id}', [App\Http\Controllers\User\OrdersController::class, 'receiptOrder']);
 
 Route::put('user/update-profile/{id}', [App\Http\Controllers\User\UsersController::class, 'updateProfile']);

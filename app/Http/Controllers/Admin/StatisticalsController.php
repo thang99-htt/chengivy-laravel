@@ -30,7 +30,7 @@ class StatisticalsController extends Controller
 
         $orders = count(Order::get());
         $orders_confirm = count(Order::where('status_id', 1)->get());
-        $orders_cancle = count(Order::where('status_id', 10)->get());
+        $orders_cancel = count(Order::where('status_id', 10)->get());
         $orders_success = count(Order::where('status_id', 9)->get());
 
         $products = count(Product::get());
@@ -152,7 +152,7 @@ class StatisticalsController extends Controller
             'users' => $users,
             'customers' => $customers,
             'orders' => $orders,
-            'orders_cancle' => $orders_cancle,
+            'orders_cancel' => $orders_cancel,
             'orders_success' => $orders_success,
             'orders_confirm' => $orders_confirm,
             'products' => $products,
@@ -169,10 +169,10 @@ class StatisticalsController extends Controller
 
     public function getRangeDate()
     {
-        // $orders_cancle = DB::table('orders')
+        // $orders_cancel = DB::table('orders')
         //     ->where('status_id', 10)
-        //     ->select(DB::raw('DATE_FORMAT(cancled_at, "%d/%m/%Y") as cancle_date'), DB::raw('count(*) as total'))
-        //     ->groupBy('cancle_date')
+        //     ->select(DB::raw('DATE_FORMAT(canceled_at, "%d/%m/%Y") as cancel_date'), DB::raw('count(*) as total'))
+        //     ->groupBy('cancel_date')
         //     ->get();
 
         // $orders_success = DB::table('orders')
@@ -183,7 +183,7 @@ class StatisticalsController extends Controller
 
 
         // $dates = collect()
-        //     ->concat($orders_cancle->pluck('cancle_date'))
+        //     ->concat($orders_cancel->pluck('cancel_date'))
         //     ->concat($orders_success->pluck('receipt_date'))
         //     ->unique()
         //     ->map(function ($date) {
@@ -231,11 +231,11 @@ class StatisticalsController extends Controller
                 ->get();
 
 
-            $orders_cancle = DB::table('orders')
+            $orders_cancel = DB::table('orders')
                 ->where('status_id', 10)
-                ->select(DB::raw('DATE_FORMAT(cancled_at, "%d/%m/%Y") as cancle_date'), DB::raw('count(*) as total'))
-                ->whereBetween('cancled_at', [$startDate, $endDate])
-                ->groupBy('cancle_date')
+                ->select(DB::raw('DATE_FORMAT(canceled_at, "%d/%m/%Y") as cancel_date'), DB::raw('count(*) as total'))
+                ->whereBetween('canceled_at', [$startDate, $endDate])
+                ->groupBy('cancel_date')
                 ->get();
 
             $orders_success = DB::table('orders')
@@ -251,10 +251,10 @@ class StatisticalsController extends Controller
                 ->get();
 
 
-            $orders_cancle = DB::table('orders')
+            $orders_cancel = DB::table('orders')
                 ->where('status_id', 10)
-                ->select(DB::raw('DATE_FORMAT(cancled_at, "%d/%m/%Y") as cancle_date'), DB::raw('count(*) as total'))
-                ->groupBy('cancle_date')
+                ->select(DB::raw('DATE_FORMAT(canceled_at, "%d/%m/%Y") as cancel_date'), DB::raw('count(*) as total'))
+                ->groupBy('cancel_date')
                 ->get();
 
             $orders_success = DB::table('orders')
@@ -265,7 +265,7 @@ class StatisticalsController extends Controller
         }
 
         $dates = collect()
-            ->concat($orders_cancle->pluck('cancle_date'))
+            ->concat($orders_cancel->pluck('cancel_date'))
             ->concat($orders_success->pluck('receipt_date'))
             ->unique()
             ->map(function ($date) {
@@ -284,7 +284,7 @@ class StatisticalsController extends Controller
         return response()->json([
             'dates' => $dates,
             'orders' => $orders,
-            'orders_cancle' => $orders_cancle,
+            'orders_cancel' => $orders_cancel,
             'orders_success' => $orders_success,
         ], 200);
     }

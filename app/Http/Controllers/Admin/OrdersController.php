@@ -9,6 +9,10 @@ use App\Models\Order;
 use App\Models\OrderProduct;
 use App\Http\Resources\OrderResource;
 use Carbon\Carbon;
+use App\Jobs\SendMailProductsCanceled;
+use App\Models\Color;
+use App\Models\Inventory;
+use App\Models\Size;
 
 class OrdersController extends Controller
 {
@@ -57,14 +61,70 @@ class OrdersController extends Controller
         ]);
     }
 
-    public function destroy($id)
+    public function cancelOrder(Request $request)
     {
-        $product = Product::find($id);
-        if($product->image != null) {
-            unlink(public_path()."/storage/uploads/products/". $product->image);
+        $selectedIds = $request->input('data'); // Lấy danh sách selectedIds từ request
+        $orders = Order::whereIn('id', $selectedIds)->get(); // Sử dụng whereIn để lấy các bản ghi tương ứng với selectedIds
+        
+        $notcancel = [];
+        $canceled = [];
+
+        foreach ($orders as $order) {
+            if ($order->status_id < 4) {
+                $canceled[] = $order->id;
+
+                $order->status_id = 10;
+                $order->canceled_at = now()->timezone('Asia/Ho_Chi_Minh');
+                // $order->save();
+                
+                // $inputDate = Carbon::now('Asia/Ho_Chi_Minh');
+                $inputDate = '2023-12-30 14:27:53';
+                $carbonDate = Carbon::parse($inputDate);
+                $currentMonthYear = $carbonDate->format('Ym');
+
+                $user = $order->user;
+                $productsCanceled = [];
+                foreach ($order->order_product as $item) {
+                    $productsCanceled[] = $item;
+        
+                    $color = Color::where('name', $item['color'])->first();
+                    $size = Size::where('name', $item['size'])->first();
+                    $existingInventory = Inventory::where(['month_year' => 202312, 
+                        'product_id' => $item['product_id'], 
+                        'color_id' => $color->id, 
+                        'size_id' => $size->id])->first();
+                        
+                    if($existingInventory) {
+                        Inventory::where(['month_year' => $currentMonthYear, 
+                            'product_id' => $item['product_id'], 
+                            'color_id' => $color->id, 
+                            'size_id' => $size->id])
+                            ->update([
+                                'total_final' => $existingInventory['total_final'] + $item['quantity'],
+                                'total_export' => $existingInventory['total_export'] - $item['quantity']
+                            ]);
+                        } 
+                }
+                SendMailProductsCanceled::dispatch($user->name, $user->email, $order, $productsCanceled);
+
+            } else {
+                $notcancel[] = $order->id;
+            }
         }
-        $product->delete();
-        return response()->json(['success'=>'true'], 200);
+        
+        if($notcancel) {
+            $notcancelString = implode(', ', $notcancel);
+            return response()->json([
+                'success' => 'warning',
+                'message' => 'Hủy đơn ' .$notcancelString. ' thất bại do hàng đã được vận chuyển.',
+            ]);
+        } else {
+            return response()->json([
+                'success' => 'success',
+                'message' => 'Hủy đơn thành công.',
+            ], 200);
+        }
     }
+
 
 }

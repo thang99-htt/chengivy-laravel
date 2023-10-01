@@ -25,6 +25,10 @@ class UsersController extends Controller
 
     public function updateProfile($id, Request $request)
     {
+        User::where('id', $id)->update([
+            'name' => $request['name']
+        ]);
+
         Profile::where('user_id', $id)->update([
             'phone' => $request['phone'],
             'birth_date' => $request['birth_date'],

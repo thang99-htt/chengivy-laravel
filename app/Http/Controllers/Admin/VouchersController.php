@@ -22,7 +22,7 @@ class VouchersController extends Controller
 
     public function voucherByUser($id)
     {
-        $vouchers = null;
+        $vouchers = [];
 
         $user = User::find($id);
         $order = Order::where('user_id', $user->id)->first(); // Lấy order đầu tiên của người dùng

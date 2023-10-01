@@ -86,11 +86,11 @@ class ProductResource extends JsonResource
                 ];
             })->toArray(),
             'reviews' => [
-                'average_star_rating' => $this->reviews->avg('star') > 0 ? $this->reviews->avg('star') : 0,
+                'average_star_rating' => (round($this->reviews->avg('star') * 4) / 4) > 0 ? (round($this->reviews->avg('star') * 4) / 4) : 0,
                 'fitted_value_distribution' => $this->reviews->count() > 0 ? [
-                    'value_1' => $this->reviews->where('fitted_value', 1)->count() / $this->reviews->count() * 100,
-                    'value_2' => $this->reviews->where('fitted_value', 2)->count() / $this->reviews->count() * 100,
-                    'value_3' => $this->reviews->where('fitted_value', 3)->count() / $this->reviews->count() * 100,
+                    'value_1' => round($this->reviews->where('fitted_value', 1)->count() / $this->reviews->count() * 100, 2),
+                    'value_2' => round($this->reviews->where('fitted_value', 2)->count() / $this->reviews->count() * 100, 2),
+                    'value_3' => round($this->reviews->where('fitted_value', 3)->count() / $this->reviews->count() * 100, 2),
                 ] : [
                     'value_1' => 0,
                     'value_2' => 0,

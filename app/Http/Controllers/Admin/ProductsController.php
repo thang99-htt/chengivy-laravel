@@ -231,10 +231,22 @@ class ProductsController extends Controller
         ]);
     }
 
-    public function destroyIds(Request $request)
+    public function hiddenProduct(Request $request)
     {
         $selectedIds = $request->all(); // Lấy danh sách selectedIds từ request
-        $products = Product::whereIn('id', $selectedIds)->get(); // Sử dụng whereIn để lấy các bản ghi tương ứng với selectedIds
+        $products = Product::whereIn('id', $selectedIds['data'])->get(); // Sử dụng whereIn để lấy các bản ghi tương ứng với selectedIds
+        foreach($products as $product) {
+            // $product->deleted_at = Carbon::now('Asia/Ho_Chi_Minh');
+            $product->status = 0;
+            $product->save();
+        }      
+        return response()->json(['success'=>'true'], 200);
+    }
+
+    public function deleteProduct(Request $request)
+    {
+        $selectedIds = $request->all(); // Lấy danh sách selectedIds từ request
+        $products = Product::whereIn('id', $selectedIds['data'])->get(); // Sử dụng whereIn để lấy các bản ghi tương ứng với selectedIds
         foreach($products as $product) {
             $product->deleted_at = Carbon::now('Asia/Ho_Chi_Minh');
             $product->save();
@@ -439,6 +451,7 @@ class ProductsController extends Controller
         $product = Product::with('category', 'brand', 'product_image', 
             'inventories.size', 'reviews.review_image')
             ->where('status', '=', 0)
+            ->where('deleted_at', '=', null)
             ->orderBy('created_at', 'DESC')
             ->get();
         return response()->json(ProductResource::collection($product));
