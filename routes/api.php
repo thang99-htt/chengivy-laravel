@@ -144,6 +144,13 @@ Route::put('admin/reviews/user-{id}', [App\Http\Controllers\Admin\ReviewsControl
 Route::put('admin/reviews/hidden', [App\Http\Controllers\Admin\ReviewsController::class, 'hiddenIds']);
 Route::put('admin/reviews/{id}', [App\Http\Controllers\Admin\ReviewsController::class, 'update']);
 
+Route::put('returns/{id}', [App\Http\Controllers\User\ReturnsController::class, 'cancelReturn']);
+Route::apiResource('/returns', App\Http\Controllers\User\ReturnsController::class);
+
+Route::get('admin/returns/{id}',[App\Http\Controllers\Admin\ReturnsController::class, 'show']);
+Route::post('admin/returns/all',[App\Http\Controllers\Admin\ReturnsController::class, 'index']);
+Route::put('admin/returns/update-status', [App\Http\Controllers\Admin\ReturnsController::class, 'updateReturnStatus']);
+
 Route::post('admin/notifications/reviews/{id}', [App\Http\Controllers\Admin\NotificationsController::class, 'storeReview']);
 
 Route::post('/upload-image',[App\Http\Controllers\User\UploadImageController::class, 'store']);

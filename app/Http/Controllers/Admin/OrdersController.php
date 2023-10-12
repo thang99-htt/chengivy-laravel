@@ -75,7 +75,7 @@ class OrdersController extends Controller
 
                 $order->status_id = 10;
                 $order->canceled_at = now()->timezone('Asia/Ho_Chi_Minh');
-                // $order->save();
+                $order->save();
                 
                 // $inputDate = Carbon::now('Asia/Ho_Chi_Minh');
                 $inputDate = '2023-12-30 14:27:53';
