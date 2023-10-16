@@ -29,7 +29,7 @@ class ReturnsController extends Controller
 
     public function show($id)
     {
-        $return = Returns::with('order','return_image','return_product.product.product_image')->find($id);
+        $return = Returns::with('order.user.profiles','return_image','return_product.product.product_image')->find($id);
         return response()->json($return);
     }
 
@@ -45,6 +45,11 @@ class ReturnsController extends Controller
             $user = User::find($order->user_id);
             $returnProduct = $return;
             SendReturnMail::dispatch($user->name, $user->email, $returnProduct);
+        }
+
+        if($request->status === 'Đã xử lý hoàn trả') {
+            $return->returned_at = Carbon::now('Asia/Ho_Chi_Minh');;
+            $return->save();
         }
 
         return response()->json([

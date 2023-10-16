@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Http\Request;
 use App\Models\User;
+use App\Models\Profile;
 use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
@@ -24,11 +25,18 @@ class AuthController extends Controller
             ]
         );
         
-        User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-        ]);
+
+        $user = new User();
+        $user->email = $request->email;
+        $user->password = Hash::make($request->password);
+        $user->save();
+
+        $profile = new Profile();
+        $profile->user_id = $user->id;
+        $profile->name = $request->name;
+        $profile->phone = $request->phone;
+        $profile->save();
+
 
         return response()->json(['msg' => 'Đăng ký thành công.']);
     }

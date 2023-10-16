@@ -39,7 +39,7 @@ class OrdersController extends Controller
         $order = new Order;
         $order->staff_id = 1;
         $order->user_id = $id;
-        $order->payment_method_id = $request['payment_method_id'];
+        $order->payment_method = $request['payment_method'];
         if($request['voucher_id']) {
             $order->voucher_id = $request['voucher_id'];
 
@@ -143,7 +143,7 @@ class OrdersController extends Controller
         $order = new Order;
         $order->staff_id = 1;
         $order->user_id = $id;
-        $order->payment_method_id = $request['payment_method_id'];
+        $order->payment_method = $request['payment_method'];
         if($request['voucher_id']) {
             $order->voucher_id = $request['voucher_id'];
         }

@@ -32,25 +32,16 @@ class OrdersController extends Controller
         return response()->json(new OrderResource($order));
     }
 
-    public function updateOrderStatus($staff, $id, Request $request) {
-        $order = Order::find($id);
-        if($request->status == 1) {
-            $order->staff_id = $staff;
-            $order->status_id = 2;
+    public function updateOrderStatus(Request $request) {
+        $order = Order::find($request->orderId);
+        $order->staff_id = $request->staffId;
+        $order->status_id = $request->status;
+
+        if($request->status == 2) {
             $order->confirmed_at = Carbon::now('Asia/Ho_Chi_Minh');
         }
-        if($request->status == 2)
-            $order->status_id = 3;
-        if($request->status == 3)
-            $order->status_id = 4;
-        if($request->status == 4)
-            $order->status_id = 5;
-        if($request->status == 5)
-            $order->status_id = 6;
-        if($request->status == 6)
-            $order->status_id = 7;
-        if($request->status == 8) {
-            $order->status_id = 9;
+
+        if($request->status == 9) {
             $order->paid = 1;
         }
         $order->save();

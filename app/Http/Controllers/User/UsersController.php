@@ -25,15 +25,12 @@ class UsersController extends Controller
 
     public function updateProfile($id, Request $request)
     {
-        User::where('id', $id)->update([
-            'name' => $request['name']
-        ]);
-
         Profile::where('user_id', $id)->update([
+            'name' => $request['name'],
             'phone' => $request['phone'],
             'birth_date' => $request['birth_date'],
             'gender' => $request['gender'],
-            'bank_account' => $request['account_number'],
+            'bank_account' => $request['bank_account'],
         ]);
 
         return response()->json([

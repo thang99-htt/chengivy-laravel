@@ -28,7 +28,6 @@ class Order extends Model
         'staff_id',
         'user_id',
         'status_id',
-        'payment_method_id',
         'voucher_id',
         'ordered_at',
         'confirmed_at',
@@ -39,6 +38,7 @@ class Order extends Model
         'fee',
         'total_discount',
         'total_price',
+        'payment_method',
         'paid',
         'note',
     ];
@@ -61,11 +61,6 @@ class Order extends Model
     public function status()
     {
         return $this->belongsTo(Status::class, 'status_id');
-    }
-
-    public function payment_method()
-    {
-        return $this->belongsTo(PaymentMethod::class, 'payment_method_id');
     }
 
     public function voucher()

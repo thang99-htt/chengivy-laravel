@@ -136,7 +136,7 @@
         </div>
         <p>Quý khách hàng cần thực hiện vui lòng truy cập đường link bên dưới và làm theo hướng dẫn:</p>
         <div class="cta-button">
-            <a href="http://localhost:3000/returns/guide">Chengivy - Trả hàng/Hoàn tiền</a>
+            <a href="http://localhost:3000/customer/returns/guide">Chengivy - Trả hàng/Hoàn tiền</a>
         </div>
         <div>
             <p>Mọi thắc mắc cần giải đáp Quý khách vui lòng liên hệ Trung tâm Chăm sóc Khách hàng – Chengivy Store tại (+84) 222 666 8888 hoặc gửi mail theo địa chỉ hi@chengivy.comđể được hỗ trợ.</p>

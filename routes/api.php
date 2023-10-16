@@ -35,6 +35,8 @@ Route::apiResource('/admin/staffs', App\Http\Controllers\Admin\StaffsController:
 Route::delete('/admin/staffs', [App\Http\Controllers\Admin\StaffsController::class, 'destroyIds']);
 Route::put('admin/staffs/{id}/{status}', [App\Http\Controllers\Admin\StaffsController::class, 'updateStaffStatus']);
 
+Route::apiResource('/admin/customers', App\Http\Controllers\Admin\CustomersController::class);
+
 Route::prefix('/admin/categories')->group( function() {
     Route::get('/add',[CategoriesController::class, 'create']);   
     Route::put('{id}/{status}', [CategoriesController::class, 'updateCategoryStatus']);
@@ -73,7 +75,7 @@ Route::apiResource('/admin/products', ProductsController::class);
 // Route::apiResource('/admin/orders', OrdersController::class);
 Route::get('admin/orders/{id}', [OrdersController::class, 'show']);
 Route::post('admin/orders/', [OrdersController::class, 'index']);
-Route::put('admin/orders/{staff}/{id}/{status}', [OrdersController::class, 'updateOrderStatus']);
+Route::put('admin/orders/update-status', [OrdersController::class, 'updateOrderStatus']);
 Route::put('admin/orders/cancel', [OrdersController::class, 'cancelOrder']);
 
 Route::get('/admin/statisticals/get-range-date',[StatisticalsController::class, 'getRangeDate']);
@@ -88,6 +90,8 @@ Route::post('/admin/statisticals/get-products',[StatisticalsController::class, '
 Route::post('/admin/statisticals/send-notification',[StatisticalsController::class, 'sendNotification']);
 
 Route::apiResource('/admin/invoices', App\Http\Controllers\Admin\InvoicesController::class);
+
+Route::apiResource('/admin/statuses', App\Http\Controllers\Admin\StatusesController::class);
 
 Route::prefix('/categories')->group( function() {
     Route::get('/category',[App\Http\Controllers\User\CategoriesController::class, 'category']);
@@ -110,7 +114,6 @@ Route::prefix('/favorite')->group( function() {
 });
 
 Route::get('/addresses/cities',[App\Http\Controllers\User\AddressesController::class, 'getCities']);
-Route::apiResource('/admin/payment-methods', App\Http\Controllers\Admin\PaymentMethodsController::class);
 
 Route::prefix('/addresses')->group( function() {
     Route::get('/{id}',[App\Http\Controllers\User\AddressesController::class, 'index']);
