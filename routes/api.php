@@ -75,6 +75,7 @@ Route::apiResource('/admin/products', ProductsController::class);
 // Route::apiResource('/admin/orders', OrdersController::class);
 Route::get('admin/orders/{id}', [OrdersController::class, 'show']);
 Route::post('admin/orders/', [OrdersController::class, 'index']);
+Route::post('admin/orders/sold-at-store', [OrdersController::class, 'soldAtStore']);
 Route::put('admin/orders/update-status', [OrdersController::class, 'updateOrderStatus']);
 Route::put('admin/orders/cancel', [OrdersController::class, 'cancelOrder']);
 

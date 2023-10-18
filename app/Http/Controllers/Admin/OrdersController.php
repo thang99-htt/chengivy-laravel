@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Events\SendNotification;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Product;
@@ -12,7 +13,9 @@ use Carbon\Carbon;
 use App\Jobs\SendMailProductsCanceled;
 use App\Models\Color;
 use App\Models\Inventory;
+use App\Models\Notification;
 use App\Models\Size;
+use App\Models\Voucher;
 
 class OrdersController extends Controller
 {
@@ -117,5 +120,78 @@ class OrdersController extends Controller
         }
     }
 
+    public function soldAtStore(Request $request)
+    {
+        $getItems = $request->items;
+
+        // Save table orders
+        $order = new Order;
+        $order->staff_id = $request['staff_id'];
+        $order->user_id = $request['user_id'];
+        $order->payment_method = 'Thanh toán tiền mặt';
+        if($request['voucher_id']) {
+            $order->voucher_id = $request['voucher_id'];
+            $voucher = Voucher::find($request['voucher_id']);
+            $voucher->quantity_remain = $voucher->quantity_remain - 1;
+            $voucher->save();
+        }
+        if($request['name_receiver'])
+            $order->name_receiver = $request['name_receiver'];
+        if($request['phone_receiver'])
+            $order->phone_receiver = $request['phone_receiver'];
+
+        $order->status_id = 11;
+        $order->ordered_at = Carbon::now('Asia/Ho_Chi_Minh');
+        $order->estimated_at = Carbon::now('Asia/Ho_Chi_Minh');
+        $order->receipted_at = Carbon::now('Asia/Ho_Chi_Minh');
+
+        $order->total_price = $request['total_price'];
+        $order->total_discount = $request['total_discount'];
+        $order->total_value = $request['total_value'];
+
+        $order->fee = 0;  
+        $order->paid = 1;        
+        $order->save();
+
+        $order_id = $order->id;
+
+        foreach($getItems as $item) {
+            $inventory = Inventory::where([
+                'product_id' => $item['product_id'], 'color_id' => $item['color_id'], 
+                'size_id' => $item['size_id']])->orderByDesc('month_year')->first();
+
+            // Save table order_product
+            $orderItem = new OrderProduct;
+            $orderItem->order_id = $order_id;
+            $orderItem->product_id = $item['product_id'];
+            $orderItem->size = $item['size'];
+            $orderItem->color = $item['color'];
+            $orderItem->quantity = $item['quantity'];
+            $orderItem->price = $item['price'];
+            $orderItem->price_discount = $item['price'] - $item['price_final'];
+            $orderItem->save();
+            
+            $latestMonthYear = Inventory::where([
+                'product_id' => $item['product_id'],
+                'size_id' => $item['size_id'],
+                'color_id' => $item['color_id']
+            ])->max('month_year');
+            
+            Inventory::where(['product_id' => $item['product_id'], 
+                'size_id' => $item['size_id'],
+                'color_id' => $item['color_id'],
+                'month_year' => $latestMonthYear]
+                )->update([
+                    'total_export' => $inventory->total_export + $item['quantity'],
+                    'total_final' => $inventory->total_final - $item['quantity']
+            ]);
+
+        }
+        
+        return response()->json([
+            'success' => 'success',
+            'message' => 'Tạo đơn hàng thành công.'
+        ], 200);  
+    }
 
 }

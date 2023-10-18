@@ -76,6 +76,7 @@ class ProductResource extends JsonResource
                             'size_id' => $item->size_id,
                             'size_name' => $item->size->name,
                             'color_id' => $item->color_id,
+                            'color' => $item->color->color,
                             'color_name' => $item->color->name,
                             'total_initial' => $item->total_initial,
                             'total_import' => $item->total_import,
