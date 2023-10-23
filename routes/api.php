@@ -35,6 +35,7 @@ Route::apiResource('/admin/staffs', App\Http\Controllers\Admin\StaffsController:
 Route::delete('/admin/staffs', [App\Http\Controllers\Admin\StaffsController::class, 'destroyIds']);
 Route::put('admin/staffs/{id}/{status}', [App\Http\Controllers\Admin\StaffsController::class, 'updateStaffStatus']);
 
+Route::get('/admin/customers/filter-ghost',[App\Http\Controllers\Admin\CustomersController::class, 'filterGhost']);   
 Route::apiResource('/admin/customers', App\Http\Controllers\Admin\CustomersController::class);
 
 Route::prefix('/admin/categories')->group( function() {

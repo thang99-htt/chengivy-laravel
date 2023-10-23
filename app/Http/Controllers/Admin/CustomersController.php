@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Order;
 use App\Models\Profile;
 use Illuminate\Http\Request;
 use App\Models\User;
@@ -35,6 +36,11 @@ class CustomersController extends Controller
         $customer->save();
 
         return response()->json($customer, 200);
+    }
+
+    public function filterGhost() {
+        $order = Order::with('user')->where('status_id', 13)->get();
+        return response()->json($order, 200);
     }
 
 

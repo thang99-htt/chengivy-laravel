@@ -50,7 +50,7 @@ class AuthController extends Controller
             ],
                         
         );
-        $user = User::where('email', $request->email)->first();
+        $user = User::where('email', $request->email)->with('profiles')->first();
 
         if(! $user || ! Hash::check($request->password, $user->password)) {
             throw ValidationException::withMessages([

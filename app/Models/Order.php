@@ -41,6 +41,7 @@ class Order extends Model
         'payment_method',
         'paid',
         'note',
+        'bill'
     ];
 
     /**

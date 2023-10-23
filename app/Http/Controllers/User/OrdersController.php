@@ -114,16 +114,15 @@ class OrdersController extends Controller
 
         }
 
-        $user = User::find($id);
         event(new SendNotification(
-            $user->name, 
+            $request['delivery_address']['name'], 
             1,
             "Vừa đặt hàng",
             "http://localhost:3000/admin/orders",
         ));
 
         $notification = new Notification();
-        $notification->user = $user->name;
+        $notification->user = $request['delivery_address']['name'];
         $notification->type = 1;
         $notification->message = "Vừa đặt hàng";
         $notification->status = 'Chưa đọc';

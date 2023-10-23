@@ -14,8 +14,12 @@ use App\Jobs\SendMailProductsCanceled;
 use App\Models\Color;
 use App\Models\Inventory;
 use App\Models\Notification;
+use App\Models\Profile;
 use App\Models\Size;
+use App\Models\User;
 use App\Models\Voucher;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class OrdersController extends Controller
 {
@@ -135,10 +139,9 @@ class OrdersController extends Controller
             $voucher->quantity_remain = $voucher->quantity_remain - 1;
             $voucher->save();
         }
-        if($request['name_receiver'])
-            $order->name_receiver = $request['name_receiver'];
-        if($request['phone_receiver'])
-            $order->phone_receiver = $request['phone_receiver'];
+
+        $order->name_receiver = $request['name_receiver'];
+        $order->phone_receiver = $request['phone_receiver'];
 
         $order->status_id = 11;
         $order->ordered_at = Carbon::now('Asia/Ho_Chi_Minh');
@@ -150,7 +153,15 @@ class OrdersController extends Controller
         $order->total_value = $request['total_value'];
 
         $order->fee = 0;  
-        $order->paid = 1;        
+        $order->paid = 1;      
+        
+        $pdfBase64 = $request->input('bill');
+        $pdfBinary = base64_decode(Str::after($pdfBase64, ','));
+        $pdfFilename = uniqid('pdf_') . '.pdf';
+        $disk = 'public';
+        Storage::disk($disk)->put('uploads/orders/' . $pdfFilename, $pdfBinary);
+        $order->bill = "http://localhost:8000/storage/uploads/orders/".$pdfFilename;
+        
         $order->save();
 
         $order_id = $order->id;
@@ -190,7 +201,8 @@ class OrdersController extends Controller
         
         return response()->json([
             'success' => 'success',
-            'message' => 'Tạo đơn hàng thành công.'
+            'message' => 'Tạo đơn hàng thành công.',
+            'bill' => $pdfFilename
         ], 200);  
     }
 
