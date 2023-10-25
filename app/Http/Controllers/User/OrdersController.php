@@ -62,6 +62,7 @@ class OrdersController extends Controller
         if($request['note'] != null)
             $order->note = $request['note'];
         $order->paid = $request->paid;        
+        $order->bill = 'bill.pdf';
         $order->save();
 
         $order_id = $order->id;
@@ -113,6 +114,20 @@ class OrdersController extends Controller
             }
 
         }
+
+        $user = User::find($id);
+        $user->point = $user->point - $request['point'];
+        $pointPlus = intval($request['total_value'] / 100000);
+        if($user->level == 'GOLD') {
+            $user->point = $user->point + $pointPlus*3;
+        } else if($user->level == 'PLATINUM') {
+            $user->point = $user->point + $pointPlus*5;
+        } else if($user->level == 'DIAMOND') {
+            $user->point = $user->point + $pointPlus*10;
+        } else  {
+            $user->point = $user->point + $pointPlus;
+        }
+        $user->save();
 
         event(new SendNotification(
             $request['delivery_address']['name'], 

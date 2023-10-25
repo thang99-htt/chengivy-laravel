@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\Profile;
+use App\Models\Review;
 use App\Http\Resources\UserResource;
 use Illuminate\Support\Facades\Hash;
 
@@ -56,5 +57,21 @@ class UsersController extends Controller
                 'message'=>'Mật khẩu không đúng.'
             ]);
         }
+    }
+
+    public function getReviews($id)
+    {
+        $reviews = Review::with('product.product_image', 'review_image', 'user')->where('user_id', $id)
+            ->orderBy('created_at', 'DESC')->get();
+        return response($reviews);
+    }
+
+    public function deleteReview($id)
+    {
+        $review = Review::find($id);
+        $review->delete();
+        return response()->json([
+            'success'=>true,
+        ], 200);
     }
 }

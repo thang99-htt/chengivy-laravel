@@ -294,77 +294,46 @@ class StatisticalsController extends Controller
         if ($request->input('startDate') && $request->input('endDate')) {
             $startDate = Carbon::createFromFormat('d/m/Y', $request->input('startDate'))->startOfMonth();
             $endDate = Carbon::createFromFormat('d/m/Y', $request->input('endDate'))->endOfMonth();
-
-            $revenues = DB::table('orders')
-                ->where('status_id', 9)
-                ->where('total_value', '>', 0)
-                ->select(DB::raw('DATE_FORMAT(receipted_at, "%m/%Y") as date'), DB::raw('sum(total_value) as total'))
-                ->whereBetween('receipted_at', [$startDate, $endDate])
-                ->groupBy('date')
-                ->get();
-
-            $payments = DB::table('payment_voucher')
-                ->select(DB::raw('DATE_FORMAT(date, "%m/%Y") as date'), DB::raw('sum(total_price) as total'))
-                ->whereBetween('date', [$startDate, $endDate])
-                ->groupBy('date')
-                ->get();
-
-            // Tạo một danh sách tất cả các ngày từ cả revenues và payments
-            $revenueDates = $revenues->pluck('date')->toArray();
-            $paymentDates = $payments->pluck('date')->toArray();
-            $allDates = array_values(array_unique(array_merge($revenueDates, $paymentDates)));
-            usort($allDates, function ($date1, $date2) {
-                $carbon1 = Carbon::createFromFormat('m/Y', $date1);
-                $carbon2 = Carbon::createFromFormat('m/Y', $date2);
-
-                return $carbon1->timestamp - $carbon2->timestamp;
-            });
-
-            // Tính lợi nhuận cho tất cả các ngày từ cả revenues và payments
-            $profits = [];
-            foreach ($allDates as $date) {
-                $revenueAmount = $revenues->where('date', $date)->sum('total');
-                $paymentAmount = $payments->where('date', $date)->sum('total');
-                $profit = $revenueAmount - $paymentAmount;
-                $profits[] = [
-                    'date' => $date,
-                    'total' => $profit,
-                ];
-            }
         } else {
-            $revenues = DB::table('orders')
-                ->where('status_id', 9)
-                ->where('total_value', '>', 0)
-                ->select(DB::raw('DATE_FORMAT(receipted_at, "%m/%Y") as date'), DB::raw('sum(total_value) as total'))
-                ->groupBy('date')
-                ->get();
+            $startDate = Carbon::now()->startOfMonth();
+            $endDate = Carbon::now()->endOfMonth();
+        }
 
-            $payments = DB::table('payment_voucher')
-                ->select(DB::raw('DATE_FORMAT(date, "%m/%Y") as date'), DB::raw('sum(total_price) as total'))
-                ->groupBy('date')
-                ->get();
+        $revenues = DB::table('orders')
+            ->where('status_id', 9)
+            ->where('total_value', '>', 0)
+            ->select(DB::raw('DATE_FORMAT(receipted_at, "%d/%m/%Y") as date'), DB::raw('sum(total_value) as total'))
+            ->whereBetween('receipted_at', [$startDate, $endDate])
+            ->groupBy('date')
+            ->get();
 
-            // Tạo một danh sách tất cả các ngày từ cả revenues và payments
-            $revenueDates = $revenues->pluck('date')->toArray();
-            $paymentDates = $payments->pluck('date')->toArray();
-            $allDates = array_values(array_unique(array_merge($revenueDates, $paymentDates)));
-            usort($allDates, function ($date1, $date2) {
-                $carbon1 = Carbon::createFromFormat('m/Y', $date1);
-                $carbon2 = Carbon::createFromFormat('m/Y', $date2);
+        $payments = DB::table('payment_voucher')
+            ->select(DB::raw('DATE_FORMAT(date, "%d/%m/%Y") as date'), DB::raw('sum(total_price) as total'))
+            ->whereBetween('date', [$startDate, $endDate])
+            ->groupBy('date')
+            ->get();
 
-                return $carbon1->timestamp - $carbon2->timestamp;
-            });
-            // Tính lợi nhuận cho tất cả các ngày từ cả revenues và payments
-            $profits = [];
-            foreach ($allDates as $date) {
-                $revenueAmount = $revenues->where('date', $date)->sum('total');
-                $paymentAmount = $payments->where('date', $date)->sum('total');
-                $profit = $revenueAmount - $paymentAmount;
-                $profits[] = [
-                    'date' => $date,
-                    'total' => $profit,
-                ];
-            }
+        // Tạo một danh sách tất cả các ngày từ cả revenues và payments
+        $revenueDates = $revenues->pluck('date')->toArray();
+        $paymentDates = $payments->pluck('date')->toArray();
+        $allDates = array_values(array_unique(array_merge($revenueDates, $paymentDates)));
+        usort($allDates, function ($date1, $date2) {
+            $carbon1 = Carbon::createFromFormat('d/m/Y', $date1);
+            $carbon2 = Carbon::createFromFormat('d/m/Y', $date2);
+
+            return $carbon1->timestamp - $carbon2->timestamp;
+        });
+
+        // Tính lợi nhuận cho tất cả các ngày từ cả revenues và payments
+        $profits = [];
+        foreach ($allDates as $date) {
+            $revenueAmount = $revenues->where('date', $date)->sum('total');
+            $paymentAmount = $payments->where('date', $date)->sum('total');
+            $profit = $revenueAmount - $paymentAmount;
+            $profits[] = [
+                'date' => $date,
+                'total' => $profit,
+            ];
         }
 
         return response()->json([
@@ -374,7 +343,7 @@ class StatisticalsController extends Controller
             'profits' => $profits,
         ], 200);
     }
-
+    
     public function getProducts(Request $request)
     {
         $products = Product::get();
@@ -440,6 +409,72 @@ class StatisticalsController extends Controller
             'products_sell' => $products_sell_data
         ], 200);
     }
+
+    public function getProductsSoldOut(Request $request)
+    {
+        if ($request->input('startDate') && $request->input('endDate')) {
+            $startDate = Carbon::createFromFormat('d/m/Y', $request->input('startDate'))->startOfDay();
+            $endDate = Carbon::createFromFormat('d/m/Y', $request->input('endDate'))->endOfDay();
+        } else {
+            $startDate = Carbon::now()->startOfMonth();
+            $endDate = Carbon::now()->endOfMonth();
+        }
+
+        $orders = DB::table('orders')
+            ->whereBetween('receipted_at', [$startDate, $endDate])
+            ->get();
+
+        $products = [];
+        $dates = [];
+        foreach ($orders as $order) {
+            $orderDate = Carbon::createFromFormat('Y-m-d H:i:s', $order->receipted_at)->format('d/m/y');
+            $dates[] = $orderDate;
+            $orderProducts = OrderProduct::with('product')
+                ->where('order_id', $order->id)
+                ->get();
+
+            foreach ($orderProducts as $product) {
+                $productId = $product->product_id;
+                $productName = $product->product->name;
+                $quantity = $product->quantity;
+
+                if (!isset($products[$orderDate])) {
+                    $products[$orderDate] = [
+                        'date' => $orderDate,
+                        'productQuantities' => [],
+                        'total' => 0
+                    ];
+                }
+
+                $productQuantities = &$products[$orderDate]['productQuantities'];
+
+                if (!isset($productQuantities[$productId])) {
+                    $productQuantities[$productId] = [
+                        'name' => $productName,
+                        'quantity' => 0,
+                    ];
+                }
+
+                $productQuantities[$productId]['quantity'] += $quantity;
+                $products[$orderDate]['total'] += $productQuantities[$productId]['quantity'];
+            }
+        }
+
+        $dates = array_values(array_unique($dates));
+        $products = array_values($products);
+
+        // Loại bỏ chỉ số key "product_id" trong mảng "productQuantities"
+        foreach ($products as &$product) {
+            $product['productQuantities'] = array_values($product['productQuantities']);
+        }
+
+        return response()->json([
+            'dates' => $dates,
+            'products' => $products
+        ], 200);
+    }
+
+
 
     public function getTopProducts()
     {

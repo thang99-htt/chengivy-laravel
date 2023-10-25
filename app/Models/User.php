@@ -26,6 +26,8 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'level',
+        'point'
     ];
 
     /**
@@ -63,5 +65,9 @@ class User extends Authenticatable
     public function favorites()
     {
         return $this->hasMany(Favorite::class);
+    }
+
+    public function orders() {
+        return $this->hasMany(Order::class, 'user_id');
     }
 }
