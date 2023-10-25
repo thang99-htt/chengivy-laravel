@@ -15,6 +15,8 @@ use Carbon\Carbon;
 use App\Http\Resources\OrderResource;
 use App\Models\Notification;
 use App\Models\User;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class OrdersController extends Controller
 {    
@@ -62,7 +64,14 @@ class OrdersController extends Controller
         if($request['note'] != null)
             $order->note = $request['note'];
         $order->paid = $request->paid;        
-        $order->bill = 'bill.pdf';
+       
+        $pdfBase64 = $request->input('bill');
+        $pdfBinary = base64_decode(Str::after($pdfBase64, ','));
+        $pdfFilename = uniqid('pdf_') . '.pdf';
+        $disk = 'public';
+        Storage::disk($disk)->put('uploads/orders/' . $pdfFilename, $pdfBinary);
+        $order->bill = "http://localhost:8000/storage/uploads/orders/".$pdfFilename;
+        
         $order->save();
 
         $order_id = $order->id;
@@ -147,7 +156,8 @@ class OrdersController extends Controller
         
         return response()->json([
             'success' => 'success',
-            'message' => 'Đơn hàng đặt thành công.'
+            'message' => 'Đơn hàng đặt thành công.',
+            'bill' => $pdfFilename
         ], 200);  
     }
 
@@ -176,6 +186,14 @@ class OrdersController extends Controller
         if($request['note'] != null)
             $order->note = $request['note'];
         $order->paid = $request->paid;        
+        $pdfBase64 = $request->input('bill');
+        
+        $pdfBinary = base64_decode(Str::after($pdfBase64, ','));
+        $pdfFilename = uniqid('pdf_') . '.pdf';
+        $disk = 'public';
+        Storage::disk($disk)->put('uploads/orders/' . $pdfFilename, $pdfBinary);
+        $order->bill = "http://localhost:8000/storage/uploads/orders/".$pdfFilename;
+
         $order->save();
 
         $order_id = $order->id;
@@ -193,10 +211,25 @@ class OrdersController extends Controller
             $orderItem->price_discount = 0;
         }
         $orderItem->save();
+
+        $user = User::find($id);
+        $user->point = $user->point - $request['point'];
+        $pointPlus = intval($request['total_value'] / 100000);
+        if($user->level == 'GOLD') {
+            $user->point = $user->point + $pointPlus*3;
+        } else if($user->level == 'PLATINUM') {
+            $user->point = $user->point + $pointPlus*5;
+        } else if($user->level == 'DIAMOND') {
+            $user->point = $user->point + $pointPlus*10;
+        } else  {
+            $user->point = $user->point + $pointPlus;
+        }
+        $user->save();
         
         return response()->json([
             'success' => 'success',
-            'message' => 'Đơn hàng đặt thành công.'
+            'message' => 'Đơn hàng đặt thành công.',
+            'bill' => $pdfFilename
         ], 200);  
     }
 
