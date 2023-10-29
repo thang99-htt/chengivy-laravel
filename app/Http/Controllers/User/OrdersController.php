@@ -224,6 +224,22 @@ class OrdersController extends Controller
         } else  {
             $user->point = $user->point + $pointPlus;
         }
+
+        $orders = Order::where('user_id', $id)->get();
+        $totalValue = 0;
+        foreach($orders as $order) {
+            $totalValue = $totalValue + $order->total_value;
+        }
+        if($totalValue >= 15000000 && $totalValue <= 39999999) {
+            $user->level = 'SILVER';
+        } else if($totalValue >= 40000000 && $totalValue <= 79999999) {
+            $user->level = 'GOLD';
+        } else if($totalValue >= 80000000 && $totalValue <= 119999999) {
+            $user->level = 'PLATINUM';
+        } else if($totalValue >= 120000000) {
+            $user->level = 'DIAMOND';
+        }
+
         $user->save();
         
         return response()->json([

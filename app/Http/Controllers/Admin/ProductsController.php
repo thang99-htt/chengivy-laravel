@@ -310,39 +310,85 @@ class ProductsController extends Controller
 
         $filteredProducts = [];
         foreach ($products as $product) {
-            // Determine the maximum month and year for this product's inventories
-            $maxMonthYear = $product->inventories->max('month_year');
-
             $totalImport = $product->inventories->sum('total_import');
             $product->total_import = $totalImport;
 
             $totalExport = $product->inventories->sum('total_export');
             $product->total_export = $totalExport;
-
-            $totalFinal = $product->inventories->sum('total_final');
-            $product->total_final = $totalFinal;
-
+            
             $firstImage = $product->product_image->first();
             if ($firstImage) {
                 $product->image = $firstImage->image;
             }
 
-            // Fetch inventory entries for the determined max month and year with size relationship
             $inventoryEntries = Inventory::with('size', 'color')
-                ->where('month_year', $maxMonthYear)
                 ->where('product_id', $product->id)
                 ->orderBy('color_id')
                 ->orderBy('size_id')
                 ->get();
 
+            // Tạo mảng để lưu trữ tổng cộng total_import và total_export
+            $inventoryTotals = [];
+
+            // Khởi tạo biến để theo dõi tháng lớn nhất và total_final tương ứng
+            $maxMonthYear = '';
+            $maxTotalFinal = 0;
+            $totalFinal = 0;
+
             foreach ($inventoryEntries as $inventoryEntry) {
-                $inventoryEntry->name = $product->name;
+                $colorId = $inventoryEntry->color->id;
+                $sizeId = $inventoryEntry->size->id;
+                $monthYear = $inventoryEntry->month_year;
+
+                // Tạo khóa duy nhất cho mỗi cặp color_id và size_id
+                $key = $colorId . '-' . $sizeId;
+
+                if (!isset($inventoryTotals[$key])) {
+                    $inventoryTotals[$key] = [
+                        'product_id' => $product->id,
+                        'name' => $product->name,
+                        'color_id' => $colorId,
+                        'size_id' => $sizeId,
+                        'month_year' => $monthYear,
+                        'total_import' => 0,
+                        'total_export' => 0,
+                        'total_final' => 0,
+                        'color' => $inventoryEntry->color,
+                        'size' => $inventoryEntry->size,
+                    ];
+                }
+
+                // Cộng dữ liệu từ các bản ghi cùng color_id và size_id
+                $inventoryTotals[$key]['total_import'] += $inventoryEntry->total_import;
+                $inventoryTotals[$key]['total_export'] += $inventoryEntry->total_export;
+
+                // Cập nhật total_final nếu month_year lớn hơn
+                if ($monthYear > $inventoryTotals[$key]['month_year']) {
+                    $inventoryTotals[$key]['month_year'] = $monthYear;
+                    $inventoryTotals[$key]['total_final'] = $inventoryEntry->total_final;
+                }
+
+                // Cập nhật tháng lớn nhất và total_final tương ứng
+                if ($monthYear > $maxMonthYear) {
+                    $maxMonthYear = $monthYear;
+                    $maxTotalFinal = $inventoryEntry->total_final;
+                    $totalFinal += $inventoryEntry->total_final;
+                }
             }
 
-            // Assign the inventory entries to a new property, preserving the original eager loaded data
-            $product->filtered_inventories = $inventoryEntries;
+            // Chuyển mảng kết quả về dạng dấu vết
+            $inventoryTotals = array_values($inventoryTotals);
 
-            if ($product->filtered_inventories->count() > 0) {
+            // Gán kết quả cho thuộc tính filtered_inventories
+            $product->filtered_inventories = $inventoryTotals;
+
+            // Gán tháng lớn nhất và total_final tương ứng
+            $product->maxMonthYear = $maxMonthYear;
+            $product->maxTotalFinal = $maxTotalFinal;
+            
+            $product->total_final = $totalFinal;
+
+            if (count($inventoryTotals) > 0) {
                 $filteredProducts[] = $product;
             }
         }
