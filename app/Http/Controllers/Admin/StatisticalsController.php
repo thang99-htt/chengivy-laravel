@@ -14,6 +14,9 @@ use App\Models\Order;
 use App\Models\OrderProduct;
 use App\Models\PaymentVoucher;
 use App\Models\Product;
+use App\Models\ProductImage;
+use App\Models\ReturnProduct;
+use App\Models\Returns;
 use App\Models\StockReceivedDocketProduct;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -436,6 +439,8 @@ class StatisticalsController extends Controller
             foreach ($orderProducts as $product) {
                 $productId = $product->product_id;
                 $productName = $product->product->name;
+                $productPrice = $product->product->price_final;
+                $productImage = $product->product->product_image[0]->image;
                 $quantity = $product->quantity;
 
                 if (!isset($products[$orderDate])) {
@@ -451,6 +456,8 @@ class StatisticalsController extends Controller
                 if (!isset($productQuantities[$productId])) {
                     $productQuantities[$productId] = [
                         'name' => $productName,
+                        'price' => $productPrice,
+                        'image' => $productImage,
                         'quantity' => 0,
                     ];
                 }
@@ -733,11 +740,45 @@ class StatisticalsController extends Controller
         return response()->json(['success' => true], 200);
     }
 
-    public function getNotification(Request $request)
+    public function getNotification()
     {
 
         $notifications = Notification::orderByDesc('date')->get();
 
         return response()->json($notifications);
+    }
+
+    public function getReturns(Request $request)
+    {
+        $startDate = Carbon::createFromFormat('d/m/Y', $request->input('startDate'))->startOfDay();
+        $endDate = Carbon::createFromFormat('d/m/Y', $request->input('endDate'))->endOfDay();
+
+        $returns = Returns::with('return_product.product')
+            ->where('status','Đã xử lý hoàn trả')
+            ->whereBetween('returned_at', [$startDate, $endDate])
+            ->orderBy('created_at', 'DESC')->get();
+        
+        // Tạo mảng chứa thông tin sản phẩm
+        $returnProducts = [];
+
+        foreach ($returns as $return) {
+            foreach ($return->return_product as $returnProduct) {
+                $color = Color::where('name',$returnProduct->color)->first();
+                $imageProduct = ProductImage::where(['product_id' => $returnProduct->product->id, 'color_id' => $color->id])->first();
+                $returnProduct->image = $imageProduct->image;
+                $returnProducts[] = $returnProduct;
+            }
+        }
+
+        return response($returnProducts);
+    }
+    
+    public function reImportInventory(Request $request) {
+        $thang = [];
+        foreach($request->all() as $item) {
+            $returnProduct = ReturnProduct::find($item);
+            $thang[] = $returnProduct;
+        }
+        return response($thang);
     }
 }

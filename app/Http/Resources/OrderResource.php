@@ -26,10 +26,12 @@ class OrderResource extends JsonResource
         return [
             'id' => $this->id,
             'staff' => $this->staff,
+            'staff_delivery' => $this->staff_delivery,
             'payment_method' => $this->payment_method,
             'voucher' => $this->voucher,
             'total_value' => $this->total_value,
             'fee' => $this->fee,
+            'point' => $this->point,
             'total_discount' => $this->total_discount,
             'total_price' => $this->total_price,
             'paid' => $this->paid,
@@ -42,10 +44,13 @@ class OrderResource extends JsonResource
             'note' => $this->note,
         
             'user_account_detail' => $this->user,
+            'user_name' => $this->user->profiles->first()->name,
             'name_receiver' => $this->name_receiver,
             'phone_receiver' => $this->phone_receiver,
             'user_address_detail' => $user_address_detail,
             'user_address' => $user_address,
+
+            'voucher' => $this->voucher,
 
             'items' => $this->order_product->map(function ($orderDetail) {
                 $selectedImage = null;

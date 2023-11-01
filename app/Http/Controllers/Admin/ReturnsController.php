@@ -12,6 +12,9 @@ use App\Http\Resources\ReturnResource;
 use App\Jobs\UploadReturnToGoogleDrive;
 use Carbon\Carbon;
 use App\Jobs\SendReturnMail;
+use App\Models\Color;
+use App\Models\Product;
+use App\Models\ProductImage;
 use App\Models\User;
 
 class ReturnsController extends Controller
@@ -30,6 +33,11 @@ class ReturnsController extends Controller
     public function show($id)
     {
         $return = Returns::with('order.user.profiles','return_image','return_product.product.product_image')->find($id);
+        foreach ($return->return_product as $returnProduct) {
+            $color = Color::where('name',$returnProduct->color)->first();
+            $imageProduct = ProductImage::where(['product_id' => $returnProduct->product->id, 'color_id' => $color->id])->first();
+            $returnProduct->image = $imageProduct->image;
+        }
         return response()->json($return);
     }
 

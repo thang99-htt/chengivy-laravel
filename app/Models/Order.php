@@ -36,6 +36,7 @@ class Order extends Model
         'receipted_at',
         'total_value',
         'fee',
+        'point',
         'total_discount',
         'total_price',
         'payment_method',
@@ -52,6 +53,11 @@ class Order extends Model
     public function staff()
     {
         return $this->belongsTo(Staff::class, 'staff_id');
+    }
+
+    public function staff_delivery()
+    {
+        return $this->belongsTo(Staff::class, 'staff_delivery_id');
     }
 
     public function user()

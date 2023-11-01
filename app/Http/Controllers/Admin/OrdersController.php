@@ -59,6 +59,26 @@ class OrdersController extends Controller
         ]);
     }
 
+    public function deliveryOrder(Request $request) {
+        $order = Order::find($request->orderId);
+        if($order->staff_delivery_id == NULL && $order->status_id == 2) {
+            $order->staff_delivery_id = $request->staff_delivery_id;
+        }
+        if($order->status_id == 3) {
+            $order->status_id = 4;
+        } else if($order->status_id == 4) {
+            $order->status_id = 6;
+        } else if($order->status_id == 6) {
+            $order->status_id = 7;
+        }
+        $order->save();
+        
+        return response()->json([
+            'success' => true,
+            'order' => $order,
+        ]);
+    }
+
     public function cancelOrder(Request $request)
     {
         $selectedIds = $request->input('data'); // Lấy danh sách selectedIds từ request
@@ -153,6 +173,7 @@ class OrdersController extends Controller
         $order->total_value = $request['total_value'];
 
         $order->fee = 0;  
+        $order->point = $request['point'];
         $order->paid = 1;      
         
         $pdfBase64 = $request->input('bill');
@@ -197,6 +218,38 @@ class OrdersController extends Controller
                     'total_final' => $inventory->total_final - $item['quantity']
             ]);
 
+        }
+
+        if($request['user_id']) {
+            $user = User::find($request['user_id']);
+            $user->point = $user->point - $request['point'];
+            $pointPlus = intval($request['total_value'] / 100000);
+            if($user->level == 'GOLD') {
+                $user->point = $user->point + $pointPlus*3;
+            } else if($user->level == 'PLATINUM') {
+                $user->point = $user->point + $pointPlus*5;
+            } else if($user->level == 'DIAMOND') {
+                $user->point = $user->point + $pointPlus*10;
+            } else  {
+                $user->point = $user->point + $pointPlus;
+            }
+    
+            $orders = Order::where('user_id', $request['user_id'])->get();
+            $totalValue = 0;
+            foreach($orders as $order) {
+                $totalValue = $totalValue + $order->total_value;
+            }
+            if($totalValue >= 15000000 && $totalValue <= 39999999) {
+                $user->level = 'SILVER';
+            } else if($totalValue >= 40000000 && $totalValue <= 79999999) {
+                $user->level = 'GOLD';
+            } else if($totalValue >= 80000000 && $totalValue <= 119999999) {
+                $user->level = 'PLATINUM';
+            } else if($totalValue >= 120000000) {
+                $user->level = 'DIAMOND';
+            }
+    
+            $user->save();
         }
         
         return response()->json([

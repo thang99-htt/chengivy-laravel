@@ -39,7 +39,6 @@ class OrdersController extends Controller
 
         // Save table orders
         $order = new Order;
-        $order->staff_id = 1;
         $order->user_id = $id;
         $order->payment_method = $request['payment_method'];
         if($request['voucher_id']) {
@@ -165,7 +164,6 @@ class OrdersController extends Controller
     {               
         // Save table orders
         $order = new Order;
-        $order->staff_id = 1;
         $order->user_id = $id;
         $order->payment_method = $request['payment_method'];
         if($request['voucher_id']) {
@@ -180,6 +178,7 @@ class OrdersController extends Controller
 
         $order->total_price = $request['total_price'];
         $order->fee = 25000;
+        $order->point = $request['point'];
         $order->total_discount = $request['total_discount'];
         $order->total_value = $request['total_value'];
 

@@ -78,6 +78,7 @@ Route::get('admin/orders/{id}', [OrdersController::class, 'show']);
 Route::post('admin/orders/', [OrdersController::class, 'index']);
 Route::post('admin/orders/sold-at-store', [OrdersController::class, 'soldAtStore']);
 Route::put('admin/orders/update-status', [OrdersController::class, 'updateOrderStatus']);
+Route::put('admin/orders/delivery-order', [OrdersController::class, 'deliveryOrder']);
 Route::put('admin/orders/cancel', [OrdersController::class, 'cancelOrder']);
 
 Route::get('/admin/statisticals/get-range-date',[StatisticalsController::class, 'getRangeDate']);
@@ -90,6 +91,8 @@ Route::post('/admin/statisticals/get-sales',[StatisticalsController::class, 'get
 Route::post('/admin/statisticals/get-orders',[StatisticalsController::class, 'getOrders']);
 Route::post('/admin/statisticals/get-products',[StatisticalsController::class, 'getProducts']);
 Route::post('/admin/statisticals/get-products-sold-out',[StatisticalsController::class, 'getProductsSoldOut']);
+Route::post('/admin/statisticals/get-returns',[StatisticalsController::class, 'getReturns']);
+Route::post('/admin/statisticals/re-import-into-inventory',[StatisticalsController::class, 'reImportInventory']);
 Route::post('/admin/statisticals/send-notification',[StatisticalsController::class, 'sendNotification']);
 
 Route::apiResource('/admin/invoices', App\Http\Controllers\Admin\InvoicesController::class);

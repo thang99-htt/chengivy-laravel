@@ -33,6 +33,11 @@
             margin-top: 10px;
         }
 
+        .product-container {
+            display: flex;
+            margin: 0 auto
+        }
+
         .product {
             background-color: #f7f7f7;
             padding: 10px;
@@ -117,7 +122,8 @@
             </div>
             <div>
                 <h3>Sản phẩm hoàn trả:</h3>
-                @foreach ($returnProduct->return_product as $item)
+                <div class="product-container">
+                    @foreach ($returnProduct->return_product as $item)
                     <div class="product">
                         <img src="{{ $message->embed($item->product->product_image[0]->image) }}" alt="{{ $item->product->name }}">
                         <p class="name">{{ $item->product->name }}</p>
@@ -126,7 +132,8 @@
                             <span class="price">{{ $item->quantity }} x {{ number_format($item->price, 0, ',', '.') }} VNĐ</span>
                         </p>
                     </div>
-                @endforeach
+                    @endforeach
+                </div>
             </div>
             <div>
                 <p class="text-danger">Số tiền hoàn trả: {{ number_format($returnProduct->total_price, 0, ',', '.') }} VNĐ</p>

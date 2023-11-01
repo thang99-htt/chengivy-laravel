@@ -20,7 +20,9 @@ class AuthController extends Controller
         $staff = Staff::with('roles.permission_role.permission')->where('email', $request->email)->first();
 
         $permissionIDs = [];
+        $roleIDs = [];
         foreach ($staff->roles as $role) {
+            $roleIDs[] = $role->id;
             foreach ($role->permission_role as $permissionRole) {
                 $permissionIDs[] = $permissionRole->permission->id;
             }
@@ -34,6 +36,7 @@ class AuthController extends Controller
             'email' => $staff->email,
             'password' => $staff->password,
             'avatar' => $staff->avatar,
+            'roleIDs' => $roleIDs,
             'permissionIDs' => $permissionIDs,
         ];
 

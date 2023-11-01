@@ -10,6 +10,8 @@ use App\Models\ReturnImage;
 use Intervention\Image\Facades\Image;
 use App\Http\Resources\ReturnResource;
 use App\Jobs\UploadReturnToGoogleDrive;
+use App\Models\Color;
+use App\Models\ProductImage;
 use App\Models\ReturnProduct;
 use Carbon\Carbon;
 
@@ -19,6 +21,13 @@ class ReturnsController extends Controller
     {
         $returns = Returns::with('order', 'return_image', 'return_product.product.product_image')
             ->orderBy('created_at', 'DESC')->get();
+        foreach($returns as $return) {
+            foreach ($return->return_product as $returnProduct) {
+                $color = Color::where('name',$returnProduct->color)->first();
+                $imageProduct = ProductImage::where(['product_id' => $returnProduct->product->id, 'color_id' => $color->id])->first();
+                $returnProduct->image = $imageProduct->image;
+            }
+        }
         return response($returns);
     }
 
