@@ -17,6 +17,7 @@ use App\Models\Product;
 use App\Models\ProductImage;
 use App\Models\ReturnProduct;
 use App\Models\Returns;
+use App\Models\Size;
 use App\Models\StockReceivedDocketProduct;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -763,22 +764,15 @@ class StatisticalsController extends Controller
 
         foreach ($returns as $return) {
             foreach ($return->return_product as $returnProduct) {
-                $color = Color::where('name',$returnProduct->color)->first();
-                $imageProduct = ProductImage::where(['product_id' => $returnProduct->product->id, 'color_id' => $color->id])->first();
-                $returnProduct->image = $imageProduct->image;
-                $returnProducts[] = $returnProduct;
+                if ($returnProduct->restocked === 0) {
+                    $color = Color::where('name', $returnProduct->color)->first();
+                    $imageProduct = ProductImage::where(['product_id' => $returnProduct->product->id, 'color_id' => $color->id])->first();
+                    $returnProduct->image = $imageProduct->image;
+                    $returnProducts[] = $returnProduct;
+                }
             }
         }
 
         return response($returnProducts);
-    }
-    
-    public function reImportInventory(Request $request) {
-        $thang = [];
-        foreach($request->all() as $item) {
-            $returnProduct = ReturnProduct::find($item);
-            $thang[] = $returnProduct;
-        }
-        return response($thang);
     }
 }

@@ -33,7 +33,7 @@ class Returns extends Model
         'description',
         'total_price',
         'status',
-        'method'
+        'method',
     ];
 
     /**

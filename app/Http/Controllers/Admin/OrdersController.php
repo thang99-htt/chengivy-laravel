@@ -16,6 +16,7 @@ use App\Models\Inventory;
 use App\Models\Notification;
 use App\Models\Profile;
 use App\Models\Size;
+use App\Models\Staff;
 use App\Models\User;
 use App\Models\Voucher;
 use Illuminate\Support\Facades\Storage;
@@ -64,11 +65,20 @@ class OrdersController extends Controller
         if($order->staff_delivery_id == NULL && $order->status_id == 2) {
             $order->staff_delivery_id = $request->staff_delivery_id;
         }
-        if($order->status_id == 3) {
+        if($order->status_id == 2 && $request['receiveOrder']) {
+            $order->status_id = 3;
+        } else if($order->status_id == 2 || ($order->status_id == 2 && $request['refuseOrder'])) {
+            $order->status_id = 2;
+            $order->staff_delivery_id = null;
+        } else if($order->status_id == 3) {
             $order->status_id = 4;
         } else if($order->status_id == 4) {
+            $order->status_id = 5;
+        } else if($order->status_id == 5) {
             $order->status_id = 6;
-        } else if($order->status_id == 6) {
+        } else if($order->status_id == 6 && $request['unreceipt']) {
+            $order->status_id = 12;
+        } else {
             $order->status_id = 7;
         }
         $order->save();
@@ -257,6 +267,35 @@ class OrdersController extends Controller
             'message' => 'Tạo đơn hàng thành công.',
             'bill' => $pdfFilename
         ], 200);  
+    }
+
+    public function getAllShippers() {
+        $staffs = Staff::with('roles')
+            ->whereHas('roles', function ($query) {
+                $query->where('role_id', 5);
+            })
+            ->get();
+
+        foreach($staffs as $staff) {
+            $totalOrder = 0;
+            $staff['current_orders'] = $staff->orders->whereBetween('status_id', [3, 7])->values();
+            foreach($staff->orders as $order) {
+                $totalOrder = $totalOrder + 1;
+            }
+            $staff['total_order'] = $totalOrder;
+        }
+        return response()->json($staffs);
+    }
+
+    public function assignmentShipper(Request $request) {
+        $order = Order::find($request->orderId);
+        $order->staff_delivery_id = $request->staff_delivery_id;
+        $order->save();
+        
+        return response()->json([
+            'success' => true,
+            'order' => $order,
+        ]);
     }
 
 }

@@ -31,6 +31,7 @@ class ReturnProduct extends Model
         'color',
         'quantity',
         'price',
+        'restocked'
     ];
 
     public function return()

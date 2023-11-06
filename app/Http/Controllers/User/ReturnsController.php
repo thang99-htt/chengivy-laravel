@@ -11,8 +11,10 @@ use Intervention\Image\Facades\Image;
 use App\Http\Resources\ReturnResource;
 use App\Jobs\UploadReturnToGoogleDrive;
 use App\Models\Color;
+use App\Models\Inventory;
 use App\Models\ProductImage;
 use App\Models\ReturnProduct;
+use App\Models\Size;
 use Carbon\Carbon;
 
 class ReturnsController extends Controller
@@ -50,9 +52,27 @@ class ReturnsController extends Controller
             $returnItem = new ReturnProduct;
             $returnItem->return_id = $returnId;
             $returnItem->product_id = $item['id'];
+
             $returnItem->size = $item['size'];
             $returnItem->color = $item['color'];
             $returnItem->quantity = $item['quantity'];
+
+            $color = Color::where('name',$item['color'])->first();
+            $size = Size::where('name',$item['size'])->first();
+            $inventory = Inventory::where([
+                'product_id' => $item['id'],
+                'color_id' => $color->id,
+                'size_id' => $size->id
+            ])->orderBy('month_year', 'desc')->first();
+
+            Inventory::where(['month_year' => $inventory['month_year'],
+                'product_id' => $item['id'], 'color_id' => $color->id, 
+                'size_id' => $size->id])->update([
+                    'total_import' => $inventory['total_import'] + $item['quantity'],
+                    'total_export' => $inventory['total_export'] - $item['quantity'],
+                    'total_final' => $inventory['total_final'] + $item['quantity'],
+                ]);
+
             $returnItem->price = $item['price'];
             $returnItem->price_discount = $item['price_discount'];
             $returnItem->save();
