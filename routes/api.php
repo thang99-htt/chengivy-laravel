@@ -95,6 +95,8 @@ Route::post('/admin/statisticals/get-products',[StatisticalsController::class, '
 Route::post('/admin/statisticals/get-products-sold-out',[StatisticalsController::class, 'getProductsSoldOut']);
 Route::post('/admin/statisticals/get-returns',[StatisticalsController::class, 'getReturns']);
 Route::post('/admin/statisticals/send-notification',[StatisticalsController::class, 'sendNotification']);
+Route::post('/admin/statisticals/get-customers',[StatisticalsController::class, 'getCustomers']);
+Route::post('/admin/statisticals/get-staffs',[StatisticalsController::class, 'getStaffs']);
 
 Route::apiResource('/admin/invoices', App\Http\Controllers\Admin\InvoicesController::class);
 
@@ -154,6 +156,7 @@ Route::put('admin/reviews/user-{id}', [App\Http\Controllers\Admin\ReviewsControl
 Route::put('admin/reviews/hidden', [App\Http\Controllers\Admin\ReviewsController::class, 'hiddenIds']);
 Route::put('admin/reviews/{id}', [App\Http\Controllers\Admin\ReviewsController::class, 'update']);
 
+Route::get('returns/{id}', [App\Http\Controllers\User\ReturnsController::class, 'index']);
 Route::put('returns/{id}', [App\Http\Controllers\User\ReturnsController::class, 'cancelReturn']);
 Route::apiResource('/returns', App\Http\Controllers\User\ReturnsController::class);
 

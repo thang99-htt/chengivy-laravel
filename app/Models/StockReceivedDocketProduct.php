@@ -40,4 +40,9 @@ class StockReceivedDocketProduct extends Model
     {
         return $this->hasMany(StockReceivedDocketProductDetail::class, 'stock_received_docket_product_id');
     }
+
+    public function stock_received_docket()
+    {
+        return $this->belongsTo(StockReceivedDocket::class, 'stock_received_docket_id');
+    }
 }

@@ -99,4 +99,9 @@ class Order extends Model
     {
         return $this->belongsToMany(Product::class);
     }
+
+    public function returns()
+    {
+        return $this->hasMany(Returns::class, 'order_id');
+    }
 }

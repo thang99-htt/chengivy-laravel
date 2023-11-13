@@ -15,22 +15,31 @@ use App\Models\Inventory;
 use App\Models\ProductImage;
 use App\Models\ReturnProduct;
 use App\Models\Size;
+use App\Models\User;
 use Carbon\Carbon;
 
 class ReturnsController extends Controller
 {
-    public function index()
+    public function index($id)
     {
-        $returns = Returns::with('order', 'return_image', 'return_product.product.product_image')
-            ->orderBy('created_at', 'DESC')->get();
-        foreach($returns as $return) {
-            foreach ($return->return_product as $returnProduct) {
-                $color = Color::where('name',$returnProduct->color)->first();
-                $imageProduct = ProductImage::where(['product_id' => $returnProduct->product->id, 'color_id' => $color->id])->first();
-                $returnProduct->image = $imageProduct->image;
+        $user = User::find($id);
+        $returnsAll = [];
+        foreach($user->orders as $item) {
+            $orderId = $item->id;
+            $returns = Returns::with('order', 'return_image', 'return_product.product.product_image')
+                ->orderBy('created_at', 'DESC')->get();
+            foreach($returns as $return) {
+                if($return->order->id == $orderId) {
+                    $returnsAll[] = $return;
+                    foreach ($return->return_product as $returnProduct) {
+                        $color = Color::where('name',$returnProduct->color)->first();
+                        $imageProduct = ProductImage::where(['product_id' => $returnProduct->product->id, 'color_id' => $color->id])->first();
+                        $returnProduct->image = $imageProduct->image;
+                    }
+                }
             }
         }
-        return response($returns);
+        return response($returnsAll);
     }
 
     public function store(Request $request)

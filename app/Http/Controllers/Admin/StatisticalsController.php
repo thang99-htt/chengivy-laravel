@@ -483,7 +483,6 @@ class StatisticalsController extends Controller
     }
 
 
-
     public function getTopProducts()
     {
         $products = Product::get();
@@ -775,4 +774,85 @@ class StatisticalsController extends Controller
 
         return response($returnProducts);
     }
+
+    public function getCustomers(Request $request) {
+        $startDate = Carbon::createFromFormat('d/m/Y', $request->input('startDate'))->startOfDay();
+        $endDate = Carbon::createFromFormat('d/m/Y', $request->input('endDate'))->endOfDay();
+
+        $customers = User::with(['orders' => function ($query) use ($startDate, $endDate) {
+            $query->whereBetween('receipted_at', [$startDate, $endDate]);
+        }])->get();
+        foreach($customers as $customer) {
+            $orders = $customer->orders;
+            $total_purchase = 0;
+            $total_value = 0;
+            $total_return = 0;
+            $total_unreceipt = 0;
+            foreach($orders as $item) {
+                $total_purchase = $total_purchase + 1;
+                $total_value = $total_value + $item->total_value;
+                $total_return += count($item->returns);
+                if($item->status_id == 12) {
+                    $total_unreceipt = $total_unreceipt + 1;
+                }
+            }
+            $customer['number_of_purchases'] = $total_purchase;
+            $customer['total_value'] = $total_value;
+            $customer['number_of_returns'] = $total_return;
+            $customer['total_unreceipt'] = $total_unreceipt;
+            $customer['name'] = $customer->profiles[0]->name;
+            // Hide the 'orders' property from the response
+            $customer->makeHidden('orders');
+            $customer->makeHidden('profiles');
+        }
+        return response($customers);
+    }
+
+    public function getStaffs(Request $request) {
+        $startDate = Carbon::createFromFormat('d/m/Y', $request->input('startDate'))->startOfDay();
+        $endDate = Carbon::createFromFormat('d/m/Y', $request->input('endDate'))->endOfDay();
+
+        $staffs = Staff::with(['getorders' => function ($query) use ($startDate, $endDate) {
+            $query->where('status_id', 9)
+                ->whereBetween('receipted_at', [$startDate, $endDate]);
+        }])->get();
+
+        
+        foreach ($staffs as $staff) {
+            $orders = $staff->getorders;
+            $roles = $staff->roles;
+            $total_sell = 0;
+            $total_value = 0;
+            $total_amount_spent = 0;
+            foreach ($orders as $order) {
+                $total_sell += 1;
+                $total_value += $order->total_value;
+                $order_product = $order->order_product;
+                $lastDate = null;
+                foreach($order_product as $item) {
+                    $item->makeHidden('product');
+                    $stock_received_docket_product = $item->product->stock_received_docket_product;
+                    foreach($stock_received_docket_product as $item1) {
+                        $stock_received_docket = $item1->stock_received_docket;
+                        $item['price_purchase'] = $item1->price;
+                    }
+                    $total_amount_spent += $item['quantity'] * $item['price_purchase'];
+                }
+
+            }
+    
+            $staff['number_of_sells'] = $total_sell;
+            $staff['total_value'] = $total_value;
+            $staff['total_amount_spent'] = $total_amount_spent;
+            $staff['revenus'] = $total_value - $total_amount_spent;
+    
+            // Hide the 'getorders' property from the response
+            $staff->makeHidden('getorders');
+        }
+    
+        return response($staffs);
+    }
+    
+    
+    
 }

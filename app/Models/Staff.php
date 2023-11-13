@@ -90,4 +90,8 @@ class Staff extends Authenticatable
     public function orders() {
         return $this->hasMany(Order::class, 'staff_delivery_id');
     }
+
+    public function getorders() {
+        return $this->hasMany(Order::class, 'staff_id');
+    }
 }

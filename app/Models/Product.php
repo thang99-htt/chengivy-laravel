@@ -95,7 +95,7 @@ class Product extends Model
         return $this->hasMany(Review::class, 'product_id');
     }
     
-    public function stock_received_docket()
+    public function stock_received_docket_product()
     {
         return $this->hasMany(StockReceivedDocketProduct::class, 'product_id');
 
