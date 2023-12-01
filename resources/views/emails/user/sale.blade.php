@@ -103,8 +103,8 @@
                     <img src="{{ $message->embed($product->image) }}" alt="{{ $product->name }}">
                     <p class="name">{{ $product->name }}</p>
                     <p class="product-price">
-                        <span class="price-final">{{ number_format($product->price_final, 0, ',', '.') }} VNĐ</span>
-                        <span class="price">{{ number_format($product->price, 0, ',', '.') }} VNĐ</span>
+                        <span class="price-final">{{ number_format($product->price_final, 0, ',', '.') }} đ</span>
+                        <span class="price">{{ number_format($product->price, 0, ',', '.') }} đ</span>
                     </p>
                 </div>
             @endforeach

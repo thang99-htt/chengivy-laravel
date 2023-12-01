@@ -499,10 +499,11 @@ class StatisticalsController extends Controller
                 $colorName = $orderProduct->color;
                 $productPrice = $orderProduct->price;
 
-                $stock_received_dockets = $product->stock_received_docket;
+                $stock_received_dockets = $product->stock_received_docket_product;
                 foreach($stock_received_dockets as $stock_received_docket) {
                     $productPricePurchase = $stock_received_docket->price;
                 }
+
                 $selectedImage = null;
 
                 $color = Color::where('name', $colorName)->first();
@@ -582,7 +583,7 @@ class StatisticalsController extends Controller
             if (!isset($users_top[$userId])) {
                 $users_top[$userId] = [
                     'user_id' => $userId,
-                    'user_name' => $user->user->name,
+                    'user_name' => $user->user->profiles[0]->name,
                     'order_count' => 1,
                     'order_value' => 0,
                 ];

@@ -17,6 +17,7 @@ use App\Models\Notification;
 use App\Models\User;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use App\Jobs\SendMailOrderSuccessed;
 
 class OrdersController extends Controller
 {    
@@ -153,10 +154,15 @@ class OrdersController extends Controller
         $notification->link = "http://localhost:3000/admin/orders";
         $notification->save();
         
+        $orderSuccessed = $order;
+        
+        SendMailOrderSuccessed::dispatch($user->profiles[0]->name, $user->email, $orderSuccessed);
+
         return response()->json([
             'success' => 'success',
             'message' => 'Đơn hàng đặt thành công.',
-            'bill' => $pdfFilename
+            'bill' => $pdfFilename,
+            'orderSuccessed' => $orderSuccessed
         ], 200);  
     }
 
