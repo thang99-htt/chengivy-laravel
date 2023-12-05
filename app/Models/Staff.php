@@ -40,7 +40,7 @@ class Staff extends Authenticatable
         'birth_date',
         'address',
         'image',
-        'status',
+        'actived',
     ];
 
     /**

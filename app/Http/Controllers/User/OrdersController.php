@@ -65,12 +65,12 @@ class OrdersController extends Controller
             $order->note = $request['note'];
         $order->paid = $request->paid;        
        
-        $pdfBase64 = $request->input('bill');
-        $pdfBinary = base64_decode(Str::after($pdfBase64, ','));
-        $pdfFilename = uniqid('pdf_') . '.pdf';
-        $disk = 'public';
-        Storage::disk($disk)->put('uploads/orders/' . $pdfFilename, $pdfBinary);
-        $order->bill = "http://localhost:8000/storage/uploads/orders/".$pdfFilename;
+        // $pdfBase64 = $request->input('bill');
+        // $pdfBinary = base64_decode(Str::after($pdfBase64, ','));
+        // $pdfFilename = uniqid('pdf_') . '.pdf';
+        // $disk = 'public';
+        // Storage::disk($disk)->put('uploads/orders/' . $pdfFilename, $pdfBinary);
+        // $order->bill = "http://localhost:8000/storage/uploads/orders/".$pdfFilename;
         
         $order->save();
 
@@ -161,8 +161,7 @@ class OrdersController extends Controller
         return response()->json([
             'success' => 'success',
             'message' => 'Đơn hàng đặt thành công.',
-            'bill' => $pdfFilename,
-            'orderSuccessed' => $orderSuccessed
+            // 'bill' => $pdfFilename,
         ], 200);  
     }
 
@@ -191,13 +190,13 @@ class OrdersController extends Controller
         if($request['note'] != null)
             $order->note = $request['note'];
         $order->paid = $request->paid;        
-        $pdfBase64 = $request->input('bill');
+        // $pdfBase64 = $request->input('bill');
         
-        $pdfBinary = base64_decode(Str::after($pdfBase64, ','));
-        $pdfFilename = uniqid('pdf_') . '.pdf';
-        $disk = 'public';
-        Storage::disk($disk)->put('uploads/orders/' . $pdfFilename, $pdfBinary);
-        $order->bill = "http://localhost:8000/storage/uploads/orders/".$pdfFilename;
+        // $pdfBinary = base64_decode(Str::after($pdfBase64, ','));
+        // $pdfFilename = uniqid('pdf_') . '.pdf';
+        // $disk = 'public';
+        // Storage::disk($disk)->put('uploads/orders/' . $pdfFilename, $pdfBinary);
+        // $order->bill = "http://localhost:8000/storage/uploads/orders/".$pdfFilename;
 
         $order->save();
 
@@ -247,10 +246,13 @@ class OrdersController extends Controller
 
         $user->save();
         
+        $orderSuccessed = $order;
+        SendMailOrderSuccessed::dispatch($user->profiles[0]->name, $user->email, $orderSuccessed);
+        
         return response()->json([
             'success' => 'success',
             'message' => 'Đơn hàng đặt thành công.',
-            'bill' => $pdfFilename
+            // 'bill' => $pdfFilename
         ], 200);  
     }
 

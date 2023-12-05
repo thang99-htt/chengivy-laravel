@@ -31,6 +31,7 @@ class UserResource extends JsonResource
             'birth_date' => $this->profiles->first()->birth_date,
             'phone' => $this->profiles->first()->phone,
             'bank_account' => $this->profiles->first()->bank_account,
+            'bank_number' => $this->profiles->first()->bank_number,
             'total_spend' => $total_value,
             'total_order' =>$total_order,
             'delivery_address' => $this->delivery_address->map(function ($address) {

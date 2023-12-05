@@ -28,7 +28,10 @@ class Profile extends Model
         'user_id',
         'gender',
         'birth_date',
-        'avatar',
+        'phone',
+        'bank_account',
+        'bank_number',
+        'name'
     ];
 
     /**

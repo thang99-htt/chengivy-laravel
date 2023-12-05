@@ -32,6 +32,7 @@ class UsersController extends Controller
             'birth_date' => $request['birth_date'],
             'gender' => $request['gender'],
             'bank_account' => $request['bank_account'],
+            'bank_number' => $request['bank_number'],
         ]);
 
         return response()->json([

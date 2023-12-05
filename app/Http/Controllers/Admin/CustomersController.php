@@ -119,14 +119,18 @@ class CustomersController extends Controller
     //     return response()->json(['success'=>'true'], 200);
     // }
 
-    // public function updateStaffStatus($id, Request $request) {
-    //     $staff = Staff::find($id);
-    //     $staff->status = !$request->status;
-    //     $staff->save();
+    public function updateCustomerStatus($id, $actived) {
+        $customer = User::find($id);
+        if($actived == 0) {
+            $customer->actived = 1;
+        } else {
+            $customer->actived = 0;
+        }
+        $customer->save();
         
-    //     return response()->json([
-    //         'success' => true,
-    //         'staff' => $staff,
-    //     ]);
-    // }
+        return response()->json([
+            'success' => true,
+            'cus$customer' => $customer,
+        ]);
+    }
 }

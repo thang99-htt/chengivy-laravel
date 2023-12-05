@@ -131,9 +131,13 @@ class StaffsController extends Controller
         return response()->json(['success'=>'true'], 200);
     }
 
-    public function updateStaffStatus($id, Request $request) {
+    public function updateStaffStatus($id, $actived) {
         $staff = Staff::find($id);
-        $staff->status = !$request->status;
+        if($actived == 0) {
+            $staff->actived = 1;
+        } else {
+            $staff->actived = 0;
+        }
         $staff->save();
         
         return response()->json([

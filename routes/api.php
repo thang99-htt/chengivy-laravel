@@ -37,6 +37,7 @@ Route::put('admin/staffs/{id}/{status}', [App\Http\Controllers\Admin\StaffsContr
 
 Route::get('/admin/customers/filter-ghost',[App\Http\Controllers\Admin\CustomersController::class, 'filterGhost']);   
 Route::apiResource('/admin/customers', App\Http\Controllers\Admin\CustomersController::class);
+Route::put('admin/customers/{id}/{status}', [App\Http\Controllers\Admin\CustomersController::class, 'updateCustomerStatus']);
 
 Route::prefix('/admin/categories')->group( function() {
     Route::get('/add',[CategoriesController::class, 'create']);   
@@ -65,7 +66,7 @@ Route::prefix('/admin/products')->group( function() {
     Route::post('/add-size',[ProductsController::class, 'addSize']);
     Route::put('update-product-sale', [ProductsController::class, 'updateProductsSale']);
     Route::put('{id}/{status}', [ProductsController::class, 'updateProductStatus']);
-    Route::put('/hidden',[ProductsController::class, 'hiddenProduct']);
+    Route::put('/update-hidden',[ProductsController::class, 'updateHiddens']);
     Route::put('/delete',[ProductsController::class, 'deleteProduct']);
     Route::delete('/delete-image/{id}',[ProductsController::class, 'deleteImage']);
     Route::delete('/delete-size/{id}',[ProductsController::class, 'deleteSize']);

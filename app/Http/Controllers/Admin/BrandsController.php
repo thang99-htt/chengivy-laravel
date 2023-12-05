@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Http\Request;
 use App\Models\Brand;
+use Carbon\Carbon;
 use Intervention\Image\Facades\Image;
 
 class BrandsController extends Controller
@@ -66,7 +67,7 @@ class BrandsController extends Controller
         }
         $brand = Brand::where('id', $id)->update([
             'name' => $request['name'],
-            'image' => $imageName,
+            'image' => "http://localhost:8000/storage/uploads/brands/".$imageName,
             'description' => $request['description'],
         ]);
 
@@ -78,7 +79,8 @@ class BrandsController extends Controller
         $selectedIds = $request->all(); // Lấy danh sách selectedIds từ request
         $brands = Brand::whereIn('id', $selectedIds)->get(); // Sử dụng whereIn để lấy các bản ghi tương ứng với selectedIds
         foreach($brands as $brand) {
-            $brand->delete(); // Xóa từng bản ghi Brand
+            $brand->deleted_at = Carbon::now('Asia/Ho_Chi_Minh');
+            $brand->save();
         }      
         return response()->json([
             'success' => true,

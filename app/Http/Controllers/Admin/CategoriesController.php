@@ -7,6 +7,7 @@ use Illuminate\Validation\ValidationException;
 use Illuminate\Http\Request;
 use App\Models\Category;
 use Intervention\Image\Facades\Image;
+use Carbon\Carbon;
 
 class CategoriesController extends Controller
 {
@@ -39,7 +40,7 @@ class CategoriesController extends Controller
         $category = new Category;
         $category->parent_id = $request['parent_id'];
         $category->name = $request['name'];
-        $category->image = "http://localhost:8000/storage/uploads/products/".$imageName;
+        $category->image = "http://localhost:8000/storage/uploads/categories/".$imageName;
         $category->description = $request['description'];
         $category->url = $request['url'];
         $category->save();
@@ -82,7 +83,8 @@ class CategoriesController extends Controller
         $selectedIds = $request->all(); // Lấy danh sách selectedIds từ request
         $categories = Category::whereIn('id', $selectedIds)->get(); // Sử dụng whereIn để lấy các bản ghi tương ứng với selectedIds
         foreach($categories as $category) {
-            $category->delete(); // Xóa từng bản ghi Category
+            $category->deleted_at = Carbon::now('Asia/Ho_Chi_Minh');
+            $category->save();
         }      
         return response()->json([
             'success' => true,

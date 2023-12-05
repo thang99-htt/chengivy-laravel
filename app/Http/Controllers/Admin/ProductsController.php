@@ -202,12 +202,25 @@ class ProductsController extends Controller
                 }
             }
 
-            // if ($removedImages) {
-            //     foreach ($removedImages as $image) {
-            //         $imageLink = $image->image;
-            //         DeleteFromGoogleDrive::dispatch($image->id, $imageLink);
-            //     }
-            // }
+            if ($removedImages) {
+                foreach ($removedImages as $image) {
+                    $productImage = ProductImage::where('image', $image->image)->first();
+                    $imageLink = $image->image;
+                    // Remove the base URL from the image link
+                    $baseURL = "http://localhost:8000/storage/uploads/products/";
+                    $relativePath = str_replace($baseURL, '', $imageLink);
+                    
+                    $storagePath = public_path("/storage/uploads/products/");
+                    $imageName = basename($imageLink);
+                    $imagePath = $storagePath . $relativePath;
+
+                    // Check if the file exists before attempting to delete
+                    if (file_exists($imagePath)) {
+                        unlink($imagePath);
+                    }
+                    $productImage->delete();
+                }
+            }
         }
 
         return response()->json([
@@ -231,16 +244,17 @@ class ProductsController extends Controller
         ]);
     }
 
-    public function hiddenProduct(Request $request)
+    public function updateHiddens(Request $request)
     {
         $selectedIds = $request->all(); // Lấy danh sách selectedIds từ request
         $products = Product::whereIn('id', $selectedIds['data'])->get(); // Sử dụng whereIn để lấy các bản ghi tương ứng với selectedIds
         foreach($products as $product) {
-            // $product->deleted_at = Carbon::now('Asia/Ho_Chi_Minh');
-            $product->status = 0;
+            if($product['status'] == 1)
+                $product->status = 0;
+            else $product->status = 1;
             $product->save();
         }      
-        return response()->json(['success'=>'true'], 200);
+        return response()->json($selectedIds, 200);
     }
 
     public function deleteProduct(Request $request)

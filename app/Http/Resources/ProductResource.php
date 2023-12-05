@@ -28,7 +28,7 @@ class ProductResource extends JsonResource
                 ->image;
         }
 
-        $lastStockReceivedDocket = collect($this->stock_received_docket)->last();
+        $lastStockReceivedDocket = collect($this->stock_received_docket_product)->last();
 
         return [
             'id' => $this->id,

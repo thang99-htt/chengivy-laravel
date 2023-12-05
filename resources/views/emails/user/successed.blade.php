@@ -191,7 +191,8 @@
         <p>Đơn hàng #{{ $orderSuccessed->id }} đã được đặt thành công và chúng tôi đang xử lý
         </p>
         <p>{{ $orderSuccessed->payment_method }}</p>
-        <p class="date">[Đơn hàng #{{ $orderSuccessed->id }}] ({{ \Carbon\Carbon::parse($orderSuccessed->ordered_at)->format('F j, Y') }})            )</p>
+        <p class="date">[Đơn hàng #{{ $orderSuccessed->id }}] ({{ \Carbon\Carbon::parse($orderSuccessed->ordered_at)->format('F j, Y') }})</p>
+        <p>Ngày nhận hàng dự kiến: <span class="text-primary">{{ \Carbon\Carbon::parse($orderSuccessed->estimated_at)->format('F j, Y') }}</span></p>
         <div class="message">
             <table class="table table-bordered">
                 <thead>
@@ -214,22 +215,31 @@
                             {{ $item->product->name }}
                         </td>
                         <td>{{ $item->color }}, {{ $item->size }}</td>
-                        <?php if ($item->price_discount > 0): ?>
-                            <span class="text--through">{{ number_format($item->price, 0, ',', '.') }} đ</span>
-                            <br>
-                            <span class="text-danger">{{ number_format($item->price-$item->price_discount, 0, ',', '.') }} đ</span>
-                        <?php else: ?>
-                            <span>{{ number_format($item->price, 0, ',', '.') }} đ</span>
-                        <?php endif; ?>
+                        <td>
+                            <?php if ($item->price_discount > 0): ?>
+                                <span class="text--through">{{ number_format($item->price, 0, ',', '.') }} đ</span>
+                                <br>
+                                <span class="text-danger">{{ number_format($item->price-$item->price_discount, 0, ',', '.') }} đ</span>
+                            <?php else: ?>
+                                <span>{{ number_format($item->price, 0, ',', '.') }} đ</span>
+                            <?php endif; ?>
+                        </td>
                         <td class="text-center">{{ $item->quantity }}</td>
-                        <td>{{ number_format($item->price*$item->quantity, 0, ',', '.') }} đ</td>
+                        <td>
+                            <?php if ($item->price_discount > 0): ?>
+                                <span>{{ number_format(($item->price-$item->price_discount)*$item->quantity, 0, ',', '.') }} đ</span>
+                            <?php else: ?>
+                                <span>{{ number_format($item->price*$item->quantity, 0, ',', '.') }} đ</span>
+                            <?php endif; ?>
+                            
+                        </td>
                     </tr>
                     @endforeach
                 </tbody>
                 <tfoot>
                     <tr>
                         <th colspan="5" class="text-bold">Tổng giá trị</th>
-                        <th>{{ number_format($orderSuccessed->total_value, 0, ',', '.') }}</th>
+                        <th>{{ number_format($orderSuccessed->total_price, 0, ',', '.') }}</th>
                     </tr>
                     <tr>
                         <th colspan="5" class="text-bold">Tổng giảm giá</th>
@@ -241,7 +251,7 @@
                     </tr>
                     <tr>
                         <th colspan="5" class="text-bold">Tổng đơn đặt hàng</th>
-                        <th class="text-primary">{{ number_format($orderSuccessed->total_price, 0, ',', '.') }}</th>
+                        <th class="text-primary">{{ number_format($orderSuccessed->total_value, 0, ',', '.') }}</th>
                     </tr>
                 </tfoot>
             </table>
