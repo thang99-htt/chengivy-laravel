@@ -28,7 +28,7 @@ class StockReceivedDocketsController extends Controller
 
     public function show($id)
     {
-        $import = StockReceivedDocket::with('stock_received_docket_product.product.product_image')->find($id);
+        $import = StockReceivedDocket::with('payment_voucher.supplier','stock_received_docket_product.product.product_image')->find($id);
         return response()->json(new StockReceivedDocketResource($import));
     }
 
@@ -37,7 +37,6 @@ class StockReceivedDocketsController extends Controller
         $validator = Validator::make($request->all(), [
             'items' => 'required',
             'inventories' => 'required',
-            'supplier_id' => 'required',
             'payment_voucher_id' => 'required',
             'description' => 'required',
             'image' => 'required',
@@ -47,7 +46,6 @@ class StockReceivedDocketsController extends Controller
         ], [
             'items.required' => 'Vui lòng chọn các sản phẩm.',
             'inventories.required' => 'Vui lòng nhập phân loại sản phẩm.',
-            'supplier_id.required' => 'Vui lòng chọn nhà cung cấp.',
             'payment_voucher_id.required' => 'Vui lòng chọn phiếu chi.',
             'description.required' => 'Vui lòng nhập mô tả.',
             'image.required' => 'Vui lòng chọn chứng từ.',
@@ -78,7 +76,6 @@ class StockReceivedDocketsController extends Controller
             } else {
                 $import = new StockReceivedDocket;
                 $import->staff_id = $request->staff_id;
-                $import->supplier_id = $request->supplier_id;
                 $import->payment_voucher_id = $request->payment_voucher_id;
                 $import->date = $request->date;
                 $import->total_price = $request->total_price;
@@ -362,7 +359,6 @@ class StockReceivedDocketsController extends Controller
                     $importProduct->delete();
     
                     $import->staff_id = $request->staff_id;
-                    $import->supplier_id = $request->supplier_id;
                     $import->payment_voucher_id = $request->payment_voucher_id;
                     $import->date = $request->date;
                     $import->total_price = $request->total_price;

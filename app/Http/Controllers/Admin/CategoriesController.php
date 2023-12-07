@@ -13,7 +13,7 @@ class CategoriesController extends Controller
 {
     public function index()
     {
-        $categories = Category::with(['parent'])->get();
+        $categories = Category::with(['parent'])->where('deleted_at', null)->get();
         return response()->json($categories);
     }
 

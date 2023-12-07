@@ -25,6 +25,7 @@ Route::apiResource('/admin/roles', App\Http\Controllers\Admin\RolesController::c
 Route::delete('admin/roles/', [App\Http\Controllers\Admin\RolesController::class, 'destroyIds']);
 
 Route::apiResource('/admin/suppliers', App\Http\Controllers\Admin\SuppliersController::class);
+Route::delete('admin/suppliers/', [App\Http\Controllers\Admin\SuppliersController::class, 'destroyIds']);
 Route::apiResource('/admin/payment-vouchers', App\Http\Controllers\Admin\PaymentVouchersController::class);
 
 Route::apiResource('/admin/import/stock-received-docket', App\Http\Controllers\Admin\StockReceivedDocketsController::class);
@@ -158,7 +159,8 @@ Route::put('admin/reviews/hidden', [App\Http\Controllers\Admin\ReviewsController
 Route::put('admin/reviews/{id}', [App\Http\Controllers\Admin\ReviewsController::class, 'update']);
 
 Route::get('returns/{id}', [App\Http\Controllers\User\ReturnsController::class, 'index']);
-Route::put('returns/{id}', [App\Http\Controllers\User\ReturnsController::class, 'cancelReturn']);
+Route::put('returns/cancel-{id}', [App\Http\Controllers\User\ReturnsController::class, 'cancelReturn']);
+Route::put('returns/send-{id}', [App\Http\Controllers\User\ReturnsController::class, 'sendReturn']);
 Route::apiResource('/returns', App\Http\Controllers\User\ReturnsController::class);
 
 Route::get('user/reviews/{id}', [App\Http\Controllers\User\UsersController::class, 'getReviews']);

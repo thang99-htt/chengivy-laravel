@@ -17,7 +17,6 @@
             padding: 20px;
             background-color: #ffffff;
             box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
-            text-align: center;
         }
 
         h1 {
@@ -56,7 +55,7 @@
         }
 
         .name {
-            font-size: 18px;
+            font-size: 16px;
             margin-top: 10px;
             color: #4e4d47;
             margin-bottom: 5px;
@@ -67,6 +66,9 @@
             text-align: center;
         }
 
+        .product-price span {
+            font-size: 16px
+        }
         .price-final {
             color: #e71700;
             color: #e71700;
@@ -104,11 +106,36 @@
             color: rgb(206, 2, 2);
             font-size: 20px;
         }
+        
+        .header img {
+            max-width: 300px;
+            height: auto;
+            display: block;
+            margin: 0 auto;
+        }
+        .header {
+            margin: 0 auto;
+        }
+        .header h1 {
+            text-align: center;
+        }
+        .text--through {
+            text-decoration: line-through
+        }
+        .address {
+            margin-top: 30px;
+        }
+        .address p {
+            text-align: center;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Hướng dẫn trả hàng sau khi yêu cầu Trả hàng/Hoàn tiền của bạn được chấp nhận!</h1>
+        <div class="header">
+            <img src="{{ $message->embed('http://localhost:8000/storage/images/hero/logo.jpg') }}" alt="Thank you">
+            <h1>Hướng dẫn trả hàng sau khi yêu cầu Trả hàng/Hoàn tiền của bạn được chấp nhận!</h1>
+        </div>
         <p>Xin chào, <strong>{{ $userName }}!</strong></p>
         <p>Chengivy Store kính gửi đến Quý khách hàng thông báo sản phẩm được khách hàng yêu cầu Trả hàng/Hoàn tiền đã được chấp nhận.</p>
         <p>Thông tin Trả hàng/Hoàn tiền:</p>
@@ -129,7 +156,11 @@
                         <p class="name">{{ $item->product->name }}</p>
                         <p class="name">Phân loại: {{ $item->color }}, {{ $item->size }}</p>
                         <p class="product-price">
-                            <span class="price">{{ $item->quantity }} x {{ number_format($item->price, 0, ',', '.') }} VNĐ</span>
+                            <?php if ($item->price_discount > 0): ?>
+                                <span class="text-danger">{{ $item->quantity }} x {{ number_format($item->price-$item->price_discount, 0, ',', '.') }} đ</span>
+                            <?php else: ?>
+                                <span>{{ $item->quantity }} x {{ number_format($item->price, 0, ',', '.') }} đ</span>
+                            <?php endif; ?>
                         </p>
                     </div>
                     @endforeach
@@ -146,9 +177,15 @@
             <a href="http://localhost:3000/customer/returns/guide">Chengivy - Trả hàng/Hoàn tiền</a>
         </div>
         <div>
-            <p>Mọi thắc mắc cần giải đáp Quý khách vui lòng liên hệ Trung tâm Chăm sóc Khách hàng – Chengivy Store tại (+84) 222 666 8888 hoặc gửi mail theo địa chỉ hi@chengivy.comđể được hỗ trợ.</p>
+            <p>Mọi thắc mắc cần giải đáp Quý khách vui lòng liên hệ Trung tâm Chăm sóc Khách hàng – Chengivy Store tại (+84) 222 666 8888 hoặc gửi mail theo địa chỉ hi@chengivy.com để được hỗ trợ.</p>
             <p>Xin trân trọng cảm ơn Quý khách hàng.</p>
             <p>Thư này được gửi từ địa chỉ mail không chấp nhận mail đến. Vui lòng không trả lời thư này./.</p>
+        </div>
+        <div class="address">
+            <hr>
+            <p>CHENGIVY- Nhà phân phối thương hiệu thời trang quốc tế hàng đầu Việt Nam</p>
+            <p>Thành viên Tập đoàn Imex Pan Pacific Group (IPPG)</p>
+            <p>Tầng 12, Tòa nhà Sonatus, 15 Lê Thánh Tôn, Phường Bến Nghé, Quận 1, Tp.HCM, Việt Nam</p>
         </div>
     </div>
 </body>

@@ -26,7 +26,6 @@ class StockReceivedDocket extends Model
      */
     protected $fillable = [
         'staff_id',
-        'supplier_id',
         'payment_voucher_id',
         'form',
         'date',

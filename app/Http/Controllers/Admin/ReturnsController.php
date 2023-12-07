@@ -49,13 +49,13 @@ class ReturnsController extends Controller
         $return->save();
 
         $order = Order::find($return->order_id);
-        if($request->status === 'Đã gửi hướng dẫn hoàn trả') {
+        if($request->status === 'Đã duyệt') {
             $user = User::find($order->user_id);
             $returnProduct = $return;
-            SendReturnMail::dispatch($user->name, $user->email, $returnProduct);
+            SendReturnMail::dispatch($user->profiles[0]->name, $user->email, $returnProduct);
         }
 
-        if($request->status === 'Đã xử lý hoàn trả') {
+        if($request->status === 'Hoàn thành') {
             $return->returned_at = Carbon::now('Asia/Ho_Chi_Minh');;
             $return->save();
         }

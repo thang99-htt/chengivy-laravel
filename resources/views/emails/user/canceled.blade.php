@@ -12,7 +12,7 @@
         }
 
         .container {
-            width: auto;
+            width: 600px;
             margin: 0 auto;
             padding: 20px;
             background-color: #ffffff;
@@ -114,7 +114,7 @@
                 <p class="name">Phân loại: {{ $item->color }}, {{ $item->size }}</p>
                 <p class="product-price">
                     <span class="price">{{ $item->quantity }} x </span>
-                    <span class="price"> {{ number_format($item->price, 0, ',', '.') }} VNĐ</span>
+                    <span class="price"> {{ number_format($item->price, 0, ',', '.') }} đ</span>
                 </p>
             </div>
             @endforeach

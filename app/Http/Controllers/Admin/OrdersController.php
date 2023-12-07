@@ -133,7 +133,7 @@ class OrdersController extends Controller
                             ]);
                         } 
                 }
-                SendMailProductsCanceled::dispatch($user->name, $user->email, $order, $productsCanceled);
+                SendMailProductsCanceled::dispatch($user->profiles[0]->name, $user->email, $order, $productsCanceled);
 
             } else {
                 $notcancel[] = $order->id;

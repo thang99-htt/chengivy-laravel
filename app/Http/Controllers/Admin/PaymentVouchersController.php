@@ -10,7 +10,7 @@ class PaymentVouchersController extends Controller
 {
     public function index()
     {
-        $payment_vouchers = PaymentVoucher::with('staff', 'supplier')->orderBy('created_at', 'DESC')->get();
+        $payment_vouchers = PaymentVoucher::with('staff', 'supplier')->orderBy('date', 'DESC')->get();
         return response()->json($payment_vouchers); 
     }
 

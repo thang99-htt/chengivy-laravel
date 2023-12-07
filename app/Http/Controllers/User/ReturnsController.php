@@ -27,7 +27,7 @@ class ReturnsController extends Controller
         foreach($user->orders as $item) {
             $orderId = $item->id;
             $returns = Returns::with('order', 'return_image', 'return_product.product.product_image')
-                ->orderBy('created_at', 'DESC')->get();
+                ->orderBy('requested_at', 'DESC')->get();
             foreach($returns as $return) {
                 if($return->order->id == $orderId) {
                     $returnsAll[] = $return;
@@ -111,6 +111,14 @@ class ReturnsController extends Controller
         return response()->json([
             'success' => true,
         ],200);
+    }
+
+    public function sendReturn($id) {
+        $return = Returns::find($id);
+        $return->status = 'Đã nhận hàng trả lại';
+        $return->save();
+
+        return response()->json($return);
     }
 
     

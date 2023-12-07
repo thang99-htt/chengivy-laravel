@@ -5,12 +5,15 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Supplier;
+use Carbon\Carbon;
 
 class SuppliersController extends Controller
 {
     public function index()
     {
-        $suppliers = Supplier::orderBy('created_at', 'DESC')->get();
+        $suppliers = Supplier::where('deleted_at', null)
+                    ->orderBy('created_at', 'DESC')
+                    ->get();
         return response()->json($suppliers); 
     }
 
@@ -49,7 +52,14 @@ class SuppliersController extends Controller
     public function update(Request $request, $id)
     {
         $supplier = Supplier::find($id);
-        $supplier->update($request->all());
+        $supplier->name = $request['name'];
+        $supplier->address = $request->input('address_detail') . ", " . $request->input('address');
+        $supplier->phone = $request['phone'];
+        $supplier->email = $request['email'];
+        $supplier->bank_account = $request['bank_account'];
+        $supplier->tax_code = $request['tax_code'];
+        $supplier->date_cooperate = $request['date_cooperate'];
+        $supplier->save();
         
         return response()->json([
             'success' => 'success',
@@ -57,11 +67,19 @@ class SuppliersController extends Controller
         ]);
     }
 
-    public function destroy($id)
+    public function destroyIds(Request $request)
     {
-        $supplier = Supplier::find($id);
-        $supplier->delete();
-        return response()->json(['success'=>'true'], 200);
+        $selectedIds = $request->all(); // Lấy danh sách selectedIds từ request
+        $suppliers = Supplier::whereIn('id', $selectedIds)->get(); // Sử dụng whereIn để lấy các bản ghi tương ứng với selectedIds
+        foreach($suppliers as $supplier) {
+            $supplier->deleted_at = Carbon::now('Asia/Ho_Chi_Minh');
+            $supplier->save();
+        }      
+        return response()->json([
+            'success' => true,
+            'message' => "Deleted All."
+        ], 200);
     }
+
 
 }
