@@ -298,4 +298,14 @@ class OrdersController extends Controller
         ]);
     }
 
+    public function ordersByShipper(Request $request)
+    {
+        $startDate = Carbon::createFromFormat('d/m/Y', $request->input('startDate'))->startOfDay();
+        $endDate = Carbon::createFromFormat('d/m/Y', $request->input('endDate'))->endOfDay();
+
+        $orders = Order::with(['order_product.product'])->where('staff_delivery_id', $request->shipperId)->whereBetween('ordered_at', [$startDate, $endDate])
+            ->orderBy('ordered_at', 'DESC')->get();
+        return response()->json(OrderResource::collection($orders));
+    }
+
 }

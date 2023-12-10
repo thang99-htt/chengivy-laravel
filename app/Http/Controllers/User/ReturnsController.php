@@ -44,62 +44,69 @@ class ReturnsController extends Controller
 
     public function store(Request $request)
     {
-        $return = new Returns;
-        $return->requested_at = Carbon::now('Asia/Ho_Chi_Minh');
-        $return->staff_id = 1;
-        $return->order_id = $request['order_id'];
-        $return->reason = $request['reason'];
-        $return->description = $request['description'];
-        $return->total_price = $request['total_price'];
-        $return->status = 'Đã ghi nhận';
-        $return->method = 'Tài khoản ngân hàng';
-        $return->save();
-        
-        $returnId = $return->id;
-
-        foreach($request['products'] as $item) {
-            $returnItem = new ReturnProduct;
-            $returnItem->return_id = $returnId;
-            $returnItem->product_id = $item['id'];
-
-            $returnItem->size = $item['size'];
-            $returnItem->color = $item['color'];
-            $returnItem->quantity = $item['quantity'];
-
-            $color = Color::where('name',$item['color'])->first();
-            $size = Size::where('name',$item['size'])->first();
-            $inventory = Inventory::where([
-                'product_id' => $item['id'],
-                'color_id' => $color->id,
-                'size_id' => $size->id
-            ])->orderBy('month_year', 'desc')->first();
-
-            Inventory::where(['month_year' => $inventory['month_year'],
-                'product_id' => $item['id'], 'color_id' => $color->id, 
-                'size_id' => $size->id])->update([
-                    'total_import' => $inventory['total_import'] + $item['quantity'],
-                    'total_export' => $inventory['total_export'] - $item['quantity'],
-                    'total_final' => $inventory['total_final'] + $item['quantity'],
-                ]);
-
-            $returnItem->price = $item['price'];
-            $returnItem->price_discount = $item['price_discount'];
-            $returnItem->save();
-        }
-
-        $imagesData = $request['images'];
-
-        if ($imagesData) {
-            foreach ($imagesData as $image) {
-                $base64Image = $image;
-                UploadReturnToGoogleDrive::dispatch($returnId, $base64Image);
+        if($request['total_price'] > 1000000) {
+            $return = new Returns;
+            $return->requested_at = Carbon::now('Asia/Ho_Chi_Minh');
+            $return->staff_id = 1;
+            $return->order_id = $request['order_id'];
+            $return->reason = $request['reason'];
+            $return->description = $request['description'];
+            $return->total_price = $request['total_price'];
+            $return->status = 'Đã ghi nhận';
+            $return->method = 'Tài khoản ngân hàng';
+            $return->save();
+            
+            $returnId = $return->id;
+    
+            foreach($request['products'] as $item) {
+                $returnItem = new ReturnProduct;
+                $returnItem->return_id = $returnId;
+                $returnItem->product_id = $item['id'];
+    
+                $returnItem->size = $item['size'];
+                $returnItem->color = $item['color'];
+                $returnItem->quantity = $item['quantity'];
+    
+                $color = Color::where('name',$item['color'])->first();
+                $size = Size::where('name',$item['size'])->first();
+                $inventory = Inventory::where([
+                    'product_id' => $item['id'],
+                    'color_id' => $color->id,
+                    'size_id' => $size->id
+                ])->orderBy('month_year', 'desc')->first();
+    
+                Inventory::where(['month_year' => $inventory['month_year'],
+                    'product_id' => $item['id'], 'color_id' => $color->id, 
+                    'size_id' => $size->id])->update([
+                        'total_import' => $inventory['total_import'] + $item['quantity'],
+                        'total_export' => $inventory['total_export'] - $item['quantity'],
+                        'total_final' => $inventory['total_final'] + $item['quantity'],
+                    ]);
+    
+                $returnItem->price = $item['price'];
+                $returnItem->price_discount = $item['price_discount'];
+                $returnItem->save();
             }
+    
+            $imagesData = $request['images'];
+    
+            if ($imagesData) {
+                foreach ($imagesData as $image) {
+                    $base64Image = $image;
+                    UploadReturnToGoogleDrive::dispatch($returnId, $base64Image);
+                }
+            }
+    
+            return response()->json([
+                'success' => 'success',
+                'message' => 'Yêu cầu hoàn trả thành công!',
+            ]);
+        } else {
+            return response()->json([
+                'success' => 'warning',
+                'message' => 'Số tiền để thực hiện hoàn trả phải là ít nhất là 1.000.000 đồng!'
+            ]);
         }
-
-        return response()->json([
-            'success' => 'success',
-            'message' => 'Yêu cầu hoàn trả thành công!',
-        ]);
 
     }
 

@@ -80,6 +80,7 @@ Route::get('admin/orders/get-shippers', [OrdersController::class, 'getAllShipper
 Route::get('admin/orders/{id}', [OrdersController::class, 'show']);
 Route::post('admin/orders/', [OrdersController::class, 'index']);
 Route::post('admin/orders/sold-at-store', [OrdersController::class, 'soldAtStore']);
+Route::post('admin/orders/order-by-shipper', [OrdersController::class, 'ordersByShipper']);
 Route::put('admin/orders/update-status', [OrdersController::class, 'updateOrderStatus']);
 Route::put('admin/orders/delivery-order', [OrdersController::class, 'deliveryOrder']);
 Route::put('admin/orders/assignment-shipper', [OrdersController::class, 'assignmentShipper']);

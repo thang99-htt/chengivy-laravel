@@ -87,17 +87,17 @@ class ProductResource extends JsonResource
                 ];
             })->toArray(),
             'reviews' => [
-                'average_star_rating' => (round($this->reviews->avg('star') * 4) / 4) > 0 ? (round($this->reviews->avg('star') * 4) / 4) : 0,
-                'fitted_value_distribution' => $this->reviews->count() > 0 ? [
-                    'value_1' => round($this->reviews->where('fitted_value', 1)->count() / $this->reviews->count() * 100, 2),
-                    'value_2' => round($this->reviews->where('fitted_value', 2)->count() / $this->reviews->count() * 100, 2),
-                    'value_3' => round($this->reviews->where('fitted_value', 3)->count() / $this->reviews->count() * 100, 2),
+                'average_star_rating' => (round($this->reviews->where('status', 1)->avg('star') * 4) / 4) > 0 ? (round($this->reviews->where('status', 1)->avg('star') * 4) / 4) : 0,
+                'fitted_value_distribution' => $this->reviews->where('status', 1)->count() > 0 ? [
+                    'value_1' => round($this->reviews->where('status', 1)->where('fitted_value', 1)->count() / $this->reviews->where('status', 1)->count() * 100, 2),
+                    'value_2' => round($this->reviews->where('status', 1)->where('fitted_value', 2)->count() / $this->reviews->where('status', 1)->count() * 100, 2),
+                    'value_3' => round($this->reviews->where('status', 1)->where('fitted_value', 3)->count() / $this->reviews->where('status', 1)->count() * 100, 2),
                 ] : [
                     'value_1' => 0,
                     'value_2' => 0,
                     'value_3' => 0,
                 ],
-                'items' => $this->reviews->map(function ($review) {
+                'items' => $this->reviews->where('status', 1)->map(function ($review) {
                     return [
                         'id' => $review->id,
                         'user' => $review->user->name,
@@ -116,7 +116,7 @@ class ProductResource extends JsonResource
                         }),
                     ];
                 })
-            ], 
+            ],            
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
             'deleted_at' => $this->deleted_at,
