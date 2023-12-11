@@ -32,6 +32,7 @@ class ReviewResource extends JsonResource
         return [
             'id' => $this->id,
             'user' => $this->user,
+            'name' => $this->user->profiles[0]->name,
             'date' => $this->date,
             'star' => $this->star,
             'fitted_value' => $this->fitted_value,

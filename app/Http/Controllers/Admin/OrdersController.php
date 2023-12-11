@@ -62,15 +62,15 @@ class OrdersController extends Controller
 
     public function deliveryOrder(Request $request) {
         $order = Order::find($request->orderId);
-        if($order->staff_delivery_id == NULL && $order->status_id == 2) {
-            $order->staff_delivery_id = $request->staff_delivery_id;
-        }
-        if($order->status_id == 2 && $request['receiveOrder']) {
-            $order->status_id = 3;
-        } else if($order->status_id == 2 || ($order->status_id == 2 && $request['refuseOrder'])) {
+        if($order->status_id == 2 && $request['refuseOrder']) {
             $order->status_id = 2;
             $order->staff_delivery_id = null;
-        } else if($order->status_id == 3) {
+        } else if(!$order->staff_delivery_id && $order->status_id == 2) {
+            $order->staff_delivery_id = $request->staff_delivery_id;
+            $order->status_id = 3;
+        } else if($order->status_id == 2 || ($order->status_id == 2 && $request['receiveOrder'])) {
+            $order->status_id = 3;
+        }  else if($order->status_id == 3) {
             $order->status_id = 4;
         } else if($order->status_id == 4) {
             $order->status_id = 5;
@@ -80,6 +80,7 @@ class OrdersController extends Controller
             $order->status_id = 12;
         } else {
             $order->status_id = 7;
+            $order->receipted_at = Carbon::now('Asia/Ho_Chi_Minh');
         }
         $order->save();
         

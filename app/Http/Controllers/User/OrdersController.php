@@ -18,6 +18,7 @@ use App\Models\User;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use App\Jobs\SendMailOrderSuccessed;
+use App\Jobs\SendMailOrderCancelledByUser;
 
 class OrdersController extends Controller
 {    
@@ -275,6 +276,10 @@ class OrdersController extends Controller
         $order->status_id = 10;
         $order->canceled_at = Carbon::now('Asia/Ho_Chi_Minh');
         $order->save();
+
+        if($order->payment_method == 'Thanh toán qua PayPal') {
+            SendMailOrderCancelledByUser::dispatch($order->user->profiles[0]->name, $order->user->email, $order);
+        }
         
         return response()->json([
             'success' => true,
@@ -285,7 +290,6 @@ class OrdersController extends Controller
     public function receiptOrder($id) {
         $order = Order::find($id);
         $order->status_id = 8;
-        $order->receipted_at = Carbon::now('Asia/Ho_Chi_Minh');
         $order->save();
         
         return response()->json([
