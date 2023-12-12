@@ -400,7 +400,7 @@ class ProductsController extends Controller
             $product->maxMonthYear = $maxMonthYear;
             $product->maxTotalFinal = $maxTotalFinal;
             
-            $product->total_final = $totalFinal;
+            $product->total_final = $product->total_import - $product->total_export;
 
             if (count($inventoryTotals) > 0) {
                 $filteredProducts[] = $product;

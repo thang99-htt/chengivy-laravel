@@ -61,6 +61,7 @@ class OrdersController extends Controller
         $order->fee = 25000;
         $order->total_discount = $request['total_discount'];
         $order->total_value = $request['total_value'];
+        $order->point = $request['point'];
 
         if($request['note'] != null)
             $order->note = $request['note'];
@@ -143,7 +144,7 @@ class OrdersController extends Controller
             $request['delivery_address']['name'], 
             1,
             "Vừa đặt hàng",
-            "http://localhost:3000/admin/orders",
+            "http://localhost:3000/admin/orders/overview",
         ));
 
         $notification = new Notification();
@@ -152,7 +153,7 @@ class OrdersController extends Controller
         $notification->message = "Vừa đặt hàng";
         $notification->status = 'Chưa đọc';
         $notification->date = Carbon::now('Asia/Ho_Chi_Minh');
-        $notification->link = "http://localhost:3000/admin/orders";
+        $notification->link = "http://localhost:3000/admin/orders/overview";
         $notification->save();
         
         $orderSuccessed = $order;

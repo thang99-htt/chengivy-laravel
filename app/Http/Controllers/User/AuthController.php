@@ -50,7 +50,10 @@ class AuthController extends Controller
             ],
                         
         );
-        $user = User::where('email', $request->email)->with('profiles')->first();
+        $user = User::where('email', $request->email)
+                ->where('actived', 1) // Check for 'actived' status
+                ->with('profiles')
+                ->first();
 
         if(! $user || ! Hash::check($request->password, $user->password)) {
             throw ValidationException::withMessages([

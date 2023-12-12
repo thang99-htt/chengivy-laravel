@@ -46,7 +46,7 @@ class ProductResource extends JsonResource
             'brand_id' => $this->brand->id,
             'status' => $this->status,
             'total_export' => $this->inventories->sum('total_export'),
-            'total_final' => $this->inventories->sum('total_export'),
+            'total_final' => $this->inventories->sum('total_final'),
             'total_likes' => $this->favorites->count(),
             'image' => $firstColorImage,
             'images' => $this->product_image
