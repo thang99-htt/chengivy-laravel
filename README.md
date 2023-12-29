@@ -1,3 +1,8 @@
+Dự án được chia làm 2 source code:
+Back-end: sử dụng Laravel https://github.com/thang99-htt/chengivy-laravel
+Front-end: sử dụng VueJs https://github.com/thang99-htt/chengivy-vue
+
+
 <p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400"></a></p>
 
 <p align="center">
